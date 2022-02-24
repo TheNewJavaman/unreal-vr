@@ -14,8 +14,11 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="UnrealVRLauncher.cpp">
+    <ClCompile Include="Launcher.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Application</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

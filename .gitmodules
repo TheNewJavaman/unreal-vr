@@ -1,0 +1,6 @@
+[submodule "minhook"]
+	path = minhook
+	url = https://github.com/TsudaKageyu/minhook
+[submodule "UnrealModLoader"]
+	path = UnrealModLoader
+	url = https://github.com/RussellJerome/UnrealModLoader
