@@ -5,7 +5,7 @@
 #include "MinHook.h"
 #include "Logger.h"
 
-namespace VUE
+namespace UnrealVR
 {
 	class HookManager
 	{

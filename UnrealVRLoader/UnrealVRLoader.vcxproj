@@ -141,6 +141,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>C:\Users\gpiza\OneDrive\Code\UnrealVR\UnrealVRCommon;C:\Users\gpiza\OneDrive\Code\UnrealVR\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -151,8 +152,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="D3D11Manager.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="HookManager.cpp" />
     <ClCompile Include="Loader.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\minhook\build\VC16\libMinHook.vcxproj">
+      <Project>{f142a341-5ee0-442d-a15f-98ae9b48dbae}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\UnrealVRCommon\UnrealVRCommon.vcxproj">
+      <Project>{03f82e21-aac2-4922-8c1b-cfe3c40503b4}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D3D11Manager.h" />
+    <ClInclude Include="HookManager.h" />
+    <ClInclude Include="Loader.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
