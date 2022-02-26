@@ -8,7 +8,7 @@
 #include <MinHook.h>
 #include "Logger.h"
 #include "HookManager.h"
-#include "D3D11Manager.h"
+#include "D3D11LoaderManager.h"
 
 namespace UnrealVR
 {

@@ -41,18 +41,13 @@ namespace UnrealVR
 	void Loader::Init()
 	{
 		Logger::Init(true);
-		Logger::Info(L"hi");
-		Sleep(3000);
+		Sleep(10000);
 		if (!HookManager::Init())
 		{
 			Logger::Error(L"Failed to init hooks");
 			return;
 		}
-		if (!D3D11Manager::AddHooks())
-		{
-			Logger::Error(L"Failed to add D3D11 hooks");
-			return;
-		}
+		D3D11LoaderManager::AddHooks();
 		if (!ResumeGame())
 		{
 			Logger::Error(L"Failed to resume game");

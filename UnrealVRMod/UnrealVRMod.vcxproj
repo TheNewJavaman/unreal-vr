@@ -141,6 +141,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModeLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -152,6 +153,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Mod.cpp" />
+    <ClCompile Include="D3D11ModManager.cpp" />
+    <ClCompile Include="VRManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Mod.h" />
+    <ClInclude Include="D3D11ModManager.h" />
+    <ClInclude Include="VRManager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

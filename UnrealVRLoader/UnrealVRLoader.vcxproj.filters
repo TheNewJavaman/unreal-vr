@@ -12,6 +12,9 @@
     <Filter Include="DLL">
       <UniqueIdentifier>{fff1897c-8c3e-40cf-af1a-d18039623345}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Nuget">
+      <UniqueIdentifier>{d12073c1-e910-468d-94c6-139fbc6a58b1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -20,22 +23,30 @@
     <ClCompile Include="Loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D3D11Manager.cpp">
+    <ClCompile Include="HookManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HookManager.cpp">
+    <ClCompile Include="D3D11LoaderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D3D11Manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HookManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="D3D11LoaderManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config">
+      <Filter>Nuget</Filter>
+    </None>
+    <None Include="$(OpenXRLoaderBinaryRoot)\bin\openxr_loader.dll">
+      <Filter>Nuget</Filter>
+    </None>
   </ItemGroup>
 </Project>

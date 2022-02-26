@@ -27,7 +27,7 @@ namespace UnrealVR
 
     bool Launcher::InjectDLL(std::string launcherPath)
     {
-        std::string dllPath = launcherPath.substr(0, launcherPath.find_last_of("/\\")) + "\\VirtualUnrealityEngineLoader.dll";
+        std::string dllPath = launcherPath.substr(0, launcherPath.find_last_of("/\\")) + "\\UnrealVRLoader.dll";
         void* loc = VirtualAllocEx(procInfo.hProcess, 0, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
         if (!loc)
         {
