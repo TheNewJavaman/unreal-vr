@@ -9,11 +9,10 @@
 namespace UnrealVR
 {
 	// TODO
-	class Logger
+	namespace Logger
 	{
-	public:
-		static void Init(bool bNewWindow);
-		static void Info(std::wstring message);
-		static void Error(std::wstring message);
+		void Init(bool bNewWindow);
+		void Info(std::wstring message);
+		void Error(std::wstring message);
 	};
 }

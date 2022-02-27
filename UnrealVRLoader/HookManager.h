@@ -2,19 +2,33 @@
 #pragma once
 
 #include <string>
+#include <format>
 #include "MinHook.h"
 #include "Logger.h"
 
 namespace UnrealVR
 {
-	class HookManager
+	namespace HookManager
 	{
-	public:
-		static bool Init();
+		bool Init();
 
 		template <typename T>
-		static bool Add(DWORD_PTR pTarget, LPVOID pDetour, T** ppOriginal, std::wstring displayName);
+		bool Add(T* pTarget, T* pDetour, T** ppOriginal, std::wstring displayName)
+		{
+			if (MH_CreateHook((LPVOID)(DWORD64)pTarget, (LPVOID)pDetour, reinterpret_cast<LPVOID*>(ppOriginal)) != MH_OK)
+			{
+				Logger::Error(std::format(L"Failed to create hook ({})", displayName));
+				return false;
+			}
+			if (MH_EnableHook((LPVOID)(DWORD64)pTarget) != MH_OK)
+			{
+				Logger::Error(std::format(L"Failed to enable hook ({})", displayName));
+				return false;
+			}
+			Logger::Error(std::format(L"Added hook ({})", displayName));
+			return true;
+		}
 
-		static bool Stop();
+		bool Stop();
 	};
 }

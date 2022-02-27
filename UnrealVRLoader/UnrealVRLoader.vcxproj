@@ -126,7 +126,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\Users\gpiza\OneDrive\Code\UnrealVR\UnrealVRCommon;C:\Users\gpiza\OneDrive\Code\UnrealVR\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)UnrealVRCommon;$(SolutionDir)minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -145,7 +146,8 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\Users\gpiza\OneDrive\Code\UnrealVR\UnrealVRCommon;C:\Users\gpiza\OneDrive\Code\UnrealVR\minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)UnrealVRCommon;$(SolutionDir)minhook\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -161,6 +163,7 @@
     <ClCompile Include="HookManager.cpp" />
     <ClCompile Include="Loader.cpp" />
     <ClCompile Include="D3D11LoaderManager.cpp" />
+    <ClCompile Include="VRLoaderManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\minhook\build\VC16\libMinHook.vcxproj">
@@ -174,6 +177,7 @@
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="Loader.h" />
     <ClInclude Include="D3D11LoaderManager.h" />
+    <ClInclude Include="VRLoaderManager.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

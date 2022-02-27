@@ -7,13 +7,9 @@
 
 namespace UnrealVR
 {
-	class Launcher
+	namespace Launcher
 	{
-	public:
-		static bool StartGame(std::wstring gamePath);
-		static bool InjectDLL(std::string launcherPath);
-
-	private:
-		static PROCESS_INFORMATION procInfo;
+		bool StartGame(std::wstring gamePath);
+		bool InjectDLL(std::string launcherPath);
 	};
 }

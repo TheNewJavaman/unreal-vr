@@ -2,29 +2,32 @@
 
 namespace UnrealVR
 {
-	void Logger::Init(bool bNewWindow)
+	namespace Logger
 	{
-		if (bNewWindow)
+		void Init(bool bNewWindow)
 		{
-			ShowWindow(GetConsoleWindow(), SW_SHOW);
-			FreeConsole();
+			if (bNewWindow)
+			{
+				ShowWindow(GetConsoleWindow(), SW_SHOW);
+				FreeConsole();
+			}
+			AllocConsole();
+			FILE* fpstdin = stdin;
+			FILE* fpstdout = stdout;
+			FILE* fpstderr = stderr;
+			freopen_s(&fpstdin, "CONIN$", "r", stdin);
+			freopen_s(&fpstdout, "CONOUT$", "w", stdout);
+			freopen_s(&fpstderr, "CONOUT$", "w", stderr);
 		}
-		AllocConsole();
-		FILE* fpstdin = stdin;
-		FILE* fpstdout = stdout;
-		FILE* fpstderr = stderr;
-		freopen_s(&fpstdin, "CONIN$", "r", stdin);
-		freopen_s(&fpstdout, "CONOUT$", "w", stdout);
-		freopen_s(&fpstderr, "CONOUT$", "w", stderr);
-	}
 
-	void Logger::Info(std::wstring message)
-	{
-		std::wcout << message << "\n";
-	}
+		void Info(std::wstring message)
+		{
+			std::wcout << message << "\n";
+		}
 
-	void Logger::Error(std::wstring message)
-	{
-		std::wcout << message << "\n";
+		void Error(std::wstring message)
+		{
+			std::wcout << message << "\n";
+		}
 	}
 }

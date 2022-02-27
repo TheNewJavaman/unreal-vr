@@ -12,13 +12,9 @@
 
 namespace UnrealVR
 {
-	class Loader
+	namespace Loader
 	{
-	public:
-		static void Init();
-		static void Stop();
-
-	private:
-		static bool ResumeGame();
+		void Init();
+		void Stop();
 	};
 }
