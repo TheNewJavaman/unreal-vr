@@ -6,6 +6,8 @@ namespace UnrealVR
 	{
 		DWORD __stdcall AddHooksThread(LPVOID);
 
+		bool IsHooked;
+
 		typedef HRESULT(__stdcall CreateSwapChainFunc)(
 			IDXGIFactory* pFactory,
 			IUnknown* pDevice,

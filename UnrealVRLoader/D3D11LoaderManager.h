@@ -10,6 +10,6 @@ namespace UnrealVR
 	namespace D3D11LoaderManager
 	{
 		void AddHooks();
-		bool IsHooked;
+		extern bool IsHooked;
 	};
 }

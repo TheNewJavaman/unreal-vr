@@ -23,7 +23,7 @@ namespace UnrealVR
 			Logger::Info(L"OpenXR extensions available:");
 			for (size_t i = 0; i < allExtensions.size(); i++)
 			{
-				Logger::Info(std::format(L"- {}", allExtensions[i].extensionName));
+				//Logger::Info(std::format(L"- {}", allExtensions[i].extensionName));
 				for (int32_t j = 0; j < _countof(requestedExtensions); j++)
 				{
 					if (strcmp(requestedExtensions[j], allExtensions[i].extensionName) == 0)
