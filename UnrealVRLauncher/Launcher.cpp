@@ -14,15 +14,15 @@ namespace UnrealVR
             startupInfo.cb = sizeof(startupInfo);
             if (!CreateProcessW(gamePath.c_str(), NULL, NULL, NULL, TRUE, 0, NULL, gameDir.c_str(), &startupInfo, &procInfo))
             {
-                Logger::Info(L"Failed to create game process");
+                std::cout << "Failed to create game process\n";
                 return false;
             };
             if (SuspendThread(procInfo.hThread) == -1)
             {
-                Logger::Error(L"Failed to suspend main thread");
+                std::cout << "Failed to suspend main thread\n";
                 return false;
             }
-            Logger::Info(L"Created game process and suspended main thread");
+            std::cout << "Created game process and suspended main thread\n";
             return true;
         }
 
@@ -32,36 +32,36 @@ namespace UnrealVR
             void* loc = VirtualAllocEx(procInfo.hProcess, 0, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
             if (!loc)
             {
-                Logger::Error(L"Failed to allocate memory in remote process");
+                std::cout << "Failed to allocate memory in remote process\n";
                 return false;
             }
             if (!WriteProcessMemory(procInfo.hProcess, loc, dllPath.c_str(), strlen(dllPath.c_str()) + 1, 0))
             {
-                Logger::Error(L"Failed to write DLL injection to memory");
+                std::cout << "Failed to write DLL injection to memory\n";
                 return false;
             }
             HANDLE hThread = CreateRemoteThread(procInfo.hProcess, NULL, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, loc, 0, NULL);
             if (!hThread)
             {
-                Logger::Error(L"Failed to obtain remote thread");
+                std::cout << "Failed to obtain remote thread\n";
                 return false;
             }
             else if (!CloseHandle(hThread))
             {
-                Logger::Error(L"Failed to close DLL thread");
+                std::cout << "Failed to close DLL thread\n";
                 return false;
             }
             if (!CloseHandle(procInfo.hProcess))
             {
-                Logger::Error(L"Failed to close game process");
+                std::cout << "Failed to close game process\n";
                 return false;
             }
             if (!CloseHandle(procInfo.hThread))
             {
-                Logger::Error(L"Failed to close game thread");
+                std::cout << "Failed to close game thread\n";
                 return false;
             }
-            Logger::Info(L"Started DLL injection");
+            std::cout << "Started DLL injection\n";
             return true;
         }
     }

@@ -8,21 +8,20 @@ namespace UnrealVR
 
 		void Init()
 		{
-			Logger::Init(true);
-			if (!VRLoaderManager::Init())
+			if (!VRManager::Init())
 			{
-				Logger::Error(L"Failed to init VR");
+				Log::Error("Failed to init VR");
 				return;
 			}
 			if (!HookManager::Init())
 			{
-				Logger::Error(L"Failed to init hooks");
+				Log::Error("Failed to init hooks");
 				return;
 			}
-			D3D11LoaderManager::AddHooks();
+			D3D11Manager::AddHooks();
 			if (!ResumeGame())
 			{
-				Logger::Error(L"Failed to resume game");
+				Log::Error("Failed to resume game");
 				return;
 			}
 		}
@@ -34,16 +33,16 @@ namespace UnrealVR
 			hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 			if (hThreadSnap == INVALID_HANDLE_VALUE)
 			{
-				Logger::Error(L"Failed to create thread snap");
+				Log::Error("Failed to create thread snap");
 				return false;
 			}
 			te32.dwSize = sizeof(THREADENTRY32);
 			if (!Thread32First(hThreadSnap, &te32))
 			{
-				Logger::Error(L"Failed to find first game process thread");
+				Log::Error("Failed to find first game process thread");
 				if (!CloseHandle(hThreadSnap))
 				{
-					Logger::Error(L"Failed to close thread snap handle");
+					Log::Error("Failed to close thread snap handle");
 					return false;
 				}
 				return false;
@@ -54,17 +53,17 @@ namespace UnrealVR
 					HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID);
 					if (ResumeThread(hThread) == -1)
 					{
-						Logger::Error(L"Failed to resume a thread");
+						Log::Error("Failed to resume a thread");
 					}
 					if (!CloseHandle(hThread))
 					{
-						Logger::Error(L"Failed to close a thread handle");
+						Log::Error("Failed to close a thread handle");
 					}
 				}
 			} while (Thread32Next(hThreadSnap, &te32));
 			if (!CloseHandle(hThreadSnap))
 			{
-				Logger::Error(L"Failed to close thread snap handle");
+				Log::Error("Failed to close thread snap handle");
 				return false;
 			}
 			return true;
@@ -72,11 +71,8 @@ namespace UnrealVR
 
 		void Stop()
 		{
-			if (!HookManager::Stop())
-			{
-				Logger::Error(L"Failed to stop hooks");
-				return;
-			}
+			VRManager::Stop();
+			HookManager::Stop();
 		}
 	}
 }

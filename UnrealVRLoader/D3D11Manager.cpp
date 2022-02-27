@@ -1,12 +1,10 @@
-#include "D3D11LoaderManager.h"
+#include "D3D11Manager.h"
 
 namespace UnrealVR
 {
-	namespace D3D11LoaderManager
+	namespace D3D11Manager
 	{
 		DWORD __stdcall AddHooksThread(LPVOID);
-
-		bool IsHooked = false;
 
 		typedef HRESULT(__stdcall CreateSwapChainFunc)(
 			IDXGIFactory* pFactory,
@@ -31,15 +29,12 @@ namespace UnrealVR
 		CreateSwapChainForHwndFunc* CreateSwapChainForHwndTarget = nullptr;
 		CreateSwapChainForHwndFunc* CreateSwapChainForHwndOriginal = nullptr;
 
-		void D3D11LoaderManager::AddHooks()
+		void AddHooks()
 		{
-			if (!IsHooked)
-			{
-				CreateThread(NULL, 0, AddHooksThread, NULL, 0, NULL);
-			}
+			CreateThread(NULL, 0, AddHooksThread, NULL, 0, NULL);
 		}
 
-		DWORD __stdcall D3D11LoaderManager::AddHooksThread(LPVOID)
+		DWORD __stdcall AddHooksThread(LPVOID)
 		{
 			IDXGIFactory* factory;
 			CreateDXGIFactory(__uuidof(IDXGIFactory), (void**)&factory);
@@ -49,15 +44,14 @@ namespace UnrealVR
 
 			CreateSwapChainTarget = (CreateSwapChainFunc*)factory2VTable[10];
 			CreateSwapChainForHwndTarget = (CreateSwapChainForHwndFunc*)factory2VTable[15];
-			HookManager::Add<CreateSwapChainFunc>(CreateSwapChainTarget, &CreateSwapChainDetour, &CreateSwapChainOriginal, L"CreateSwapChain");
-			HookManager::Add<CreateSwapChainForHwndFunc>(CreateSwapChainForHwndTarget, &CreateSwapChainForHwndDetour, &CreateSwapChainForHwndOriginal, L"CreateSwapChainForHwnd");
+			HookManager::Add<CreateSwapChainFunc>(CreateSwapChainTarget, &CreateSwapChainDetour, &CreateSwapChainOriginal, "CreateSwapChain");
+			HookManager::Add<CreateSwapChainForHwndFunc>(CreateSwapChainForHwndTarget, &CreateSwapChainForHwndDetour, &CreateSwapChainForHwndOriginal, "CreateSwapChainForHwnd");
 			DWORD createSwapChainOld;
 			DWORD createSwapChainForHwndOld;
 			VirtualProtect(CreateSwapChainTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainOld);
 			VirtualProtect(CreateSwapChainForHwndTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainForHwndOld);
 
-			Logger::Info(L"Added D3D11 hooks");
-			IsHooked = true;
+			Log::Info("Added D3D11 hooks");
 
 			while (true)
 			{
@@ -70,7 +64,7 @@ namespace UnrealVR
 			return NULL;
 		}
 
-		HRESULT __stdcall D3D11LoaderManager::CreateSwapChainDetour(
+		HRESULT __stdcall CreateSwapChainDetour(
 			IDXGIFactory* pFactory,
 			IUnknown* pDevice,
 			DXGI_SWAP_CHAIN_DESC* pDesc,
@@ -78,11 +72,11 @@ namespace UnrealVR
 		)
 		{
 			CreateSwapChainOriginal(pFactory, pDevice, pDesc, ppSwapChain);
-			Logger::Info(L"Intercepted CreateSwapChain");
+			Log::Info("Intercepted CreateSwapChain");
 			return S_OK;
 		}
 
-		HRESULT __stdcall D3D11LoaderManager::CreateSwapChainForHwndDetour(
+		HRESULT __stdcall CreateSwapChainForHwndDetour(
 			IDXGIFactory2* pFactory,
 			IUnknown* pDevice,
 			HWND hWnd,
@@ -93,7 +87,7 @@ namespace UnrealVR
 		)
 		{
 			CreateSwapChainForHwndOriginal(pFactory, pDevice, hWnd, pDesc, pFullscreenDesc, pRestrictToOutput, ppSwapChain);
-			Logger::Info(L"Intercepted CreateSwapChainForHwnd");
+			Log::Info("Intercepted CreateSwapChainForHwnd");
 			return S_OK;
 		}
 	}

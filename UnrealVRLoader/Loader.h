@@ -6,10 +6,10 @@
 #include <tlHelp32.h>
 #include <processthreadsapi.h>
 #include <MinHook.h>
-#include "Logger.h"
+#include "Utilities/Logger.h"
 #include "HookManager.h"
-#include "D3D11LoaderManager.h"
-#include "VRLoaderManager.h"
+#include "D3D11Manager.h"
+#include "VRManager.h"
 
 namespace UnrealVR
 {

@@ -26,10 +26,10 @@
     <ClCompile Include="HookManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D3D11LoaderManager.cpp">
+    <ClCompile Include="D3D11Manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="VRLoaderManager.cpp">
+    <ClCompile Include="VRManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -40,10 +40,10 @@
     <ClInclude Include="HookManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D3D11LoaderManager.h">
+    <ClInclude Include="D3D11Manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="VRLoaderManager.h">
+    <ClInclude Include="VRManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
