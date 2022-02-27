@@ -9,7 +9,11 @@ namespace UnrealVR
 		void Init()
 		{
 			Logger::Init(true);
-			Sleep(10000);
+			if (!VRLoaderManager::Init())
+			{
+				Logger::Error(L"Failed to init VR");
+				return;
+			}
 			if (!HookManager::Init())
 			{
 				Logger::Error(L"Failed to init hooks");
@@ -48,7 +52,14 @@ namespace UnrealVR
 				if (te32.th32OwnerProcessID == GetCurrentProcessId() && te32.th32ThreadID != GetCurrentThreadId())
 				{
 					HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID);
-					ResumeThread(hThread);
+					if (ResumeThread(hThread) == -1)
+					{
+						Logger::Error(L"Failed to resume a thread");
+					}
+					if (!CloseHandle(hThread))
+					{
+						Logger::Error(L"Failed to close a thread handle");
+					}
 				}
 			} while (Thread32Next(hThreadSnap, &te32));
 			if (!CloseHandle(hThreadSnap))

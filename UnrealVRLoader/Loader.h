@@ -9,6 +9,7 @@
 #include "Logger.h"
 #include "HookManager.h"
 #include "D3D11LoaderManager.h"
+#include "VRLoaderManager.h"
 
 namespace UnrealVR
 {

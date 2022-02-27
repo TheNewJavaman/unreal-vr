@@ -6,7 +6,7 @@ namespace UnrealVR
 	{
 		DWORD __stdcall AddHooksThread(LPVOID);
 
-		bool IsHooked;
+		bool IsHooked = false;
 
 		typedef HRESULT(__stdcall CreateSwapChainFunc)(
 			IDXGIFactory* pFactory,
@@ -15,8 +15,8 @@ namespace UnrealVR
 			IDXGISwapChain** ppSwapChain
 			);
 		CreateSwapChainFunc CreateSwapChainDetour;
-		CreateSwapChainFunc* CreateSwapChainTarget;
-		CreateSwapChainFunc* CreateSwapChainOriginal;
+		CreateSwapChainFunc* CreateSwapChainTarget = nullptr;
+		CreateSwapChainFunc* CreateSwapChainOriginal = nullptr;
 
 		typedef HRESULT(__stdcall CreateSwapChainForHwndFunc)(
 			IDXGIFactory2* pFactory,
@@ -28,8 +28,8 @@ namespace UnrealVR
 			IDXGISwapChain1** ppSwapChain
 			);
 		CreateSwapChainForHwndFunc CreateSwapChainForHwndDetour;
-		CreateSwapChainForHwndFunc* CreateSwapChainForHwndTarget;
-		CreateSwapChainForHwndFunc* CreateSwapChainForHwndOriginal;
+		CreateSwapChainForHwndFunc* CreateSwapChainForHwndTarget = nullptr;
+		CreateSwapChainForHwndFunc* CreateSwapChainForHwndOriginal = nullptr;
 
 		void D3D11LoaderManager::AddHooks()
 		{

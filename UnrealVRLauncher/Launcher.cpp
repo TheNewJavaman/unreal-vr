@@ -17,10 +17,9 @@ namespace UnrealVR
                 Logger::Info(L"Failed to create game process");
                 return false;
             };
-            //if (SuspendThread(procInfo.hThread) == -1)
-            if (false)
+            if (SuspendThread(procInfo.hThread) == -1)
             {
-                Logger::Info(L"Failed to suspend thread");
+                Logger::Error(L"Failed to suspend main thread");
                 return false;
             }
             Logger::Info(L"Created game process and suspended main thread");

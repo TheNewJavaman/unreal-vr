@@ -15,5 +15,6 @@ namespace UnrealVR
 	namespace VRLoaderManager
 	{
 		bool Init();
+		void Stop();
 	};
 }

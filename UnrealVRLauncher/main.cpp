@@ -15,6 +15,5 @@ int main(int argc, char* argv[])
 		UnrealVR::Logger::Error(L"Failed to inject DLL");
 		return 1;
 	}
-	Sleep(3000);
 	return 0;
 }
