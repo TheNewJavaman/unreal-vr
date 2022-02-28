@@ -18,6 +18,21 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Mod.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Mod.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader.vcxproj">
+      <Project>{de3bc2ad-2683-4d76-ad72-95d98164e9c7}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\UnrealVRLoader\UnrealVRLoader.vcxproj">
+      <Project>{d6615132-07ae-494b-91b0-84c8bd5eff23}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -125,6 +140,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpplatest</LanguageStandard>
+      <AdditionalIncludeDirectories>$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealVRLoader</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -142,7 +158,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModeLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealVRLoader</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

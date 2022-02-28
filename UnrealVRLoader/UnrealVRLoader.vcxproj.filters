@@ -20,7 +20,7 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>DLL</Filter>
     </ClCompile>
-    <ClCompile Include="Loader.cpp">
+    <ClCompile Include="UnrealVRLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HookManager.cpp">
@@ -34,7 +34,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Loader.h">
+    <ClInclude Include="UnrealVRLoader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HookManager.h">

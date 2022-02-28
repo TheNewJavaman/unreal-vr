@@ -14,7 +14,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Launcher.cpp">
+    <ClCompile Include="UnrealVRLauncher.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
@@ -22,7 +22,7 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Launcher.h">
+    <ClInclude Include="UnrealVRLauncher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

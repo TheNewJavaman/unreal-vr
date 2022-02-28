@@ -1,5 +1,5 @@
 #include <string>
-#include "Launcher.h"
+#include "UnrealVRLauncher.h"
 
 int main(int argc, char* argv[])
 {

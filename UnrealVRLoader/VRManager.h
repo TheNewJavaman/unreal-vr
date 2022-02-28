@@ -10,13 +10,14 @@
 #include <openxr/openxr_platform.h>
 #include <format>
 #include "Utilities/Logger.h"
+#include "Defs.h"
 
 namespace UnrealVR
 {
 	namespace VRManager
 	{
 		bool Init();
-		bool ContinueInitAndCreateSwapChain();
+		UNREALVR_API bool ContinueInitAndCreateSwapChain();
 		void Stop();
 	};
 }

@@ -5,6 +5,7 @@
 #include <format>
 #include "MinHook.h"
 #include "Utilities/Logger.h"
+#include "Defs.h"
 
 namespace UnrealVR
 {
@@ -13,7 +14,7 @@ namespace UnrealVR
 		bool Init();
 
 		template <typename T>
-		bool Add(T* pTarget, T* pDetour, T** ppOriginal, std::string displayName)
+		UNREALVR_API bool Add(T* pTarget, T* pDetour, T** ppOriginal, std::string displayName)
 		{
 			if (MH_CreateHook((LPVOID)(DWORD64)pTarget, (LPVOID)pDetour, reinterpret_cast<LPVOID*>(ppOriginal)) != MH_OK)
 			{

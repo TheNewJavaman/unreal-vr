@@ -1,4 +1,4 @@
-#include "Launcher.h"
+#include "UnrealVRLauncher.h"
 
 namespace UnrealVR
 {

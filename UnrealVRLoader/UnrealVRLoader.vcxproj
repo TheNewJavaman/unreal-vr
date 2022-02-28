@@ -165,7 +165,7 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="HookManager.cpp" />
-    <ClCompile Include="Loader.cpp" />
+    <ClCompile Include="UnrealVRLoader.cpp" />
     <ClCompile Include="D3D11Manager.cpp" />
     <ClCompile Include="VRManager.cpp" />
   </ItemGroup>
@@ -179,7 +179,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HookManager.h" />
-    <ClInclude Include="Loader.h" />
+    <ClInclude Include="UnrealVRLoader.h" />
     <ClInclude Include="D3D11Manager.h" />
     <ClInclude Include="VRManager.h" />
   </ItemGroup>

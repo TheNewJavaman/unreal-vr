@@ -1,4 +1,4 @@
-#include "Loader.h"
+#include "UnrealVRLoader.h"
 
 namespace UnrealVR
 {
