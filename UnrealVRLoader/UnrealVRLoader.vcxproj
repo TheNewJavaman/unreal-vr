@@ -178,6 +178,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Defs.h" />
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="UnrealVRLoader.h" />
     <ClInclude Include="D3D11Manager.h" />

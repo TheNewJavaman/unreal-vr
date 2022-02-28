@@ -20,10 +20,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Mod.cpp" />
+    <ClCompile Include="UnrealVRMod.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Mod.h" />
+    <ClInclude Include="UnrealVRMod.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader.vcxproj">

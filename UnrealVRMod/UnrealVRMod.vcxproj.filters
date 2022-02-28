@@ -17,12 +17,12 @@
     <ClCompile Include="dllmain.cpp">
       <Filter>DLL</Filter>
     </ClCompile>
-    <ClCompile Include="Mod.cpp">
+    <ClCompile Include="UnrealVRMod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Mod.h">
+    <ClInclude Include="UnrealVRMod.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
