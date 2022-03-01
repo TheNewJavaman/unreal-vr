@@ -19,13 +19,19 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Basic.cpp" />
+    <ClCompile Include="CoreUObject_functions.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="UnrealVRMod.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ue4.hpp" />
     <ClInclude Include="UnrealVRMod.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\minhook\build\VC16\libMinHook.vcxproj">
+      <Project>{f142a341-5ee0-442d-a15f-98ae9b48dbae}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader.vcxproj">
       <Project>{de3bc2ad-2683-4d76-ad72-95d98164e9c7}</Project>
     </ProjectReference>
@@ -156,9 +162,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;UNREALVRMOD_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealVRLoader</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealVRLoader;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\MinHook;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4</AdditionalIncludeDirectories>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

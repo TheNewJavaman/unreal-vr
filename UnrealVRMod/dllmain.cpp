@@ -5,7 +5,7 @@
 
 void CreateMod()
 {
-    auto mod = new UnrealVR::Mod();
+    auto mod = new UnrealVR::CoreMod();
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)

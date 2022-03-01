@@ -12,6 +12,9 @@
     <Filter Include="DLL">
       <UniqueIdentifier>{533e3365-fda3-4626-b078-cedf24535e74}</UniqueIdentifier>
     </Filter>
+    <Filter Include="UE4">
+      <UniqueIdentifier>{7dc7070c-3d0c-41fd-9db5-52b3f872d76d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -20,10 +23,19 @@
     <ClCompile Include="UnrealVRMod.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Basic.cpp">
+      <Filter>UE4</Filter>
+    </ClCompile>
+    <ClCompile Include="CoreUObject_functions.cpp">
+      <Filter>UE4</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UnrealVRMod.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Ue4.hpp">
+      <Filter>UE4</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
