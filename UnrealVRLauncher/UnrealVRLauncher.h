@@ -11,6 +11,7 @@ namespace UnrealVR
 	namespace Launcher
 	{
 		bool StartGame(std::wstring gamePath);
-		bool InjectDLL(std::string launcherPath);
+		bool InjectDLL(std::string launcherPath, std::string dllName);
+		bool CloseHandles();
 	};
 }

@@ -26,9 +26,9 @@ namespace UnrealVR
             return true;
         }
 
-        bool InjectDLL(std::string launcherPath)
+        bool InjectDLL(std::string launcherPath, std::string dllName)
         {
-            std::string dllPath = launcherPath.substr(0, launcherPath.find_last_of("/\\")) + "\\UnrealVRLoader.dll";
+            std::string dllPath = launcherPath.substr(0, launcherPath.find_last_of("/\\")) + "\\" + dllName;
             void* loc = VirtualAllocEx(procInfo.hProcess, 0, MAX_PATH, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
             if (!loc)
             {
@@ -46,11 +46,22 @@ namespace UnrealVR
                 std::cout << "Failed to obtain remote thread\n";
                 return false;
             }
+            if (ResumeThread(procInfo.hThread) == -1)
+            {
+                std::cout << "Failed to resume DLL thread\n";
+                return false;
+            }
             else if (!CloseHandle(hThread))
             {
                 std::cout << "Failed to close DLL thread\n";
                 return false;
             }
+            std::cout << "Injected " + dllName + "\n";
+            return true;
+        }
+
+        bool CloseHandles()
+        {
             if (!CloseHandle(procInfo.hProcess))
             {
                 std::cout << "Failed to close game process\n";
@@ -61,7 +72,7 @@ namespace UnrealVR
                 std::cout << "Failed to close game thread\n";
                 return false;
             }
-            std::cout << "Started DLL injection\n";
+            std::cout << "Successfully closed handles\n";
             return true;
         }
     }

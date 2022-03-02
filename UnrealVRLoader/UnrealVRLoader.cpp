@@ -10,18 +10,18 @@ namespace UnrealVR
 		{
 			if (!VRManager::Init())
 			{
-				Log::Error("Failed to init VR");
+				Log::Error("[UnrealVR] Failed to init VR");
 				return;
 			}
 			if (!HookManager::Init())
 			{
-				Log::Error("Failed to init hooks");
+				Log::Error("[UnrealVR] Failed to init hooks");
 				return;
 			}
 			D3D11Manager::AddHooks();
 			if (!ResumeGame())
 			{
-				Log::Error("Failed to resume game");
+				Log::Error("[UnrealVR] Failed to resume game");
 				return;
 			}
 		}
@@ -33,16 +33,16 @@ namespace UnrealVR
 			hThreadSnap = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
 			if (hThreadSnap == INVALID_HANDLE_VALUE)
 			{
-				Log::Error("Failed to create thread snap");
+				Log::Error("[UnrealVR] Failed to create thread snap");
 				return false;
 			}
 			te32.dwSize = sizeof(THREADENTRY32);
 			if (!Thread32First(hThreadSnap, &te32))
 			{
-				Log::Error("Failed to find first game process thread");
+				Log::Error("[UnrealVR] Failed to find first game process thread");
 				if (!CloseHandle(hThreadSnap))
 				{
-					Log::Error("Failed to close thread snap handle");
+					Log::Error("[UnrealVR] Failed to close thread snap handle");
 					return false;
 				}
 				return false;
@@ -53,17 +53,17 @@ namespace UnrealVR
 					HANDLE hThread = OpenThread(THREAD_SUSPEND_RESUME, FALSE, te32.th32ThreadID);
 					if (ResumeThread(hThread) == -1)
 					{
-						Log::Error("Failed to resume a thread");
+						Log::Error("[UnrealVR] Failed to resume a thread");
 					}
 					if (!CloseHandle(hThread))
 					{
-						Log::Error("Failed to close a thread handle");
+						Log::Error("[UnrealVR] Failed to close a thread handle");
 					}
 				}
 			} while (Thread32Next(hThreadSnap, &te32));
 			if (!CloseHandle(hThreadSnap))
 			{
-				Log::Error("Failed to close thread snap handle");
+				Log::Error("[UnrealVR] Failed to close thread snap handle");
 				return false;
 			}
 			return true;

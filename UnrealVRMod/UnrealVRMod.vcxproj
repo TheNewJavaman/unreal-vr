@@ -29,14 +29,8 @@
     <ClInclude Include="UnrealVRMod.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\minhook\build\VC16\libMinHook.vcxproj">
-      <Project>{f142a341-5ee0-442d-a15f-98ae9b48dbae}</Project>
-    </ProjectReference>
     <ProjectReference Include="..\UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader.vcxproj">
       <Project>{de3bc2ad-2683-4d76-ad72-95d98164e9c7}</Project>
-    </ProjectReference>
-    <ProjectReference Include="..\UnrealVRLoader\UnrealVRLoader.vcxproj">
-      <Project>{d6615132-07ae-494b-91b0-84c8bd5eff23}</Project>
     </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">

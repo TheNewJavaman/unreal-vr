@@ -51,7 +51,7 @@ namespace UnrealVR
 			VirtualProtect(CreateSwapChainTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainOld);
 			VirtualProtect(CreateSwapChainForHwndTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainForHwndOld);
 
-			Log::Info("Added D3D11 hooks");
+			Log::Info("[UnrealVR] Added D3D11 hooks");
 
 			while (true)
 			{
@@ -72,7 +72,7 @@ namespace UnrealVR
 		)
 		{
 			CreateSwapChainOriginal(pFactory, pDevice, pDesc, ppSwapChain);
-			Log::Info("Intercepted CreateSwapChain");
+			Log::Info("[UnrealVR] Intercepted CreateSwapChain");
 			return S_OK;
 		}
 
@@ -87,7 +87,7 @@ namespace UnrealVR
 		)
 		{
 			CreateSwapChainForHwndOriginal(pFactory, pDevice, hWnd, pDesc, pFullscreenDesc, pRestrictToOutput, ppSwapChain);
-			Log::Info("Intercepted CreateSwapChainForHwnd");
+			Log::Info("[UnrealVR] Intercepted CreateSwapChainForHwnd");
 			return S_OK;
 		}
 	}

@@ -8,10 +8,10 @@ namespace UnrealVR
 		{
 			if (MH_Initialize() != MH_OK)
 			{
-				Log::Error("Failed to initialize MinHook");
+				Log::Error("[UnrealVR] Failed to initialize MinHook");
 				return false;
 			}
-			Log::Info("Initialized MinHook");
+			Log::Info("[UnrealVR] Initialized MinHook");
 			return true;
 		}
 
@@ -19,15 +19,15 @@ namespace UnrealVR
 		{
 			if (MH_DisableHook(MH_ALL_HOOKS) != MH_OK)
 			{
-				Log::Error("Failed to disable all hooks");
+				Log::Error("[UnrealVR] Failed to disable all hooks");
 				return;
 			}
 			if (MH_Uninitialize() != MH_OK)
 			{
-				Log::Error("Failed to uninitialize MinHook");
+				Log::Error("[UnrealVR] Failed to uninitialize MinHook");
 				return;
 			}
-			Log::Info("Stopped MinHook");
+			Log::Info("[UnrealVR] Stopped MinHook");
 		}
 	}
 }

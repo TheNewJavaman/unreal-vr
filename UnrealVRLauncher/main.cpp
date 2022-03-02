@@ -9,9 +9,19 @@ int main(int argc, char* argv[])
 		std::cout << "Failed to start game\n";
 		return 1;
 	}
-	if (!UnrealVR::Launcher::InjectDLL(std::string(argv[0])))
+	if (!UnrealVR::Launcher::InjectDLL(std::string(argv[0]), "UnrealEngineModLoader.dll"))
 	{
-		std::cout << "Failed to inject DLL\n";
+		std::cout << "Failed to inject UnrealEngineModLoader DLL\n";
+		return 1;
+	}
+	if (!UnrealVR::Launcher::InjectDLL(std::string(argv[0]), "UnrealVRLoader.dll"))
+	{
+		std::cout << "Failed to inject UnrealVR DLL\n";
+		return 1;
+	}
+	if (!UnrealVR::Launcher::CloseHandles())
+	{
+		std::cout << "Failed to close handles\n";
 		return 1;
 	}
 	return 0;
