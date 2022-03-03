@@ -4,14 +4,19 @@
 
 #include <windows.h>
 #include <string>
-#include <iostream>
 
 namespace UnrealVR
 {
-	namespace Launcher
+	class Launcher
 	{
-		bool StartGame(std::wstring gamePath);
-		bool InjectDLL(std::string launcherPath, std::string dllName);
-		bool CloseHandles();
+	public:
+		static bool StartGame(std::wstring gamePath);
+		
+		static bool InjectDLL(std::string launcherPath, std::string dllName);
+		
+		static bool CloseHandles();
+		
+	private:
+		inline static PROCESS_INFORMATION procInfo = {};
 	};
 }

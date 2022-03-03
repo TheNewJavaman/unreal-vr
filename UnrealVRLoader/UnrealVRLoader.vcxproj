@@ -93,6 +93,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -165,6 +166,7 @@
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="HookManager.cpp" />
+    <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="UnrealVRLoader.cpp" />
     <ClCompile Include="D3D11Manager.cpp" />
     <ClCompile Include="VRManager.cpp" />
@@ -178,8 +180,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Defs.h" />
     <ClInclude Include="HookManager.h" />
+    <ClInclude Include="Matrix.h" />
     <ClInclude Include="UnrealVRLoader.h" />
     <ClInclude Include="D3D11Manager.h" />
     <ClInclude Include="VRManager.h" />

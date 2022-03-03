@@ -1,9 +1,11 @@
+#include <iostream>
 #include <string>
+
 #include "UnrealVRLauncher.h"
 
 int main(int argc, char* argv[])
 {
-	std::wstring gamePath = L"C:\\Program Files (x86)\\GOG Galaxy\\Games\\Ghostrunner\\Ghostrunner\\Binaries\\Win64\\Ghostrunner-Win64-Shipping.exe";
+	const std::wstring gamePath = L"C:\\Program Files (x86)\\GOG Galaxy\\Games\\Ghostrunner\\Ghostrunner\\Binaries\\Win64\\Ghostrunner-Win64-Shipping.exe";
 	if (!UnrealVR::Launcher::StartGame(gamePath))
 	{
 		std::cout << "Failed to start game\n";
