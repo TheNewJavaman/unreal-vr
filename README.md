@@ -6,6 +6,15 @@ Sneak peek below 👀
 
 ![](preview.png)
 
+## Contribute
+
+If you have any ideas for features, or want to implement a feature yourself, please email me or send a DM on Discord to
+TheNewJavaman#3966.
+
+I currently use Rider for Unreal Engine to develop this project (with Visual Studio 2022 build tools). You can get a
+free license of Rider for Unreal Engine
+at [jetbrains.com/rider/nextversion/](https://www.jetbrains.com/rider/nextversion/)
+
 ## Rewrite Todolist
 
 - [x] Switch to OpenXR
