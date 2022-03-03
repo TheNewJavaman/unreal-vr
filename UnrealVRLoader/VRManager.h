@@ -14,6 +14,7 @@ namespace UnrealVR
 	public:
 		static bool Init();
 
+		// TODO: Finish initializing OpenXR once we can send the swapchain back to Unreal Engine
 		static bool ContinueInitAndCreateSwapChain();
 
 		static void Stop();

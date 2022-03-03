@@ -13,7 +13,11 @@ namespace UnrealVR
 		/** Create game process */
 		static bool StartGame(std::wstring gamePath);
 
-		/** Inject a DLL located in the launcher's folder */
+		/**
+		 * Inject a DLL located in the launcher's folder
+		 *
+		 * TODO: Sometimes UnrealVR doesn't get injected?? Always requires a rebuild of the DLL
+		 */
 		static bool InjectDLL(std::string launcherPath, std::string dllName);
 
 		/** Close the game process handles */

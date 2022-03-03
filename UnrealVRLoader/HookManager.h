@@ -10,8 +10,10 @@ namespace UnrealVR
     class HookManager
     {
     public:
+        /** Links to libMinHook */
         static bool Init();
 
+        /** My take on Russell.J's MinHook helper. Templates >> casting in the main code */ 
         template <typename T>
         static bool Add(T* pTarget, T* pDetour, T** ppOriginal, const std::string displayName)
         {
@@ -31,6 +33,7 @@ namespace UnrealVR
             return true;
         }
 
+        /** Disable/remove all hooks */
         static void Stop();
     };
 }
