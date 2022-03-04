@@ -2,6 +2,7 @@
 
 #include <d3d11.h>
 #include <dxgi1_6.h>
+#include <set>
 
 namespace UnrealVR
 {
@@ -14,6 +15,21 @@ namespace UnrealVR
     private:
         /** Hooking runs in a separate thread due to DXGI quirks */
         static DWORD __stdcall AddHooksThread(LPVOID);
+
+        /**
+         * A reference to the projection view matrix resource in GPU memory
+         *
+         * Set this handle when a buffer with width 64 bytes is created; then, on each subresource update, compare the
+         * destination resource handle to this one to see if we need to modify the memory that will be sent to the GPU
+         *
+         * Why 64 bytes? The projection view matrix is a 4x4 of floats:
+         *     Float:     4 bytes
+         *     Rows:      4
+         *     Columns: x 4
+         *     ------------------
+         *               64 bytes
+         */
+        static inline std::set<ID3D11Resource*> matrixResources;
 
         /**
          * CreateSwapChain functions
@@ -56,24 +72,19 @@ namespace UnrealVR
         inline static CreateSwapChainForHwndFunc* CreateSwapChainForHwndOriginal = nullptr;
 
         /**
-         * CreateBuffer functions
+         * VSSetConstantBuffers functions
          *
-         * If the buffer has a byte width of 64, flag the handle internally as the projection view matrix. Why 64 bytes?
-         *     Float:     4 bytes
-         *     Rows:      4
-         *     Columns: x 4
-         *     ------------------
-         *               64 bytes
+         * If the buffer has a byte width of 64, flag the handle internally as a projection view matrix.
          */
-        typedef HRESULT (__stdcall CreateBufferFunc)(
-            ID3D11Device* pDevice,
-            const D3D11_BUFFER_DESC* pDesc,
-            const D3D11_SUBRESOURCE_DATA* pInitialData,
-            ID3D11Buffer** ppBuffer
+        typedef void (__stdcall VSSetConstantBuffersFunc)(
+            ID3D11DeviceContext* pDeviceContext,
+            UINT StartSlot,
+            UINT NumBuffers,
+            ID3D11Buffer** ppConstantBuffers
         );
-        static CreateBufferFunc CreateBufferDetour;
-        inline static CreateBufferFunc* CreateBufferTarget = nullptr;
-        inline static CreateBufferFunc* CreateBufferOriginal = nullptr;
+        static VSSetConstantBuffersFunc VSSetConstantBuffersDetour;
+        inline static VSSetConstantBuffersFunc* VSSetConstantBuffersTarget = nullptr;
+        inline static VSSetConstantBuffersFunc* VSSetConstantBuffersOriginal = nullptr;
 
         /**
          * UpdateSubresource functions
@@ -86,7 +97,7 @@ namespace UnrealVR
          * It is not feasible to hook ID3D11DeviceContext::VSSetConstantBuffers instead of this function. We would have
          * to read the buffer's contents via ID3D11DeviceContext::Map each frame, which has two issues: a) it would
          * probably introduce latency; b) the buffer was not created with CPU read access. Therefore, it is easier and
-         * faster to hook this function instead.
+         * faster to hook this function instead
          *
          * As of 4.27, Unreal Engine does not use v1 of this function, just this one (the original) instead 
          */
@@ -94,8 +105,8 @@ namespace UnrealVR
             ID3D11DeviceContext* pDeviceContext,
             ID3D11Resource* pDstResource,
             UINT DstSubresource,
-            const D3D11_BOX* pDstBox,
-            const void* pSrcData,
+            D3D11_BOX* pDstBox,
+            void* pSrcData,
             UINT SrcRowPitch,
             UINT SrcDepthPitch
         );
@@ -107,7 +118,7 @@ namespace UnrealVR
          * Present functions
          *
          * When Unreal Engine indicates to DXGI that the frame is ready to be presented, we must call the analogous
-         * function on OpenXR's side, and switch eyes.
+         * function on OpenXR's side, and switch eyes
          *
          * TODO: How will we display to the monitor? Just rely on the SteamVR preview? Will the window be fullscreen?
          */

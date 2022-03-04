@@ -1,8 +1,12 @@
 #include "D3D11Manager.h"
 
+#include <algorithm>
 #include <Utilities/Logger.h>
 
 #include "HookManager.h"
+#include "Matrix.h"
+
+#define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
 
 namespace UnrealVR
 {
@@ -17,7 +21,7 @@ namespace UnrealVR
         CreateDXGIFactory(__uuidof(IDXGIFactory), reinterpret_cast<void**>(&factory));
         IDXGIFactory2* factory2;
         factory->QueryInterface<IDXGIFactory2>(&factory2);
-        const DWORD_PTR* factory2VTable = reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(factory2)[0]);
+        const DWORD_PTR* factory2VTable = VTABLE(factory2);
 
         const WNDCLASSEXA wc = {
             sizeof(WNDCLASSEX),
@@ -73,12 +77,13 @@ namespace UnrealVR
             &obtainedLevel,
             &context
         );
-        const DWORD_PTR* contextVTable = reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(context)[0]);
-        const DWORD_PTR* swapChainVTable = reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(swapChain)[0]);
+        const DWORD_PTR* swapChainVTable = VTABLE(swapChain);
+        const DWORD_PTR* contextVTable = VTABLE(context);
 
         CreateSwapChainTarget = reinterpret_cast<CreateSwapChainFunc*>(factory2VTable[10]);
         CreateSwapChainForHwndTarget = reinterpret_cast<CreateSwapChainForHwndFunc*>(factory2VTable[15]);
         VSSetConstantBuffersTarget = reinterpret_cast<VSSetConstantBuffersFunc*>(contextVTable[7]);
+        UpdateSubresourceTarget = reinterpret_cast<UpdateSubresourceFunc*>(contextVTable[48]);
         PresentTarget = reinterpret_cast<PresentFunc*>(swapChainVTable[8]);
         HookManager::Add<CreateSwapChainFunc>(
             CreateSwapChainTarget,
@@ -98,31 +103,35 @@ namespace UnrealVR
             &VSSetConstantBuffersOriginal,
             "VSSetConstantBuffers"
         );
-        /*
+        HookManager::Add<UpdateSubresourceFunc>(
+            UpdateSubresourceTarget,
+            &UpdateSubresourceDetour,
+            &UpdateSubresourceOriginal,
+            "UpdateSubresource"
+        );
         HookManager::Add<PresentFunc>(
             PresentTarget,
             &PresentDetour,
             &PresentOriginal,
             "Present"
         );
-         */
         DWORD createSwapChainOld;
         DWORD createSwapChainForHwndOld;
         DWORD vsSetConstantBuffersOld;
+        DWORD updateSubresourceOld;
         DWORD presentOld;
         VirtualProtect(CreateSwapChainTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainOld);
         VirtualProtect(CreateSwapChainForHwndTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainForHwndOld);
         VirtualProtect(VSSetConstantBuffersTarget, 2, PAGE_EXECUTE_READWRITE, &vsSetConstantBuffersOld);
-        //VirtualProtect(PresentTarget, 2, PAGE_EXECUTE_READWRITE, &presentOld);
+        VirtualProtect(UpdateSubresourceTarget, 2, PAGE_EXECUTE_READWRITE, &updateSubresourceOld);
+        VirtualProtect(PresentTarget, 2, PAGE_EXECUTE_READWRITE, &presentOld);
 
-        Log::Info("[UnrealVR] Added D3D11 hooks");
+        Log::Info("[UnrealVR] Added D3D11/DXGI hooks");
 
         while (true)
         {
             Sleep(10);
         }
-
-        // ReSharper disable once CppUnreachableCode
 
         context->Release();
         device->Release();
@@ -149,7 +158,7 @@ namespace UnrealVR
     HRESULT __stdcall D3D11Manager::CreateSwapChainForHwndDetour(
         IDXGIFactory2* pFactory,
         IUnknown* pDevice,
-        const HWND hwnd,
+        HWND hwnd,
         DXGI_SWAP_CHAIN_DESC1* pDesc,
         DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc,
         IDXGIOutput* pRestrictToOutput,
@@ -161,37 +170,57 @@ namespace UnrealVR
         return S_OK;
     }
 
-    void __stdcall D3D11Manager::VSSetConstantBuffersDetour(
-        ID3D11DeviceContext* pContext,
+    void D3D11Manager::VSSetConstantBuffersDetour(
+        ID3D11DeviceContext* pDeviceContext,
         UINT StartSlot,
         UINT NumBuffers,
-        ID3D11Buffer* const* ppConstantBuffers
+        ID3D11Buffer** ppConstantBuffers
     )
     {
-        Log::Info("[UnrealVR] Intercepted VSSetConstantBuffers");
         for (int i = 0; i < NumBuffers; i++)
         {
-            if (ppConstantBuffers[i] != nullptr)
+            ID3D11Buffer* buffer = ppConstantBuffers[i];
+            if (buffer != nullptr)
             {
                 D3D11_BUFFER_DESC desc;
-                ppConstantBuffers[i]->GetDesc(&desc);
-                Log::Info("%d, %d", desc.CPUAccessFlags, desc.ByteWidth);
-                ID3D11Resource* resource;
-                ppConstantBuffers[i]->QueryInterface(IID_PPV_ARGS(&resource));
-                D3D11_MAPPED_SUBRESOURCE subresource;
-                HRESULT hr = pContext->Map(resource, 0, D3D11_MAP_READ_WRITE, 0, &subresource);
-                if (hr != S_OK)
+                buffer->GetDesc(&desc);
+                if (desc.ByteWidth == 64 && !matrixResources.contains(buffer))
                 {
-                    Log::Error("[UnrealVR] Couldn't map VS buffer; error (%X)", hr);
+                    Log::Info("[UnrealVR] Possibly found a view matrix at (0x%p)",buffer);
+                    matrixResources.insert(buffer);
                 }
-                else
-                {
-                    pContext->Unmap(resource, 0);
-                }
-                resource->Release();
             }
         }
-        VSSetConstantBuffersOriginal(pContext, StartSlot, NumBuffers, ppConstantBuffers);
+        VSSetConstantBuffersOriginal(pDeviceContext, StartSlot, NumBuffers, ppConstantBuffers);
+    }
+
+    void D3D11Manager::UpdateSubresourceDetour(
+        ID3D11DeviceContext* pDeviceContext,
+        ID3D11Resource* pDstResource,
+        UINT DstSubresource,
+        D3D11_BOX* pDstBox,
+        void* pSrcData,
+        UINT SrcRowPitch,
+        UINT SrcDepthPitch
+    )
+    {
+        if (std::ranges::any_of(matrixResources, [pDstResource](ID3D11Resource* resource)
+        {
+            return resource == pDstResource;
+        }))
+        {
+            const Matrix translation = Matrix::FromTranslation(0, 0, 10000);
+            const Matrix* original = static_cast<Matrix*>(pSrcData);
+            Matrix transformed = translation * *original;
+            Log::Info("[UnrealVR] Intercepted a matrix resource update");
+            UpdateSubresourceOriginal(pDeviceContext, pDstResource, DstSubresource, pDstBox,
+                                      static_cast<void*>(&transformed), SrcRowPitch, SrcDepthPitch);
+        }
+        else
+        {
+            UpdateSubresourceOriginal(pDeviceContext, pDstResource, DstSubresource, pDstBox,
+                                      pSrcData, SrcRowPitch, SrcDepthPitch);
+        }
     }
 
     HRESULT __stdcall D3D11Manager::PresentDetour(
@@ -200,7 +229,6 @@ namespace UnrealVR
         UINT Flags
     )
     {
-        Log::Info("[UnrealVR] Intercepted Present");
         PresentOriginal(pSwapChain, SyncInterval, Flags);
         return S_OK;
     }
