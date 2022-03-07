@@ -150,7 +150,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
@@ -164,9 +164,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Basic.cpp" />
+    <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\CoreUObject_functions.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="HookManager.cpp" />
-    <ClCompile Include="Matrix.cpp" />
+    <ClCompile Include="UE4Manager.cpp" />
     <ClCompile Include="UnrealVRLoader.cpp" />
     <ClCompile Include="D3D11Manager.cpp" />
     <ClCompile Include="VRManager.cpp" />
@@ -181,7 +183,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="HookManager.h" />
-    <ClInclude Include="Matrix.h" />
+    <ClInclude Include="UE4Manager.h" />
     <ClInclude Include="UnrealVRLoader.h" />
     <ClInclude Include="D3D11Manager.h" />
     <ClInclude Include="VRManager.h" />

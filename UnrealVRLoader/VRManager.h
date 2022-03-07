@@ -12,18 +12,35 @@ namespace UnrealVR
 	class VRManager
 	{
 	public:
+		/** Begin initializing OpenXR: starts the runtime, loads D3D11, etc. */
 		static bool Init();
 
-		// TODO: Finish initializing OpenXR once we can send the swapchain back to Unreal Engine
+		/**
+		 * Called once the game needs a swapchain
+		 *
+		 * TODO: Finish initializing OpenXR once we can send the swapchain back to Unreal Engine
+		 */
 		static bool ContinueInitAndCreateSwapChain();
 
+		/** Releases OpenXR resources */
 		static void Stop();
 
 	private:
+		/**
+		 * Loads the features that will be used, alongside an OpenXR handle
+		 *
+		 * TODO: Are the debug tools needed?
+		 */
 		static bool GetInstanceWithExtensions();
-		
+
+		/**
+		 * Loads the debug extension for logging
+		 *
+		 * TODO: Handle different log levels
+		 */
 		static void LoadDebugExtension();
-		
+
+		/** Loads the D3D11 extension for eventual swapchain management */
 		static void LoadD3D11Extension();
 
 		inline static const char* applicationName = "UnrealVR";

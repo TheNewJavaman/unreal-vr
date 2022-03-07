@@ -2,13 +2,18 @@
 
 #define WIN32_LEAN_AND_MEAN
 
+// TODO: Use the correct header
+typedef unsigned char byte;
+
 #include <windows.h>
 #include <processthreadsapi.h>
 #include <tlHelp32.h>
 #include <Utilities/Logger.h>
+#include <Ue4.hpp>
 
 #include "D3D11Manager.h"
 #include "HookManager.h"
+#include "UE4Manager.h"
 #include "VRManager.h"
 
 namespace UnrealVR
@@ -26,6 +31,8 @@ namespace UnrealVR
             return;
         }
         D3D11Manager::AddHooks();
+        UE4::InitSDK();
+        UE4Manager::AddEvents();
         if (!ResumeGame())
         {
             Log::Error("[UnrealVR] Failed to resume game");
