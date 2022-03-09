@@ -18,10 +18,10 @@ namespace UnrealVR
          *
          * TODO: Support scaling the offset in case the game's units do not match real-world centimeters
          */
-        static void SetRelativeLocation(Vector3 relativeLocation);
+        static bool AddRelativeLocation(Vector3 relativeLocation);
 
         /** Sets the absolute rotation of the view target (camera) */
-        static void SetAbsoluteRotation(Vector3 absoluteRotation);
+        static bool SetAbsoluteRotation(Vector3 absoluteRotation);
 
     private:
         /**

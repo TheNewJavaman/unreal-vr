@@ -128,6 +128,7 @@ namespace UnrealVR
         IDXGISwapChain** ppSwapChain
     )
     {
+        
         Log::Info("[UnrealVR] Intercepted CreateSwapChain");
         return CreateSwapChainOriginal(pFactory, pDevice, pDesc, ppSwapChain);
     }

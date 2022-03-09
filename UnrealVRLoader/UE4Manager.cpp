@@ -21,6 +21,7 @@ namespace UnrealVR
             if (playerController == nullptr)
             {
                 Log::Error("[UnrealVR] PlayerController(0) doesn't exist");
+                lastCallback = now;
                 return;
             }
             const auto viewTargetFunc = UE4::UObject::FindObject<UE4::UFunction>(
@@ -29,6 +30,7 @@ namespace UnrealVR
             if (viewTargetFunc == nullptr)
             {
                 Log::Warn("[UnrealVR] Function Engine.Controller.GetViewTarget doesn't exist");
+                lastCallback = now;
                 return;
             }
             struct
@@ -41,39 +43,55 @@ namespace UnrealVR
             {
                 Log::Warn("[UnrealVR] PlayerController's ViewTarget doesn't exist");
             }
-            
-            const auto locationFunc = UE4::UObject::FindObject<UE4::UFunction>(
-                "Function Engine.Actor.K2_SetActorRelativeLocation"
-            );
-            if (locationFunc == nullptr)
-            {
-                Log::Warn("[UnrealVR] Function Engine.Actor.K2_SetActorRelativeLocation doesn't exist");
-                return;
-            }
-            struct
-            {
-                UE4::FVector NewRelativeLocation = UE4::FVector(0.0f, 0.0f, 100.0f);
-                bool bSweep = false;
-                void* OutSweepHitResult;
-                int Teleport = 1;
-            } locationParams;
-            viewTarget->ProcessEvent(locationFunc, &locationParams);
         }
         lastCallback = now;
     }
 
-    void UE4Manager::SetRelativeLocation(Vector3 relativeLocation)
+    bool UE4Manager::AddRelativeLocation(Vector3 relativeLocation)
     {
-        if (viewTarget != nullptr)
+        if (viewTarget == nullptr)
         {
-            
+            return false;
         }
+        const auto func = UE4::UObject::FindObject<UE4::UFunction>(
+            "Function Engine.Actor.K2_AddActorLocalOffset"
+        );
+        if (func == nullptr)
+        {
+            Log::Warn("[UnrealVR] Function Engine.Actor.K2_AddActorLocalOffset doesn't exist");
+            return false;
+        }
+        struct
+        {
+            UE4::FVector DeltaLocation = UE4::FVector(relativeLocation.X, relativeLocation.Y, relativeLocation.Z);
+            bool bSweep = false;
+            void* SweepHitResult;
+            bool bTeleport = true;
+        } params;
+        viewTarget->ProcessEvent(func, &params);
+        return true;
     }
 
-    void UE4Manager::SetAbsoluteRotation(Vector3 absoluteRotation)
+    bool UE4Manager::SetAbsoluteRotation(Vector3 absoluteRotation)
     {
-        
+        if (viewTarget == nullptr)
+        {
+            return false;
+        }
+        const auto func = UE4::UObject::FindObject<UE4::UFunction>(
+            "Function Engine.Actor.K2_SetActorRotation"
+        );
+        if (func == nullptr)
+        {
+            Log::Warn("[UnrealVR] Function Engine.Actor.K2_SetActorRotation doesn't exist");
+            return false;
+        }
+        struct
+        {
+            UE4::FRotator NewRotation = UE4::FRotator(absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z);
+            bool bTeleportPhysics = true;
+        } params;
+        viewTarget->ProcessEvent(func, &params);
+        return true;
     }
-
-
 }
