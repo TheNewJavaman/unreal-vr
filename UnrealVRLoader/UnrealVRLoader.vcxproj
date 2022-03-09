@@ -171,6 +171,7 @@
     <ClCompile Include="UE4Manager.cpp" />
     <ClCompile Include="UnrealVRLoader.cpp" />
     <ClCompile Include="D3D11Manager.cpp" />
+    <ClCompile Include="Vector3.cpp" />
     <ClCompile Include="VRManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -186,6 +187,7 @@
     <ClInclude Include="UE4Manager.h" />
     <ClInclude Include="UnrealVRLoader.h" />
     <ClInclude Include="D3D11Manager.h" />
+    <ClInclude Include="Vector3.h" />
     <ClInclude Include="VRManager.h" />
   </ItemGroup>
   <ItemGroup>
