@@ -1,14 +1,17 @@
 #include "D3D11Manager.h"
 
-#include <algorithm>
 #include <Utilities/Logger.h>
 
+#include "Ue4.hpp"
 #include "HookManager.h"
+#include "VRManager.h"
 
 #define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
 
 namespace UnrealVR
 {
+    class VRManager;
+
     void D3D11Manager::AddHooks()
     {
         CreateThread(nullptr, 0, AddHooksThread, nullptr, 0, nullptr);
@@ -16,12 +19,6 @@ namespace UnrealVR
 
     DWORD __stdcall D3D11Manager::AddHooksThread(LPVOID)
     {
-        IDXGIFactory* factory;
-        CreateDXGIFactory(__uuidof(IDXGIFactory), reinterpret_cast<void**>(&factory));
-        IDXGIFactory2* factory2;
-        factory->QueryInterface<IDXGIFactory2>(&factory2);
-        const DWORD_PTR* factory2VTable = VTABLE(factory2);
-
         const WNDCLASSEXA wc = {
             sizeof(WNDCLASSEX),
             CS_CLASSDC,
@@ -78,32 +75,14 @@ namespace UnrealVR
         );
         const auto swapChainVTable = VTABLE(swapChain);
 
-        CreateSwapChainTarget = reinterpret_cast<CreateSwapChainFunc*>(factory2VTable[10]);
-        CreateSwapChainForHwndTarget = reinterpret_cast<CreateSwapChainForHwndFunc*>(factory2VTable[15]);
         PresentTarget = reinterpret_cast<PresentFunc*>(swapChainVTable[8]);
-        HookManager::Add<CreateSwapChainFunc>(
-            CreateSwapChainTarget,
-            &CreateSwapChainDetour,
-            &CreateSwapChainOriginal,
-            "CreateSwapChain"
-        );
-        HookManager::Add<CreateSwapChainForHwndFunc>(
-            CreateSwapChainForHwndTarget,
-            &CreateSwapChainForHwndDetour,
-            &CreateSwapChainForHwndOriginal,
-            "CreateSwapChainForHwnd"
-        );
         HookManager::Add<PresentFunc>(
             PresentTarget,
             &PresentDetour,
             &PresentOriginal,
             "Present"
         );
-        DWORD createSwapChainOld;
-        DWORD createSwapChainForHwndOld;
         DWORD presentOld;
-        VirtualProtect(CreateSwapChainTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainOld);
-        VirtualProtect(CreateSwapChainForHwndTarget, 2, PAGE_EXECUTE_READWRITE, &createSwapChainForHwndOld);
         VirtualProtect(PresentTarget, 2, PAGE_EXECUTE_READWRITE, &presentOld);
 
         while (true)
@@ -115,37 +94,7 @@ namespace UnrealVR
         device->Release();
         swapChain->Release();
 
-        factory2->Release();
-        factory->Release();
-
         return NULL;
-    }
-
-    HRESULT __stdcall D3D11Manager::CreateSwapChainDetour(
-        IDXGIFactory* pFactory,
-        IUnknown* pDevice,
-        DXGI_SWAP_CHAIN_DESC* pDesc,
-        IDXGISwapChain** ppSwapChain
-    )
-    {
-        
-        Log::Info("[UnrealVR] Intercepted CreateSwapChain");
-        return CreateSwapChainOriginal(pFactory, pDevice, pDesc, ppSwapChain);
-    }
-
-    HRESULT __stdcall D3D11Manager::CreateSwapChainForHwndDetour(
-        IDXGIFactory2* pFactory,
-        IUnknown* pDevice,
-        HWND hwnd,
-        DXGI_SWAP_CHAIN_DESC1* pDesc,
-        DXGI_SWAP_CHAIN_FULLSCREEN_DESC* pFullscreenDesc,
-        IDXGIOutput* pRestrictToOutput,
-        IDXGISwapChain1** ppSwapChain
-    )
-    {
-        Log::Info("[UnrealVR] Intercepted CreateSwapChainForHwnd");
-        return CreateSwapChainForHwndOriginal(pFactory, pDevice, hwnd, pDesc,
-                                              pFullscreenDesc, pRestrictToOutput, ppSwapChain);
     }
 
     HRESULT __stdcall D3D11Manager::PresentDetour(
@@ -154,6 +103,30 @@ namespace UnrealVR
         UINT Flags
     )
     {
+        if (!resized)
+        {
+            uint32_t width, height;
+            VRManager::GetRecommendedResolution(&width, &height);
+            const std::wstring command = std::format(L"r.SetRes {}x{}f", width, height);
+            UE4::UGameplayStatics::ExecuteConsoleCommand(command.c_str(), nullptr);
+            return S_OK;
+        }
+        if (!VRManager::ContinueInitDone)
+        {
+            ID3D11Device* device;
+            pSwapChain->GetDevice(IID_PPV_ARGS(&device));
+            VRManager::ContinueInit(device);
+        }
+        if (!VRManager::CreateSwapChainsDone)
+        {
+            DXGI_SWAP_CHAIN_DESC desc;
+            pSwapChain->GetDesc(&desc);
+            VRManager::CreateSwapChains(desc.BufferDesc.Format, desc.SampleDesc.Count);
+            return S_OK;
+        }
+        ID3D11Texture2D* texture;
+        pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
+        VRManager::SubmitFrame(texture);
         return PresentOriginal(pSwapChain, SyncInterval, Flags);
     }
 }

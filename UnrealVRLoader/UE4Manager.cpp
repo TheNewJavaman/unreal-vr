@@ -63,11 +63,14 @@ namespace UnrealVR
         }
         struct
         {
-            UE4::FVector DeltaLocation = UE4::FVector(relativeLocation.X, relativeLocation.Y, relativeLocation.Z);
-            bool bSweep = false;
+            UE4::FVector DeltaLocation;
+            bool bSweep;
             void* SweepHitResult;
-            bool bTeleport = true;
+            bool bTeleport;
         } params;
+        params.DeltaLocation = {relativeLocation.X, relativeLocation.Y, relativeLocation.Z};
+        params.bSweep = false;
+        params.bTeleport = true;
         viewTarget->ProcessEvent(func, &params);
         return true;
     }
@@ -88,9 +91,11 @@ namespace UnrealVR
         }
         struct
         {
-            UE4::FRotator NewRotation = UE4::FRotator(absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z);
-            bool bTeleportPhysics = true;
+            UE4::FRotator NewRotation;
+            bool bTeleportPhysics;
         } params;
+        params.NewRotation = {absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z};
+        params.bTeleportPhysics = true;
         viewTarget->ProcessEvent(func, &params);
         return true;
     }
