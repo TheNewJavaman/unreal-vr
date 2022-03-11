@@ -63,6 +63,8 @@ namespace UnrealVR
             Log::Error("[UnrealVR] Failed to create OpenXR instance");
             return false;
         }
+        LoadDebugExtension();
+        LoadD3D11Extension();
         return true;
     }
 

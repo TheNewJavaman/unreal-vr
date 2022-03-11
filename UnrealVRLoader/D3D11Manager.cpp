@@ -2,8 +2,8 @@
 
 #include <Utilities/Logger.h>
 
-#include "Ue4.hpp"
 #include "HookManager.h"
+#include "UE4Manager.h"
 #include "VRManager.h"
 
 #define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
@@ -107,8 +107,8 @@ namespace UnrealVR
         {
             uint32_t width, height;
             VRManager::GetRecommendedResolution(&width, &height);
-            const std::wstring command = std::format(L"r.SetRes {}x{}f", width, height);
-            UE4::UGameplayStatics::ExecuteConsoleCommand(command.c_str(), nullptr);
+            UE4Manager::SetResolution(static_cast<int>(width), static_cast<int>(height));
+            resized = true;
             return S_OK;
         }
         if (!VRManager::ContinueInitDone)

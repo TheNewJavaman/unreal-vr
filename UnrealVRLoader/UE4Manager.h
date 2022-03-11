@@ -23,6 +23,9 @@ namespace UnrealVR
         /** Sets the absolute rotation of the view target (camera) */
         static bool SetAbsoluteRotation(Vector3 absoluteRotation);
 
+        /** Sets the desktop resolution */
+        static bool SetResolution(int width, int height);
+        
     private:
         /**
          * Called for each actor in a scene when the scene starts

@@ -16,6 +16,7 @@ int main(int argc, char* argv[])
 		std::cout << "Failed to inject UnrealEngineModLoader DLL\n";
 		return 1;
 	}
+	Sleep(10000); // TODO: Remove
 	if (!UnrealVR::Launcher::InjectDLL(std::string(argv[0]), "UnrealVRLoader.dll"))
 	{
 		std::cout << "Failed to inject UnrealVR DLL\n";

@@ -183,6 +183,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Ue4.hpp" />
     <ClInclude Include="HookManager.h" />
     <ClInclude Include="UE4Manager.h" />
     <ClInclude Include="UnrealVRLoader.h" />

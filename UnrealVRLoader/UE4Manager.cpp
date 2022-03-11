@@ -99,4 +99,54 @@ namespace UnrealVR
         viewTarget->ProcessEvent(func, &params);
         return true;
     }
+
+    bool UE4Manager::SetResolution(int width, int height)
+    {
+        const auto command = std::format(L"r.SetRes {}x{}f", width, height).c_str();
+        UE4::UGameplayStatics::ExecuteConsoleCommand(command, nullptr);
+        /*
+        const auto settings = UE4::UObject::FindObject<UE4::UClass>(
+            "Class Engine.GameUserSettings"
+        );
+        if (settings == nullptr)
+        {
+            Log::Warn("[UnrealVR] Class Engine.GameUserSettings doesn't exist");
+            return false;
+        }
+        const auto setFunc = UE4::UObject::FindObject<UE4::UFunction>(
+            "Function Engine.GameUserSettings.SetScreenResolution"
+        );
+        if (setFunc == nullptr)
+        {
+            Log::Warn("[UnrealVR] Function Engine.GameUserSettings.SetScreenResolution doesn't exist");
+            return false;
+        }
+        struct FIntPoint
+        {
+            int X;
+            int Y;
+        };
+        struct
+        {
+            FIntPoint Resolution;
+        } setParams;
+        setParams.Resolution = {width, height};
+        settings->ProcessEvent(setFunc, &setParams);
+        const auto applyFunc = UE4::UObject::FindObject<UE4::UFunction>(
+            "Function Engine.GameUserSettings.ApplyResolutionSettings"
+        );
+        if (applyFunc == nullptr)
+        {
+            Log::Warn("[UnrealVR] Function Engine.GameUserSettings.ApplyResolutionSettings doesn't exist");
+            return false;
+        }
+        struct
+        {
+            bool bCheckForCommandLineOverrides;
+        } applyParams;
+        applyParams.bCheckForCommandLineOverrides = false;
+        settings->ProcessEvent(applyFunc, &applyParams);
+        */
+        return true;
+    }
 }

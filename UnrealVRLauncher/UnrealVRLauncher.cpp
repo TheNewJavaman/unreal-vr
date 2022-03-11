@@ -24,12 +24,7 @@ namespace UnrealVR
             std::cout << "Failed to create game process\n";
             return false;
         }
-        if (SuspendThread(procInfo.hThread) == -1)
-        {
-            std::cout << "Failed to suspend main thread\n";
-            return false;
-        }
-        std::cout << "Created game process and suspended main thread\n";
+        std::cout << "Created game process\n";
         return true;
     }
 
