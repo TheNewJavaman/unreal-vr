@@ -6,15 +6,23 @@
 
 #include "UE4Manager.h"
 
+#define CHECK_XR(xr, message) if (xr != XR_SUCCESS) { \
+                                  Log::Error( \
+                                      std::format("[UnrealVR] {}; error code ({})", message, static_cast<int>(xr)) \
+                                  ); \
+                                  return false; \
+                              }
+
 namespace UnrealVR
 {
     bool VRManager::Init()
     {
         if (!GetInstanceWithExtensions())
         {
-            Log::Error("Could not get an OpenXR instance");
+            Log::Error("[UnrealVR] Could not get an OpenXR instance");
             return false;
         }
+        Log::Info("[UnrealVR] OpenXR initialized");
         return true;
     }
 
@@ -26,9 +34,11 @@ namespace UnrealVR
             XR_EXT_DEBUG_UTILS_EXTENSION_NAME
         };
         uint32_t extensionCount = 0;
-        xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr);
+        XrResult xr = xrEnumerateInstanceExtensionProperties(nullptr, 0, &extensionCount, nullptr);
+        CHECK_XR(xr, "Could not query OpenXR extension count");
         std::vector<XrExtensionProperties> allExtensions(extensionCount, {XR_TYPE_EXTENSION_PROPERTIES});
-        xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, allExtensions.data());
+        xr = xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, allExtensions.data());
+        CHECK_XR(xr, "Could not query OpenXR extensions");
         Log::Info("[UnrealVR] OpenXR extensions available:");
         for (size_t i = 0; i < allExtensions.size(); i++)
         {
@@ -57,23 +67,30 @@ namespace UnrealVR
         createInfo.enabledExtensionNames = enabledExtensions.data();
         createInfo.applicationInfo.apiVersion = XR_CURRENT_API_VERSION;
         strcpy_s(createInfo.applicationInfo.applicationName, applicationName);
-        xrCreateInstance(&createInfo, &xrInstance);
-        if (xrInstance == nullptr)
+        xr = xrCreateInstance(&createInfo, &xrInstance);
+        CHECK_XR(xr, "Could not create OpenXR instance");
+        if (!LoadDebugExtension())
         {
-            Log::Error("[UnrealVR] Failed to create OpenXR instance");
+            Log::Error("[UnrealVR] Could not load OpenXR debug extension");
             return false;
         }
-        LoadDebugExtension();
-        LoadD3D11Extension();
+        if (!LoadD3D11Extension())
+        {
+            Log::Error("[UnrealVR] Could not load OpenXR D3D11 extension");
+            return false;
+        }
+        Log::Info("[UnrealVR] Obtained OpenXR instance");
         return true;
     }
 
-    void VRManager::LoadDebugExtension()
+    bool VRManager::LoadDebugExtension()
     {
-        xrGetInstanceProcAddr(xrInstance, "xrCreateDebugUtilsMessengerEXT",
-                              reinterpret_cast<PFN_xrVoidFunction*>(&xrExtCreateDebugUtilsMessenger));
-        xrGetInstanceProcAddr(xrInstance, "xrDestroyDebugUtilsMessengerEXT",
-                              reinterpret_cast<PFN_xrVoidFunction*>(&xrExtDestroyDebugUtilsMessenger));
+        XrResult xr = xrGetInstanceProcAddr(xrInstance, "xrCreateDebugUtilsMessengerEXT",
+                                            reinterpret_cast<PFN_xrVoidFunction*>(&xrExtCreateDebugUtilsMessenger));
+        CHECK_XR(xr, "Could not get address for xrCreateDebugUtilsMessengerEXT");
+        xr = xrGetInstanceProcAddr(xrInstance, "xrDestroyDebugUtilsMessengerEXT",
+                                   reinterpret_cast<PFN_xrVoidFunction*>(&xrExtDestroyDebugUtilsMessenger));
+        CHECK_XR(xr, "Could not get address for xrDestroyDebugUtilsMessengerEXT");
         XrDebugUtilsMessengerCreateInfoEXT debugInfo = {XR_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
         debugInfo.messageTypes =
             XR_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
@@ -91,25 +108,29 @@ namespace UnrealVR
             Log::Info(std::format("[UnrealVR] OpenXR | {}: {}", msg->functionName, msg->message) + "");
             return static_cast<XrBool32>(XR_FALSE);
         };
-        if (xrExtCreateDebugUtilsMessenger)
-        {
-            xrExtCreateDebugUtilsMessenger(xrInstance, &debugInfo, &xrDebug);
-        }
+        xr = xrExtCreateDebugUtilsMessenger(xrInstance, &debugInfo, &xrDebug);
+        CHECK_XR(xr, "Could not create OpenXR debug utils messenger");
         Log::Info("[UnrealVR] Loaded OpenXR debug extension");
+        return true;
     }
 
-    void VRManager::LoadD3D11Extension()
+    bool VRManager::LoadD3D11Extension()
     {
-        xrGetInstanceProcAddr(xrInstance, "xrGetD3D11GraphicsRequirementsKHR",
-                              reinterpret_cast<PFN_xrVoidFunction*>(&xrExtGetD3D11GraphicsRequirements));
+        XrResult xr = xrGetInstanceProcAddr(xrInstance, "xrGetD3D11GraphicsRequirementsKHR",
+                                            reinterpret_cast<PFN_xrVoidFunction*>(&xrExtGetD3D11GraphicsRequirements));
+        CHECK_XR(xr, "Could not get address for xrGetD3D11GraphicsRequirementsKHR");
         XrSystemGetInfo systemInfo = {XR_TYPE_SYSTEM_GET_INFO};
         systemInfo.formFactor = xrFormFactor;
-        xrGetSystem(xrInstance, &systemInfo, &xrSystemId);
+        xr = xrGetSystem(xrInstance, &systemInfo, &xrSystemId);
+        CHECK_XR(xr, "Could not get OpenXR system");
         uint32_t blendCount = 0;
-        xrEnumerateEnvironmentBlendModes(xrInstance, xrSystemId, xrViewType, 1, &blendCount, &xrBlend);
+        xr = xrEnumerateEnvironmentBlendModes(xrInstance, xrSystemId, xrViewType, 1, &blendCount, &xrBlend);
+        CHECK_XR(xr, "Could not get OpenXR blend modes");
         XrGraphicsRequirementsD3D11KHR graphicsRequirements = {XR_TYPE_GRAPHICS_REQUIREMENTS_D3D11_KHR};
-        xrExtGetD3D11GraphicsRequirements(xrInstance, xrSystemId, &graphicsRequirements);
+        xr = xrExtGetD3D11GraphicsRequirements(xrInstance, xrSystemId, &graphicsRequirements);
+        CHECK_XR(xr, "Could not get D3D11 graphics requirements");
         Log::Info("[UnrealVR] Partially loaded OpenXR D3D11 extension");
+        return true;
     }
 
     bool VRManager::ContinueInit(ID3D11Device* device)
@@ -118,36 +139,36 @@ namespace UnrealVR
         XrSessionCreateInfo sessionInfo = {XR_TYPE_SESSION_CREATE_INFO};
         sessionInfo.next = &graphicsBinding;
         sessionInfo.systemId = xrSystemId;
-        xrCreateSession(xrInstance, &sessionInfo, &xrSession);
-        if (xrSession == nullptr)
-        {
-            Log::Error("[UnrealVR] Failed to create OpenXR session");
-            return false;
-        }
+        XrResult xr = xrCreateSession(xrInstance, &sessionInfo, &xrSession);
+        CHECK_XR(xr, "Could not create OpenXR session");
         XrReferenceSpaceCreateInfo spaceInfo = {XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
         spaceInfo.poseInReferenceSpace = xrPoseIdentity;
         spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
-        xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
+        xr = xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
+        CHECK_XR(xr, "Could not create OpenXR reference space");
         ContinueInitDone = true;
         Log::Info("[UnrealVR] Finished initializing OpenXR");
         return true;
     }
 
-    void VRManager::GetRecommendedResolution(uint32_t* width, uint32_t* height)
+    bool VRManager::GetRecommendedResolution(uint32_t* width, uint32_t* height)
     {
-        xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType, 0, &xrViewCount, nullptr);
+        XrResult xr = xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType, 0, &xrViewCount, nullptr);
+        CHECK_XR(xr, "Could not enumerate OpenXR view configuration view count");
         configViews.resize(xrViewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
         xrViews.resize(xrViewCount, {XR_TYPE_VIEW});
-        xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType,
-                                          xrViewCount, &xrViewCount, configViews.data());
+        xr = xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType,
+                                               xrViewCount, &xrViewCount, configViews.data());
+        CHECK_XR(xr, "Could not enumerate OpenXR view configuration views");
         xrWidth = configViews[0].recommendedImageRectWidth;
         xrHeight = configViews[0].recommendedImageRectHeight;
         *width = xrWidth;
         *height = xrHeight;
         Log::Info("[UnrealVR] Obtained recommended VR resolution");
+        return true;
     }
 
-    void VRManager::CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount)
+    bool VRManager::CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount)
     {
         for (uint32_t i = 0; i < xrViewCount; i++)
         {
@@ -161,26 +182,42 @@ namespace UnrealVR
             swapchainInfo.height = configViews[0].recommendedImageRectHeight;
             swapchainInfo.sampleCount = sampleCount;
             swapchainInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
-            xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
+            XrResult xr = xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
+            CHECK_XR(xr, "Could not create OpenXR swapchain");
             uint32_t surfaceCount = 0;
-            xrEnumerateSwapchainImages(swapchain, 0, &surfaceCount, nullptr);
+            xr = xrEnumerateSwapchainImages(swapchain, 0, &surfaceCount, nullptr);
+            CHECK_XR(xr, "Could not enumerate OpenXR swapchain image count");
             xrSwapChains.push_back(swapchain);
             std::vector<XrSwapchainImageD3D11KHR> surfaces;
             surfaces.resize(surfaceCount);
-            xrEnumerateSwapchainImages(swapchain, surfaceCount, &surfaceCount,
-                                       reinterpret_cast<XrSwapchainImageBaseHeader*>(surfaces.data()));
+            xr = xrEnumerateSwapchainImages(swapchain, surfaceCount, &surfaceCount,
+                                            reinterpret_cast<XrSwapchainImageBaseHeader*>(surfaces.data()));
+            CHECK_XR(xr, "Could not enumerate OpenXR swapchain images");
+            xrSurfaces.insert(std::pair(i, surfaces));
         }
         UE4Manager::AddRelativeLocation({0.0f, -3.175f, 0.0f});
         CreateSwapChainsDone = true;
         Log::Info("[UnrealVR] Created OpenXR swapchains");
+        return true;
     }
 
-    void VRManager::SubmitFrame(ID3D11Texture2D* texture)
+    bool VRManager::FinalizeInit()
+    {
+        XrSessionBeginInfo beginInfo = {XR_TYPE_SESSION_BEGIN_INFO};
+        beginInfo.primaryViewConfigurationType = xrViewType;
+        CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not being OpenXR session");
+        FinalizeInitDone = true;
+        Log::Info("[UnrealVR] Started OpenXR session");
+        return true;    
+    }
+    
+    bool VRManager::SubmitFrame(ID3D11Texture2D* texture)
     {
         uint32_t imageId;
         XrSwapchainImageAcquireInfo acquireInfo = {XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         XrSwapchainImageWaitInfo waitInfo = {XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO};
         waitInfo.timeout = XR_INFINITE_DURATION;
+        XrSwapchainImageReleaseInfo releaseInfo = {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         ID3D11Device* device;
         texture->GetDevice(&device);
         ID3D11DeviceContext* context;
@@ -188,8 +225,10 @@ namespace UnrealVR
         if (lastEyeShown == Eye::Right)
         {
             xrFrameState = {XR_TYPE_FRAME_STATE};
-            xrWaitFrame(xrSession, nullptr, &xrFrameState);
-            xrBeginFrame(xrSession, nullptr);
+            XrResult xr = xrWaitFrame(xrSession, nullptr, &xrFrameState);
+            CHECK_XR(xr, "Could not wait on OpenXR frame");
+            xr = xrBeginFrame(xrSession, nullptr);
+            CHECK_XR(xr, "Could not begin OpenXR frame");
             xrLayerProj = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
             std::vector<XrCompositionLayerProjectionView> views;
             uint32_t viewCount = 0;
@@ -198,9 +237,10 @@ namespace UnrealVR
             locateInfo.viewConfigurationType = xrViewType;
             locateInfo.displayTime = xrFrameState.predictedDisplayTime;
             locateInfo.space = xrAppSpace;
-            xrLocateViews(xrSession, &locateInfo, &viewState,
-                          static_cast<uint32_t>(xrViews.size()),
-                          &viewCount, xrViews.data());
+            xr = xrLocateViews(xrSession, &locateInfo, &viewState,
+                               static_cast<uint32_t>(xrViews.size()),
+                               &viewCount, xrViews.data());
+            CHECK_XR(xr, "Could not locate OpenXR views");
             views.resize(viewCount);
             for (uint32_t i = 0; i < viewCount; i++)
             {
@@ -214,27 +254,37 @@ namespace UnrealVR
             xrLayerProj.space = xrAppSpace;
             xrLayerProj.viewCount = static_cast<uint32_t>(views.size());
             xrLayerProj.views = views.data();
-            xrAcquireSwapchainImage(xrSwapChains.at(0), &acquireInfo, &imageId);
-            xrWaitSwapchainImage(xrSwapChains.at(0), &waitInfo);
+            xr = xrAcquireSwapchainImage(xrSwapChains.at(0), &acquireInfo, &imageId);
+            CHECK_XR(xr, "Could not acquire OpenXR swapchain image");
+            xr = xrWaitSwapchainImage(xrSwapChains.at(0), &waitInfo);
+            CHECK_XR(xr, "Could not wait on OpenXR swapchain image");
             context->CopyResource(xrSurfaces.at(0).at(imageId).texture, texture);
+            xr = xrReleaseSwapchainImage(xrSwapChains.at(0), &releaseInfo);
+            CHECK_XR(xr, "Could not release OpenXR swapchain image");
             lastEyeShown = Eye::Left;
             UE4Manager::AddRelativeLocation({0.0f, 6.35f, 0.0f});
         }
         else
         {
-            xrAcquireSwapchainImage(xrSwapChains.at(1), &acquireInfo, &imageId);
-            xrWaitSwapchainImage(xrSwapChains.at(1), &waitInfo);
+            XrResult xr = xrAcquireSwapchainImage(xrSwapChains.at(1), &acquireInfo, &imageId);
+            CHECK_XR(xr, "Could not acquire OpenXR swapchain image");
+            xr = xrWaitSwapchainImage(xrSwapChains.at(1), &waitInfo);
+            CHECK_XR(xr, "Could not wait on OpenXR swapchain image");
             context->CopyResource(xrSurfaces.at(1).at(imageId).texture, texture);
+            xr = xrReleaseSwapchainImage(xrSwapChains.at(1), &releaseInfo);
+            CHECK_XR(xr, "Could not release OpenXR swapchain image");
             const auto xrLayer = reinterpret_cast<XrCompositionLayerBaseHeader*>(&xrLayerProj);
             XrFrameEndInfo endInfo = {XR_TYPE_FRAME_END_INFO};
             endInfo.displayTime = xrFrameState.predictedDisplayTime;
             endInfo.environmentBlendMode = xrBlend;
             endInfo.layerCount = xrLayer == nullptr ? 0 : 1;
             endInfo.layers = &xrLayer;
-            xrEndFrame(xrSession, &endInfo);
+            xr = xrEndFrame(xrSession, &endInfo);
+            CHECK_XR(xr, "Could not end OpenXR frame");
             lastEyeShown = Eye::Right;
             UE4Manager::AddRelativeLocation({0.0f, -6.35f, 0.0f});
         }
+        return true;
     }
 
     void VRManager::Stop()

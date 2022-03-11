@@ -29,18 +29,22 @@ namespace UnrealVR
         static inline bool ContinueInitDone = false;
 
         /** Get the recommended headset render resolution for Unreal Engine */
-        static void GetRecommendedResolution(uint32_t* width, uint32_t* height);
+        static bool GetRecommendedResolution(uint32_t* width, uint32_t* height);
 
         /**
          * Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain
          *
          * TODO: Use the correct IPD upon swapchain creation
          */
-        static void CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount);
+        static bool CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount);
         static inline bool CreateSwapChainsDone = false;
 
+        /** Start the OpenXR session */
+        static bool FinalizeInit();
+        static inline bool FinalizeInitDone = false;
+
         /** Copy a frame and present it to the headset */
-        static void SubmitFrame(ID3D11Texture2D* texture);
+        static bool SubmitFrame(ID3D11Texture2D* texture);
 
         /** Releases OpenXR resources */
         static void Stop();
@@ -58,10 +62,10 @@ namespace UnrealVR
          *
          * TODO: Handle different log levels
          */
-        static void LoadDebugExtension();
+        static bool LoadDebugExtension();
 
         /** Loads the D3D11 extension for swapchain management */
-        static void LoadD3D11Extension();
+        static bool LoadD3D11Extension();
 
         /** GetInstanceWithExtensions */
         inline static const char* applicationName = "UnrealVR";

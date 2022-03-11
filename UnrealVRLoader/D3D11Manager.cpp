@@ -122,6 +122,10 @@ namespace UnrealVR
             DXGI_SWAP_CHAIN_DESC desc;
             pSwapChain->GetDesc(&desc);
             VRManager::CreateSwapChains(desc.BufferDesc.Format, desc.SampleDesc.Count);
+        }
+        if (!VRManager::FinalizeInitDone)
+        {
+            VRManager::FinalizeInit();
             return S_OK;
         }
         ID3D11Texture2D* texture;
