@@ -170,6 +170,18 @@ namespace UnrealVR
 
     bool VRManager::CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount)
     {
+        Log::Info(std::format("[UnrealVR] Creating OpenXR swapchains with DXGI format ({})", static_cast<int>(format)));
+        uint32_t formatCount = 0;
+        XrResult xr = xrEnumerateSwapchainFormats(xrSession, 0, &formatCount, nullptr);
+        CHECK_XR(xr, "Could not enumerate OpenXR swapchain format count");
+        std::vector<int64_t> formats(formatCount);
+        xr = xrEnumerateSwapchainFormats(xrSession, formatCount, &formatCount, formats.data());
+        CHECK_XR(xr, "Could not enumerate OpenXR swapchain formats");
+        Log::Info(std::format("[UnrealVR] Found ({}) OpenXR swapchain formats:", formatCount));
+        for (int i = 0; i < formats.size(); i++)
+        {
+            Log::Info(std::format("[UnrealVR] - {}", formats.at(i)));
+        }
         for (uint32_t i = 0; i < xrViewCount; i++)
         {
             XrSwapchainCreateInfo swapchainInfo = {XR_TYPE_SWAPCHAIN_CREATE_INFO};
@@ -182,7 +194,7 @@ namespace UnrealVR
             swapchainInfo.height = configViews[0].recommendedImageRectHeight;
             swapchainInfo.sampleCount = sampleCount;
             swapchainInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
-            XrResult xr = xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
+            xr = xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
             CHECK_XR(xr, "Could not create OpenXR swapchain");
             uint32_t surfaceCount = 0;
             xr = xrEnumerateSwapchainImages(swapchain, 0, &surfaceCount, nullptr);
@@ -208,9 +220,9 @@ namespace UnrealVR
         CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not being OpenXR session");
         FinalizeInitDone = true;
         Log::Info("[UnrealVR] Started OpenXR session");
-        return true;    
+        return true;
     }
-    
+
     bool VRManager::SubmitFrame(ID3D11Texture2D* texture)
     {
         uint32_t imageId;
