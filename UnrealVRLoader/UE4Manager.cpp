@@ -84,7 +84,7 @@ namespace UnrealVR
         if (viewTarget == nullptr) return;
         FIND_UE4(func, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset");
         auto params = UE4::AddActorLocalOffsetParams();
-        params.DeltaLocation = {relativeLocation.X, relativeLocation.Y, relativeLocation.Z};
+        params.DeltaLocation = UE4::FVector(relativeLocation.X, relativeLocation.Y, relativeLocation.Z);
         viewTarget->ProcessEvent(func, &params);
     }
 
@@ -93,7 +93,7 @@ namespace UnrealVR
         if (viewTarget == nullptr) return;
         FIND_UE4(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation");
         auto params = UE4::SetActorRotationParams();
-        params.NewRotation = {absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z};
+        params.NewRotation = UE4::FRotator(absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z);
         viewTarget->ProcessEvent(func, &params);
     }
 }

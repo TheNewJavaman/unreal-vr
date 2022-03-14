@@ -9,21 +9,38 @@ namespace UE4
         AActor* ViewTarget = nullptr;
     };
 
+    enum class EAttachmentRule : UINT8
+    {
+        KeepRelative,
+        KeepWorld,
+        SnapToTarget,
+    };
+    
     struct AttachToActorParams
     {
         AActor* ParentActor = nullptr;
         FName SocketName = FName();
-        UINT8 LocationRule = 2;
-        UINT8 RotationRule = 2;
-        UINT8 ScaleRule = 2;
+        EAttachmentRule LocationRule = EAttachmentRule::SnapToTarget;
+        EAttachmentRule RotationRule = EAttachmentRule::SnapToTarget;
+        EAttachmentRule ScaleRule = EAttachmentRule::SnapToTarget;
         bool bWeldSimulatedBodies = false;
     };
 
+    enum EViewTargetBlendFunction
+    {
+        VTBlend_Linear,
+        VTBlend_Cubic,
+        VTBlend_EaseIn,
+        VTBlend_EaseOut,
+        VTBlend_EaseInOut,
+        VTBlend_MAX,
+    };
+    
     struct SetViewTargetWithBlendParams
     {
         AActor* NewViewTarget = nullptr;
         float BlendTime = 0.0f;
-        int BlendFunc = 0;
+        EViewTargetBlendFunction BlendFunc = VTBlend_Linear;
         float BlendExp = 0.0f;
         bool bLockOutgoing = false;
     };
