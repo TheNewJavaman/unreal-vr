@@ -3,10 +3,17 @@
 #include <Utilities/Logger.h>
 
 #include "HookManager.h"
+#include "PixelShader.h"
 #include "UE4Manager.h"
+#include "VertexShader.h"
 #include "VRManager.h"
 
 #define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
+#define CHECK_HR(hr, message) \
+    if (hr != S_OK) { \
+        Log::Error("[UnrealVR] %s; error code (%X)", message, hr); \
+        return false; \
+    }
 
 namespace UnrealVR
 {
@@ -103,34 +110,85 @@ namespace UnrealVR
         UINT Flags
     )
     {
-        if (!resized)
+        UE4Manager::SetViewTarget();
+        if (!UE4Manager::Resized)
         {
-            uint32_t width, height;
-            VRManager::GetRecommendedResolution(&width, &height);
-            UE4Manager::SetResolution(static_cast<int>(width), static_cast<int>(height));
-            resized = true;
-            return S_OK;
+            return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
         if (!VRManager::ContinueInitDone)
         {
             ID3D11Device* device;
             pSwapChain->GetDevice(IID_PPV_ARGS(&device));
             VRManager::ContinueInit(device);
+            device->Release();
         }
         if (!VRManager::CreateSwapChainsDone)
         {
             DXGI_SWAP_CHAIN_DESC desc;
             pSwapChain->GetDesc(&desc);
-            VRManager::CreateSwapChains(desc.BufferDesc.Format, desc.SampleDesc.Count);
+            VRManager::CreateSwapChains(desc.SampleDesc.Count);
         }
         if (!VRManager::FinalizeInitDone)
         {
             VRManager::FinalizeInit();
-            return S_OK;
+            return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
         ID3D11Texture2D* texture;
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
         VRManager::SubmitFrame(texture);
+        texture->Release();
         return PresentOriginal(pSwapChain, SyncInterval, Flags);
+    }
+
+    bool D3D11Manager::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv)
+    {
+        ID3D11Device* device;
+        rtv->GetDevice(&device);
+        ID3D11DeviceContext* context;
+        device->GetImmediateContext(&context);
+        D3D11_TEXTURE2D_DESC textureDesc;
+        source->GetDesc(&textureDesc);
+        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+        rtv->GetDesc(&rtvDesc);
+        if (!convertResourcesCreated)
+        {
+            HRESULT hr = device->CreateVertexShader(VertexShader, ARRAYSIZE(VertexShader), nullptr, &vertexShader);
+            CHECK_HR(hr, "Couldn't create vertex shader");
+            hr = device->CreatePixelShader(PixelShader, ARRAYSIZE(PixelShader), nullptr, &pixelShader);
+            CHECK_HR(hr, "Couldn't create pixel shader");
+            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            hr = device->CreateTexture2D(&textureDesc, nullptr, &copy);
+            CHECK_HR(hr, "Couldn't create copy texture");
+            D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
+            srvDesc.Format = textureDesc.Format;
+            srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+            srvDesc.Texture2D.MipLevels = 1;
+            srvDesc.Texture2D.MostDetailedMip = 0;
+            hr = device->CreateShaderResourceView(copy, &srvDesc, &srv);
+            CHECK_HR(hr, "Couldn't create shader resource view");
+            convertResourcesCreated = true;
+        }
+        context->CopyResource(copy, source);
+        context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
+        context->IASetIndexBuffer(nullptr, static_cast<DXGI_FORMAT>(0), 0);
+        context->IASetInputLayout(nullptr);
+        context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        context->VSSetShader(vertexShader, nullptr, 0);
+        context->PSSetShader(pixelShader, nullptr, 0);
+        context->OMSetRenderTargets(1, &rtv, nullptr);
+        context->PSSetShaderResources(0, 1, &srv);
+        context->Draw(3, 0);
+        context->Release();
+        device->Release();
+        return true;
+    }
+
+    void D3D11Manager::Stop()
+    {
+        if (convertResourcesCreated)
+        {
+            srv->Release();
+            copy->Release();
+        }
     }
 }

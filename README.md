@@ -15,6 +15,8 @@ I currently use Rider for Unreal Engine to develop this project (with Visual Stu
 free license of Rider for Unreal Engine
 at [jetbrains.com/rider/nextversion/](https://www.jetbrains.com/rider/nextversion/)
 
+Note: Compile shaders with VS 2022; there are a few custom settings, contact me for more info
+
 ## Rewrite Todolist
 
 - [ ] Switch to OpenXR

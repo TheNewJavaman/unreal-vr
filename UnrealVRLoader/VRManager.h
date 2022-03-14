@@ -36,7 +36,7 @@ namespace UnrealVR
          *
          * TODO: Use the correct IPD upon swapchain creation
          */
-        static bool CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount);
+        static bool CreateSwapChains(uint32_t sampleCount);
         static inline bool CreateSwapChainsDone = false;
 
         /** Start the OpenXR session */
@@ -90,18 +90,21 @@ namespace UnrealVR
 
         /** GetRecommendedResolution */
         inline static uint32_t xrViewCount = 0;
-        inline static std::vector<XrViewConfigurationView> configViews;
+        inline static std::vector<XrViewConfigurationView> xrConfigViews;
         inline static uint32_t xrWidth, xrHeight;
 
-        /** CreateSwapChain */
+        /** CreateSwapChains */
+        inline static DXGI_FORMAT xrFormat = DXGI_FORMAT_UNKNOWN;
         inline static constexpr XrPosef xrPoseIdentity = {{0, 0, 0, 1}, {0, 0, 0}};
         inline static std::vector<XrView> xrViews;
         inline static std::vector<XrSwapchain> xrSwapChains;
-        inline static std::map<uint32_t, std::vector<XrSwapchainImageD3D11KHR>> xrSurfaces;
+        inline static std::map<uint32_t, std::vector<ID3D11RenderTargetView*>> xrRTVs;
 
         /** SubmitFrame */
         inline static Eye lastEyeShown = Eye::Right;
         inline static XrCompositionLayerProjection xrLayerProj = {};
         inline static XrFrameState xrFrameState = {};
+        inline static std::vector<XrCompositionLayerProjectionView> xrProjectionViews;
+        inline static uint32_t xrProjectionViewCount = 0;
     };
 }

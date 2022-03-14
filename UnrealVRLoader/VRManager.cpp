@@ -4,14 +4,16 @@
 #include <format>
 #include <Utilities/Logger.h>
 
+#include "D3D11Manager.h"
 #include "UE4Manager.h"
 
-#define CHECK_XR(xr, message) if (xr != XR_SUCCESS) { \
-                                  Log::Error( \
-                                      std::format("[UnrealVR] {}; error code ({})", message, static_cast<int>(xr)) \
-                                  ); \
-                                  return false; \
-                              }
+#define CHECK_XR(xr, message) \
+    if (xr != XR_SUCCESS) { \
+        Log::Error( \
+            std::format("[UnrealVR] {}; error code ({})", message, static_cast<int>(xr)) \
+        ); \
+        return false; \
+    }
 
 namespace UnrealVR
 {
@@ -155,22 +157,21 @@ namespace UnrealVR
     {
         XrResult xr = xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType, 0, &xrViewCount, nullptr);
         CHECK_XR(xr, "Could not enumerate OpenXR view configuration view count");
-        configViews.resize(xrViewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
+        xrConfigViews.resize(xrViewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
         xrViews.resize(xrViewCount, {XR_TYPE_VIEW});
         xr = xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType,
-                                               xrViewCount, &xrViewCount, configViews.data());
+                                               xrViewCount, &xrViewCount, xrConfigViews.data());
         CHECK_XR(xr, "Could not enumerate OpenXR view configuration views");
-        xrWidth = configViews[0].recommendedImageRectWidth;
-        xrHeight = configViews[0].recommendedImageRectHeight;
+        xrWidth = xrConfigViews[0].recommendedImageRectWidth;
+        xrHeight = xrConfigViews[0].recommendedImageRectHeight;
         *width = xrWidth;
         *height = xrHeight;
         Log::Info("[UnrealVR] Obtained recommended VR resolution");
         return true;
     }
 
-    bool VRManager::CreateSwapChains(DXGI_FORMAT format, uint32_t sampleCount)
+    bool VRManager::CreateSwapChains(uint32_t sampleCount)
     {
-        Log::Info(std::format("[UnrealVR] Creating OpenXR swapchains with DXGI format ({})", static_cast<int>(format)));
         uint32_t formatCount = 0;
         XrResult xr = xrEnumerateSwapchainFormats(xrSession, 0, &formatCount, nullptr);
         CHECK_XR(xr, "Could not enumerate OpenXR swapchain format count");
@@ -178,6 +179,7 @@ namespace UnrealVR
         xr = xrEnumerateSwapchainFormats(xrSession, formatCount, &formatCount, formats.data());
         CHECK_XR(xr, "Could not enumerate OpenXR swapchain formats");
         Log::Info(std::format("[UnrealVR] Found ({}) OpenXR swapchain formats:", formatCount));
+        xrFormat = static_cast<DXGI_FORMAT>(formats.at(0));
         for (int i = 0; i < formats.size(); i++)
         {
             Log::Info(std::format("[UnrealVR] - {}", formats.at(i)));
@@ -189,9 +191,9 @@ namespace UnrealVR
             swapchainInfo.arraySize = 1;
             swapchainInfo.mipCount = 1;
             swapchainInfo.faceCount = 1;
-            swapchainInfo.format = format;
-            swapchainInfo.width = configViews[0].recommendedImageRectWidth;
-            swapchainInfo.height = configViews[0].recommendedImageRectHeight;
+            swapchainInfo.format = xrFormat;
+            swapchainInfo.width = xrConfigViews[0].recommendedImageRectWidth;
+            swapchainInfo.height = xrConfigViews[0].recommendedImageRectHeight;
             swapchainInfo.sampleCount = sampleCount;
             swapchainInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
             xr = xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
@@ -205,9 +207,26 @@ namespace UnrealVR
             xr = xrEnumerateSwapchainImages(swapchain, surfaceCount, &surfaceCount,
                                             reinterpret_cast<XrSwapchainImageBaseHeader*>(surfaces.data()));
             CHECK_XR(xr, "Could not enumerate OpenXR swapchain images");
-            xrSurfaces.insert(std::pair(i, surfaces));
+            std::vector<ID3D11RenderTargetView*> rtvs;
+            for (int j = 0; j < surfaces.size(); j++)
+            {
+                D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
+                rtvDesc.Format = xrFormat;
+                rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+                rtvDesc.Texture2D.MipSlice = 0;
+                ID3D11RenderTargetView* rtv;
+                ID3D11Device* device;
+                surfaces.at(j).texture->GetDevice(&device);
+                HRESULT hr = device->CreateRenderTargetView(surfaces.at(j).texture, &rtvDesc, &rtv);
+                if (hr != S_OK)
+                {
+                    Log::Error("[UnrealVR] Failed to create an RTV for OpenXR; error code (%X)", hr);
+                    return false;
+                }
+                rtvs.push_back(rtv);
+            }
+            xrRTVs.insert(std::pair(i, rtvs));
         }
-        UE4Manager::AddRelativeLocation({0.0f, -3.175f, 0.0f});
         CreateSwapChainsDone = true;
         Log::Info("[UnrealVR] Created OpenXR swapchains");
         return true;
@@ -242,8 +261,6 @@ namespace UnrealVR
             xr = xrBeginFrame(xrSession, nullptr);
             CHECK_XR(xr, "Could not begin OpenXR frame");
             xrLayerProj = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
-            std::vector<XrCompositionLayerProjectionView> views;
-            uint32_t viewCount = 0;
             XrViewState viewState = {XR_TYPE_VIEW_STATE};
             XrViewLocateInfo locateInfo = {XR_TYPE_VIEW_LOCATE_INFO};
             locateInfo.viewConfigurationType = xrViewType;
@@ -251,26 +268,27 @@ namespace UnrealVR
             locateInfo.space = xrAppSpace;
             xr = xrLocateViews(xrSession, &locateInfo, &viewState,
                                static_cast<uint32_t>(xrViews.size()),
-                               &viewCount, xrViews.data());
+                               &xrProjectionViewCount, xrViews.data());
             CHECK_XR(xr, "Could not locate OpenXR views");
-            views.resize(viewCount);
-            for (uint32_t i = 0; i < viewCount; i++)
-            {
-                views.at(i) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
-                views.at(i).pose = xrViews.at(i).pose;
-                views.at(i).fov = xrViews.at(i).fov;
-                views.at(i).subImage.swapchain = xrSwapChains.at(i);
-                views.at(i).subImage.imageRect.offset = {0, 0};
-                views.at(i).subImage.imageRect.extent = {static_cast<int32_t>(xrWidth), static_cast<int32_t>(xrHeight)};
-            }
-            xrLayerProj.space = xrAppSpace;
-            xrLayerProj.viewCount = static_cast<uint32_t>(views.size());
-            xrLayerProj.views = views.data();
+            xrProjectionViews.resize(xrProjectionViewCount);
+            xrProjectionViews.at(0) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
+            xrProjectionViews.at(0).pose = xrViews.at(0).pose;
+            xrProjectionViews.at(0).fov = xrViews.at(0).fov;
+            xrProjectionViews.at(0).subImage.swapchain = xrSwapChains.at(0);
+            xrProjectionViews.at(0).subImage.imageRect.offset = {0, 0};
+            xrProjectionViews.at(0).subImage.imageRect.extent = {
+                static_cast<int32_t>(xrWidth),
+                static_cast<int32_t>(xrHeight)
+            };
             xr = xrAcquireSwapchainImage(xrSwapChains.at(0), &acquireInfo, &imageId);
             CHECK_XR(xr, "Could not acquire OpenXR swapchain image");
             xr = xrWaitSwapchainImage(xrSwapChains.at(0), &waitInfo);
             CHECK_XR(xr, "Could not wait on OpenXR swapchain image");
-            context->CopyResource(xrSurfaces.at(0).at(imageId).texture, texture);
+            if (!D3D11Manager::ConvertFrame(texture, xrRTVs.at(0).at(imageId)))
+            {
+                Log::Error("[UnrealVR] Couldn't convert frame");
+                return false;
+            }
             xr = xrReleaseSwapchainImage(xrSwapChains.at(0), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image");
             lastEyeShown = Eye::Left;
@@ -282,9 +300,26 @@ namespace UnrealVR
             CHECK_XR(xr, "Could not acquire OpenXR swapchain image");
             xr = xrWaitSwapchainImage(xrSwapChains.at(1), &waitInfo);
             CHECK_XR(xr, "Could not wait on OpenXR swapchain image");
-            context->CopyResource(xrSurfaces.at(1).at(imageId).texture, texture);
+            if (!D3D11Manager::ConvertFrame(texture, xrRTVs.at(1).at(imageId)))
+            {
+                Log::Error("[UnrealVR] Couldn't convert frame");
+                return false;
+            }
+            xrProjectionViews.resize(xrProjectionViewCount);
+            xrProjectionViews.at(1) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
+            xrProjectionViews.at(1).pose = xrViews.at(1).pose;
+            xrProjectionViews.at(1).fov = xrViews.at(1).fov;
+            xrProjectionViews.at(1).subImage.swapchain = xrSwapChains.at(1);
+            xrProjectionViews.at(1).subImage.imageRect.offset = {0, 0};
+            xrProjectionViews.at(1).subImage.imageRect.extent = {
+                static_cast<int32_t>(xrWidth),
+                static_cast<int32_t>(xrHeight)
+            };
             xr = xrReleaseSwapchainImage(xrSwapChains.at(1), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image");
+            xrLayerProj.space = xrAppSpace;
+            xrLayerProj.viewCount = static_cast<uint32_t>(xrProjectionViews.size());
+            xrLayerProj.views = xrProjectionViews.data();
             const auto xrLayer = reinterpret_cast<XrCompositionLayerBaseHeader*>(&xrLayerProj);
             XrFrameEndInfo endInfo = {XR_TYPE_FRAME_END_INFO};
             endInfo.displayTime = xrFrameState.predictedDisplayTime;
@@ -301,6 +336,11 @@ namespace UnrealVR
 
     void VRManager::Stop()
     {
+        for (int i = 0; i < xrRTVs.at(0).size(); i++)
+        {
+            xrRTVs.at(0).at(i)->Release();
+            xrRTVs.at(1).at(i)->Release();
+        }
         for (uint32_t i = 0; i < xrViewCount; i++)
         {
             if (xrSwapChains.at(i) != XR_NULL_HANDLE && xrDestroySwapchain(xrSwapChains.at(i)))

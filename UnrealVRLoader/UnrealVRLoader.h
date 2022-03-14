@@ -1,5 +1,9 @@
 #pragma once
 
+#define WIN32_LEAN_AND_MEAN
+
+#include <windows.h>
+
 namespace UnrealVR
 {
 	class Loader
@@ -10,6 +14,6 @@ namespace UnrealVR
 		static void Stop();
 
 	private:
-		static bool ResumeGame();
+		static DWORD __stdcall InitThread(LPVOID);
 	};
 }

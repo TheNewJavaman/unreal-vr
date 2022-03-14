@@ -1,152 +1,99 @@
 ﻿#include "UE4Manager.h"
 
+#include <format>
 #include <Utilities/Globals.h>
+
+#include "VRManager.h"
+#include "UE4Extensions.h"
+
+#define FIND_UE4(ptr, t, name) \
+    const auto ptr = UE4::UObject::FindObject<t>(name); \
+    if (ptr == nullptr) \
+    { \
+        Log::Warn(std::format("[UnrealVR] Couldn't find ({})", name)); \
+        return; \
+    }
 
 namespace UnrealVR
 {
-    void UE4Manager::AddEvents()
+    void UE4Manager::SetViewTarget()
     {
-        Global::GetGlobals()->eventSystem.registerEvent(
-            new Event<UE4::AActor*>("BeginPlay", &BeginPlayCallback)
-        );
-    }
-
-    void UE4Manager::BeginPlayCallback(UE4::AActor* Actor)
-    {
-        const auto now = std::chrono::system_clock::now();
-        const std::chrono::duration<double> elapsed = now - lastCallback;
-        if (elapsed.count() > MAX_CALLBACK_SECONDS)
+        if (!Resized) Resize();
+        const auto playerController = UE4::UGameplayStatics::GetPlayerController(0);
+        if (playerController == nullptr)
         {
-            const auto playerController = UE4::UGameplayStatics::GetPlayerController(0);
-            if (playerController == nullptr)
-            {
-                Log::Error("[UnrealVR] PlayerController(0) doesn't exist");
-                lastCallback = now;
-                return;
-            }
-            const auto viewTargetFunc = UE4::UObject::FindObject<UE4::UFunction>(
-                "Function Engine.Controller.GetViewTarget"
+            Log::Error("[UnrealVR] Couldn't find PlayerController(0)");
+            return;
+        }
+        FIND_UE4(getViewTargetFunc, UE4::UFunction, "Function Engine.Controller.GetViewTarget");
+        auto getViewTargetParams = UE4::GetViewTargetParams();
+        playerController->ProcessEvent(getViewTargetFunc, &getViewTargetParams);
+        if (getViewTargetParams.ViewTarget == nullptr || getViewTargetParams.ViewTarget == viewTarget) return;
+        if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn)
+        {
+            viewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
+                UE4::AActor::StaticClass(),
+                UE4::FTransform(),
+                UE4::ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
+                nullptr
             );
-            if (viewTargetFunc == nullptr)
-            {
-                Log::Warn("[UnrealVR] Function Engine.Controller.GetViewTarget doesn't exist");
-                lastCallback = now;
-                return;
-            }
-            struct
-            {
-                UE4::AActor* ViewTarget;
-            } viewTargetParams;
-            playerController->ProcessEvent(viewTargetFunc, &viewTargetParams);
-            viewTarget = viewTargetParams.ViewTarget;
-            if (viewTarget == nullptr)
-            {
-                Log::Warn("[UnrealVR] PlayerController's ViewTarget doesn't exist");
-            }
         }
-        lastCallback = now;
-    }
-
-    bool UE4Manager::AddRelativeLocation(Vector3 relativeLocation)
-    {
+        else
+        {
+            const auto transform = UE4::FTransform();
+            const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
+            viewTarget = UE4::UWorld::GetWorld()->SpawnActor(
+                UE4::AActor::StaticClass(),
+                &transform,
+                &params
+            );
+        }
         if (viewTarget == nullptr)
         {
-            return false;
+            Log::Warn("[UnrealVR] Couldn't spawn view target actor");
+            return;
         }
-        const auto func = UE4::UObject::FindObject<UE4::UFunction>(
-            "Function Engine.Actor.K2_AddActorLocalOffset"
-        );
-        if (func == nullptr)
-        {
-            Log::Warn("[UnrealVR] Function Engine.Actor.K2_AddActorLocalOffset doesn't exist");
-            return false;
-        }
-        struct
-        {
-            UE4::FVector DeltaLocation;
-            bool bSweep;
-            void* SweepHitResult;
-            bool bTeleport;
-        } params;
-        params.DeltaLocation = {relativeLocation.X, relativeLocation.Y, relativeLocation.Z};
-        params.bSweep = false;
-        params.bTeleport = true;
-        viewTarget->ProcessEvent(func, &params);
-        return true;
+        Log::Info("[UnrealVR] Spawned view target actor");
+        FIND_UE4(attachFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor");
+        auto attachParams = UE4::AttachToActorParams();
+        attachParams.ParentActor = getViewTargetParams.ViewTarget;
+        viewTarget->ProcessEvent(attachFunc, &attachParams);
+        Log::Info("[UnrealVR] Attached new view target to original");
+        FIND_UE4(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend");
+        auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
+        setViewTargetParams.NewViewTarget = viewTarget;
+        playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
+        Log::Info("[UnrealVR] Set new view target as primary");
     }
 
-    bool UE4Manager::SetAbsoluteRotation(Vector3 absoluteRotation)
+    void UE4Manager::Resize()
     {
-        if (viewTarget == nullptr)
-        {
-            return false;
-        }
-        const auto func = UE4::UObject::FindObject<UE4::UFunction>(
-            "Function Engine.Actor.K2_SetActorRotation"
-        );
-        if (func == nullptr)
-        {
-            Log::Warn("[UnrealVR] Function Engine.Actor.K2_SetActorRotation doesn't exist");
-            return false;
-        }
-        struct
-        {
-            UE4::FRotator NewRotation;
-            bool bTeleportPhysics;
-        } params;
-        params.NewRotation = {absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z};
-        params.bTeleportPhysics = true;
-        viewTarget->ProcessEvent(func, &params);
-        return true;
-    }
-
-    bool UE4Manager::SetResolution(int width, int height)
-    {
-        const auto command = std::format(L"r.SetRes {}x{}f", width, height).c_str();
+        uint32_t width, height;
+        VRManager::GetRecommendedResolution(&width, &height);
+        const auto command = std::format(
+            L"r.SetRes {}x{}f",
+            static_cast<int>(width),
+            static_cast<int>(height)
+        ).c_str();
         UE4::UGameplayStatics::ExecuteConsoleCommand(command, nullptr);
-        /*
-        const auto settings = UE4::UObject::FindObject<UE4::UClass>(
-            "Class Engine.GameUserSettings"
-        );
-        if (settings == nullptr)
-        {
-            Log::Warn("[UnrealVR] Class Engine.GameUserSettings doesn't exist");
-            return false;
-        }
-        const auto setFunc = UE4::UObject::FindObject<UE4::UFunction>(
-            "Function Engine.GameUserSettings.SetScreenResolution"
-        );
-        if (setFunc == nullptr)
-        {
-            Log::Warn("[UnrealVR] Function Engine.GameUserSettings.SetScreenResolution doesn't exist");
-            return false;
-        }
-        struct FIntPoint
-        {
-            int X;
-            int Y;
-        };
-        struct
-        {
-            FIntPoint Resolution;
-        } setParams;
-        setParams.Resolution = {width, height};
-        settings->ProcessEvent(setFunc, &setParams);
-        const auto applyFunc = UE4::UObject::FindObject<UE4::UFunction>(
-            "Function Engine.GameUserSettings.ApplyResolutionSettings"
-        );
-        if (applyFunc == nullptr)
-        {
-            Log::Warn("[UnrealVR] Function Engine.GameUserSettings.ApplyResolutionSettings doesn't exist");
-            return false;
-        }
-        struct
-        {
-            bool bCheckForCommandLineOverrides;
-        } applyParams;
-        applyParams.bCheckForCommandLineOverrides = false;
-        settings->ProcessEvent(applyFunc, &applyParams);
-        */
-        return true;
+        Resized = true;
+    }
+
+    void UE4Manager::AddRelativeLocation(Vector3 relativeLocation)
+    {
+        if (viewTarget == nullptr) return;
+        FIND_UE4(func, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset");
+        auto params = UE4::AddActorLocalOffsetParams();
+        params.DeltaLocation = {relativeLocation.X, relativeLocation.Y, relativeLocation.Z};
+        viewTarget->ProcessEvent(func, &params);
+    }
+
+    void UE4Manager::SetAbsoluteRotation(Vector3 absoluteRotation)
+    {
+        if (viewTarget == nullptr) return;
+        FIND_UE4(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation");
+        auto params = UE4::SetActorRotationParams();
+        params.NewRotation = {absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z};
+        viewTarget->ProcessEvent(func, &params);
     }
 }

@@ -11,24 +11,30 @@ namespace UnrealVR
 {
     void Loader::Init()
     {
+        CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
+    }
+
+    DWORD __stdcall Loader::InitThread(LPVOID)
+    {
         UE4::InitSDK();
         if (!VRManager::Init())
         {
             Log::Error("[UnrealVR] Failed to init VR");
-            return;
+            return NULL;
         }
         if (!HookManager::Init())
         {
             Log::Error("[UnrealVR] Failed to init hooks");
-            return;
+            return NULL;
         }
         D3D11Manager::AddHooks();
-        UE4Manager::AddEvents();
+        return NULL;   
     }
-
+    
     void Loader::Stop()
     {
-        VRManager::Stop();
+        D3D11Manager::Stop();
         HookManager::Stop();
+        VRManager::Stop();
     }
 }
