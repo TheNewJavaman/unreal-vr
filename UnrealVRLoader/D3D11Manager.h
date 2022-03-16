@@ -22,7 +22,11 @@ namespace UnrealVR
         static void Stop();
 
     private:
-        /** Hooking runs in a separate thread due to DXGI DLL-loading quirks */
+        /**
+         * Hooking runs in a separate thread due to DXGI DLL-loading quirks
+         *
+         * TODO: Now that DllMain is not used for everything, is this needed?
+         */
         static DWORD __stdcall AddHooksThread(LPVOID);
 
         /**
@@ -31,9 +35,7 @@ namespace UnrealVR
          * When Unreal Engine indicates to DXGI that the frame is ready to be presented, we must call the analogous
          * function on OpenXR's side, and switch eyes
          *
-         * TODO: How will we display to the monitor? Ideas:
-         *   - Only use SteamVR preview (confusing for users)
-         *   - Create another swapchain for the monitor and copy frames to it (inefficient)
+         * TODO: Is there a way to add black borders so that the VR resolution isn't squashed on the desktop display?
          */
         typedef HRESULT (__stdcall PresentFunc)(
             IDXGISwapChain* pSwapChain,

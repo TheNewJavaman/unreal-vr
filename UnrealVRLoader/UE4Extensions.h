@@ -58,4 +58,29 @@ namespace UE4
         FRotator NewRotation = FRotator();
         bool bTeleportPhysics = true;
     };
+
+    struct SetScreenResolutionParams
+    {
+        FIntPoint Resolution = FIntPoint();
+    };
+
+    namespace EWindowMode
+    {
+        enum Type
+        {
+            Fullscreen,
+            WindowedFullscreen,
+            Windowed,
+        };
+    }
+    
+    struct SetFullscreenModeParams
+    {
+        EWindowMode::Type InFullscreenMode = EWindowMode::Fullscreen;
+    };
+
+    struct ApplyResolutionSettingsParams
+    {
+        bool bCheckForCommandLineOverrides = false;
+    };
 }

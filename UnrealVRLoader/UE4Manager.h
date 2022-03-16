@@ -9,9 +9,11 @@ namespace UnrealVR
     class UE4Manager
     {
     public:
+        /** Refocus the camera's perspective so that we can manipulate it in the future */
         static void SetViewTarget();
-        
-        static void Resize();
+
+        /** Set the render resolution to match the VR headset */
+        static bool Resize();
         inline static bool Resized = false;
         
         /**
@@ -25,6 +27,7 @@ namespace UnrealVR
         static void SetAbsoluteRotation(Vector3 absoluteRotation);
         
     private:
+        /** SetViewTarget */
         inline static UE4::AActor* viewTarget = nullptr;
     };
 }

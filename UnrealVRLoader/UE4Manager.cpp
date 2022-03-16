@@ -64,19 +64,28 @@ namespace UnrealVR
         setViewTargetParams.NewViewTarget = viewTarget;
         playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         Log::Info("[UnrealVR] Set new view target as primary");
+        playerController->ProcessEvent(getViewTargetFunc, &getViewTargetParams);
+        Log::Info("hi");
     }
 
-    void UE4Manager::Resize()
+    bool UE4Manager::Resize()
     {
         uint32_t width, height;
         VRManager::GetRecommendedResolution(&width, &height);
-        const auto command = std::format(
-            L"r.SetRes {}x{}f",
-            static_cast<int>(width),
-            static_cast<int>(height)
-        ).c_str();
-        UE4::UGameplayStatics::ExecuteConsoleCommand(command, nullptr);
+        FIND_UE4(settings, UE4::UObject, "GameUserSettings Engine.Default__GameUserSettings")
+        FIND_UE4(setResFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
+        auto setResParams = UE4::SetScreenResolutionParams();
+        setResParams.Resolution.X = static_cast<int>(width);
+        setResParams.Resolution.Y = static_cast<int>(height);
+        settings->ProcessEvent(setResFunc, &setResParams);
+        FIND_UE4(setModeFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetFullscreenMode")
+        auto setModeParams = UE4::SetFullscreenModeParams();
+        settings->ProcessEvent(setModeFunc, &setModeParams);
+        FIND_UE4(applyFunc, UE4::UFunction, "Function Engine.GameUserSettings.ApplyResolutionSettings")
+        auto applyParams = UE4::ApplyResolutionSettingsParams();
+        settings->ProcessEvent(applyFunc, &applyParams);
         Resized = true;
+        return true;
     }
 
     void UE4Manager::AddRelativeLocation(Vector3 relativeLocation)
