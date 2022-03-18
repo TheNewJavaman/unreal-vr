@@ -13,17 +13,17 @@ namespace UE4
     {
         KeepRelative,
         KeepWorld,
-        SnapToTarget,
+        SnapToTarget
     };
     
     struct AttachToActorParams
     {
         AActor* ParentActor = nullptr;
-        FName SocketName = FName();
+        FName SocketName = 0; // NAME_None
         EAttachmentRule LocationRule = EAttachmentRule::SnapToTarget;
         EAttachmentRule RotationRule = EAttachmentRule::SnapToTarget;
         EAttachmentRule ScaleRule = EAttachmentRule::SnapToTarget;
-        bool bWeldSimulatedBodies = false;
+        bool bWeldSimulatedBodies = true;
     };
 
     enum EViewTargetBlendFunction
@@ -64,23 +64,13 @@ namespace UE4
         FIntPoint Resolution = FIntPoint();
     };
 
-    namespace EWindowMode
-    {
-        enum Type
-        {
-            Fullscreen,
-            WindowedFullscreen,
-            Windowed,
-        };
-    }
-    
-    struct SetFullscreenModeParams
-    {
-        EWindowMode::Type InFullscreenMode = EWindowMode::Fullscreen;
-    };
-
     struct ApplyResolutionSettingsParams
     {
         bool bCheckForCommandLineOverrides = false;
+    };
+
+    struct GetAttachParentActorParams
+    {
+        AActor* Result = nullptr;
     };
 }

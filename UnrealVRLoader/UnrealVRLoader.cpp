@@ -27,8 +27,9 @@ namespace UnrealVR
             Log::Error("[UnrealVR] Failed to init hooks");
             return NULL;
         }
+        UE4Manager::AddEvents();
         D3D11Manager::AddHooks();
-        return NULL;   
+        return NULL;
     }
     
     void Loader::Stop()

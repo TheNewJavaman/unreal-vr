@@ -11,15 +11,18 @@ Sneak peek below 👀
 If you have any ideas for features, or want to implement a feature yourself, please email me or send a DM on Discord to
 TheNewJavaman#3966.
 
-I currently use Rider for Unreal Engine to develop this project (with Visual Studio 2022 build tools). You can get a
-free license of Rider for Unreal Engine
-at [jetbrains.com/rider/nextversion/](https://www.jetbrains.com/rider/nextversion/)
+I currently use Rider 2022.1 EAP to develop this project (with Visual Studio 2022 build tools). You can get a
+free license of Rider for Unreal Engine at 
+[jetbrains.com/rider/nextversion/](https://www.jetbrains.com/rider/nextversion/). Versions <2022.1 don't have
+C++/Unreal Engine support merged into mainline.
 
-Note: Compile shaders with VS 2022; there are a few custom settings, contact me for more info
+Note: VS 2022 is still needed for some tasks:
+- Compiling HLSL shaders; there are a few custom settings, contact me for more info
+- Profiling C++ code
 
 ## Rewrite Todolist
 
-- [ ] Switch to OpenXR
+- [x] Switch to OpenXR
 - [ ] Head tracking
 - [ ] GUI for editing options/launching games
 - [ ] Allow remapping actions to VR controllers
