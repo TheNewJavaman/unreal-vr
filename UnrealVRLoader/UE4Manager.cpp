@@ -46,21 +46,23 @@ namespace UnrealVR
         // Spawn new view target if nonexistent
         if (viewTarget == nullptr)
         {
+            // Spawn the view target actor
+            FIND_UE4(staticMeshClass, UE4::UClass, "Class Engine.StaticMeshActor")
+            const auto transform = UE4::FTransform();
             if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn)
             {
                 viewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
-                    UE4::AActor::StaticClass(),
-                    UE4::FTransform(),
+                    staticMeshClass,
+                    transform,
                     UE4::ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
                     nullptr
                 );
             }
             else
             {
-                const auto transform = UE4::FTransform();
                 const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
                 viewTarget = UE4::UWorld::GetWorld()->SpawnActor(
-                    UE4::AActor::StaticClass(),
+                    staticMeshClass,
                     &transform,
                     &params
                 );
@@ -71,6 +73,11 @@ namespace UnrealVR
                 return;
             }
             Log::Info("[UnrealVR] Spawned new view target");
+            
+            // Enable mobility for the actor
+            FIND_UE4(setMobilityFunc, UE4::UFunction, "Function Engine.StaticMeshActor.SetMobility")
+            auto setMobilityParams = UE4::SetMobilityParams();
+            viewTarget->ProcessEvent(setMobilityFunc, &setMobilityParams);
         }
 
         // Set new view target if needed

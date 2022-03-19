@@ -73,4 +73,24 @@ namespace UE4
     {
         AActor* Result = nullptr;
     };
+    
+    struct GetRootComponentParams
+    {
+        UObject* RootComponent = nullptr;  
+    };
+
+    namespace EComponentMobility
+    {
+        enum Type
+        {
+            Static,
+            Stationary,
+            Movable
+        };
+    }
+    
+    struct SetMobilityParams
+    {
+        EComponentMobility::Type InMobility = EComponentMobility::Movable;
+    };
 }
