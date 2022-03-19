@@ -137,7 +137,11 @@ namespace UnrealVR
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
         VRManager::SubmitFrame(texture);
         texture->Release();
-        return PresentOriginal(pSwapChain, SyncInterval, Flags);
+        if (VRManager::LastEyeShown == Eye::Right)
+        {
+            return PresentOriginal(pSwapChain, SyncInterval, Flags);
+        }
+        return S_OK;
     }
 
     bool D3D11Manager::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv)

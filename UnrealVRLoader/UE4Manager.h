@@ -35,5 +35,22 @@ namespace UnrealVR
         
         /** SetViewTarget */
         inline static UE4::AActor* viewTarget = nullptr;
+        inline static UE4::APlayerController* playerController = nullptr;
+        inline static UE4::UFunction* getViewTargetFunc = nullptr;
+        inline static UE4::UClass* staticMeshActorClass = nullptr;
+        inline static UE4::UFunction* setMobilityFunc = nullptr;
+        inline static UE4::UFunction* attachToActorFunc = nullptr;
+        inline static UE4::UFunction* setViewTargetFunc = nullptr;
+
+        /** Resize */
+        inline static UE4::UObject* gameUserSettings = nullptr;
+        inline static UE4::UFunction* setScreenResolutionFunc = nullptr;
+        inline static UE4::UFunction* applyResolutionSettingsFunc = nullptr;
+
+        /** AddRelativeLocation */
+        inline static UE4::UFunction* addActorLocalOffsetFunc = nullptr;
+
+        /** SetAbsoluteRotation */
+        inline static UE4::UFunction* setActorRotationFunc = nullptr;
     };
 }

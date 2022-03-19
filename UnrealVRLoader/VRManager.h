@@ -45,7 +45,8 @@ namespace UnrealVR
 
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);
-
+        inline static Eye LastEyeShown = Eye::Right;
+        
         /** Releases OpenXR resources */
         static void Stop();
 
@@ -101,7 +102,6 @@ namespace UnrealVR
         inline static std::map<uint32_t, std::vector<ID3D11RenderTargetView*>> xrRTVs;
 
         /** SubmitFrame */
-        inline static Eye lastEyeShown = Eye::Right;
         inline static XrCompositionLayerProjection xrLayerProj = {};
         inline static XrFrameState xrFrameState = {};
         inline static std::vector<XrCompositionLayerProjectionView> xrProjectionViews;

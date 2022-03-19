@@ -23,8 +23,9 @@ Note: VS 2022 is still needed for some tasks:
 ## Rewrite Todolist
 
 - [x] Switch to OpenXR
+- [x] Optimize graphics pipeline (WIP; can always do more)
+- [ ] Fix resolution
 - [ ] Head tracking
-- [ ] Optimize graphics pipeline
 - [ ] GUI for editing options/launching games
 - [ ] Allow remapping actions to VR controllers
 - [ ] Allow scaling world vs. virtual space

@@ -253,7 +253,7 @@ namespace UnrealVR
         texture->GetDevice(&device);
         ID3D11DeviceContext* context;
         device->GetImmediateContext(&context);
-        if (lastEyeShown == Eye::Right)
+        if (LastEyeShown == Eye::Right)
         {
             xrFrameState = {XR_TYPE_FRAME_STATE};
             XrResult xr = xrWaitFrame(xrSession, nullptr, &xrFrameState);
@@ -291,7 +291,7 @@ namespace UnrealVR
             }
             xr = xrReleaseSwapchainImage(xrSwapChains.at(0), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image");
-            lastEyeShown = Eye::Left;
+            LastEyeShown = Eye::Left;
             UE4Manager::AddRelativeLocation({0.0f, 6.35f, 0.0f});
         }
         else
@@ -328,7 +328,7 @@ namespace UnrealVR
             endInfo.layers = &xrLayer;
             xr = xrEndFrame(xrSession, &endInfo);
             CHECK_XR(xr, "Could not end OpenXR frame");
-            lastEyeShown = Eye::Right;
+            LastEyeShown = Eye::Right;
             UE4Manager::AddRelativeLocation({0.0f, -6.35f, 0.0f});
         }
         return true;
