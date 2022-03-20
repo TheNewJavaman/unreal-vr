@@ -10,7 +10,7 @@
 
 #define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
 #define CHECK_HR(hr, message) \
-    if (hr != S_OK) { \
+    if ((hr) != S_OK) { \
         Log::Error("[UnrealVR] %s; error code (%X)", message, hr); \
         return false; \
     }
@@ -80,7 +80,7 @@ namespace UnrealVR
             &obtainedLevel,
             &context
         );
-        const auto swapChainVTable = VTABLE(swapChain);
+        const auto swapChainVTable = VTABLE(swapChain)
 
         PresentTarget = reinterpret_cast<PresentFunc*>(swapChainVTable[8]);
         HookManager::Add<PresentFunc>(
@@ -91,11 +91,6 @@ namespace UnrealVR
         );
         DWORD presentOld;
         VirtualProtect(PresentTarget, 2, PAGE_EXECUTE_READWRITE, &presentOld);
-
-        while (true)
-        {
-            Sleep(10);
-        }
 
         context->Release();
         device->Release();
@@ -157,19 +152,19 @@ namespace UnrealVR
         if (!convertResourcesCreated)
         {
             HRESULT hr = device->CreateVertexShader(VertexShader, ARRAYSIZE(VertexShader), nullptr, &vertexShader);
-            CHECK_HR(hr, "Couldn't create vertex shader");
+            CHECK_HR(hr, "Couldn't create vertex shader")
             hr = device->CreatePixelShader(PixelShader, ARRAYSIZE(PixelShader), nullptr, &pixelShader);
-            CHECK_HR(hr, "Couldn't create pixel shader");
+            CHECK_HR(hr, "Couldn't create pixel shader")
             textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
             hr = device->CreateTexture2D(&textureDesc, nullptr, &copy);
-            CHECK_HR(hr, "Couldn't create copy texture");
+            CHECK_HR(hr, "Couldn't create copy texture")
             D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
             srvDesc.Format = textureDesc.Format;
             srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
             srvDesc.Texture2D.MipLevels = 1;
             srvDesc.Texture2D.MostDetailedMip = 0;
             hr = device->CreateShaderResourceView(copy, &srvDesc, &srv);
-            CHECK_HR(hr, "Couldn't create shader resource view");
+            CHECK_HR(hr, "Couldn't create shader resource view")
             convertResourcesCreated = true;
         }
         context->CopyResource(copy, source);

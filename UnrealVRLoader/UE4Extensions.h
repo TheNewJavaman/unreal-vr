@@ -59,6 +59,11 @@ namespace UE4
         bool bTeleportPhysics = true;
     };
 
+    struct GetGameUserSettingsParams
+    {
+        UObject* Result = nullptr;
+    };
+
     struct SetScreenResolutionParams
     {
         FIntPoint Resolution = FIntPoint();
@@ -79,18 +84,8 @@ namespace UE4
         UObject* RootComponent = nullptr;  
     };
 
-    namespace EComponentMobility
+    struct AddActorWorldOffsetParams
     {
-        enum Type
-        {
-            Static,
-            Stationary,
-            Movable
-        };
-    }
-    
-    struct SetMobilityParams
-    {
-        EComponentMobility::Type InMobility = EComponentMobility::Movable;
+        
     };
 }

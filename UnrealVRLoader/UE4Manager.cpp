@@ -26,6 +26,7 @@ namespace UnrealVR
     void UE4Manager::BeginPlaySingleCallback()
     {
         Resize();
+        gameUserSettings = nullptr;
         playerController = nullptr;
         viewTarget = nullptr;
     }
@@ -53,11 +54,11 @@ namespace UnrealVR
         if (viewTarget == nullptr)
         {
             // Spawn the view target actor
-            USING_UOBJECT(staticMeshActorClass, UE4::UClass, "Class Engine.StaticMeshActor")
+            USING_UOBJECT(cameraActorActorClass, UE4::UClass, "Class Engine.CameraActor")
             if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn)
             {
                 viewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
-                    staticMeshActorClass,
+                    cameraActorActorClass,
                     UE4::FTransform(),
                     UE4::ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
                     nullptr
@@ -68,7 +69,7 @@ namespace UnrealVR
                 const auto transform = UE4::FTransform();
                 const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
                 viewTarget = UE4::UWorld::GetWorld()->SpawnActor(
-                    staticMeshActorClass,
+                    cameraActorActorClass,
                     &transform,
                     &params
                 );
@@ -80,10 +81,8 @@ namespace UnrealVR
             }
             Log::Info("[UnrealVR] Spawned new view target");
 
-            // Enable mobility for the actor
-            USING_UOBJECT(setMobilityFunc, UE4::UFunction, "Function Engine.StaticMeshActor.SetMobility")
-            auto setMobilityParams = UE4::SetMobilityParams();
-            viewTarget->ProcessEvent(setMobilityFunc, &setMobilityParams);
+            // Get camera component from new view target actor
+            USING_UOBJECT(getCameraComponentFunc, UE4::UFunction, "")
         }
 
         // Set new view target if needed
@@ -95,6 +94,12 @@ namespace UnrealVR
             attachParams.ParentActor = getViewTargetParams.ViewTarget;
             viewTarget->ProcessEvent(attachToActorFunc, &attachParams);
 
+            // Adjust new view target to match the eyeline of the previous view target
+            // TODO: Use world offset, not relative offset
+            const auto a = getViewTargetParams.ViewTarget->GetActorLocation();
+            const auto b = viewTarget->GetActorLocation();
+            AddRelativeLocation(Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z));
+            
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
@@ -105,18 +110,33 @@ namespace UnrealVR
 
     void UE4Manager::Resize()
     {
+        // Get VR resolution
         uint32_t width, height;
         VRManager::GetRecommendedResolution(&width, &height);
-        USING_UOBJECT(gameUserSettings, UE4::UObject, "GameUserSettings Engine.Default__GameUserSettings")
+
+        // Get default instance of settings
+        USING_UOBJECT(defaultGameUserSettings, UE4::UObject, "GameUserSettings Engine.Default__GameUserSettings")
+
+        // Call static function on default instance to get the actual local settings
+        USING_UOBJECT(getGameUserSettingsFunc, UE4::UFunction, "Function Engine.GameUserSettings.GetGameUserSettings")
+        auto getGameUserSettingsParams = UE4::GetGameUserSettingsParams();
+        defaultGameUserSettings->ProcessEvent(getGameUserSettingsFunc, &getGameUserSettingsParams);
+        gameUserSettings = getGameUserSettingsParams.Result;
+
+        // Set the resolution
         USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
         UE4::SetScreenResolutionParams setResParams;
         setResParams.Resolution.X = static_cast<int>(width);
         setResParams.Resolution.Y = static_cast<int>(height);
         gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setResParams);
+
+        // Apply the resolution changes
+        // TODO: Does this need to be run every BeginPlaySingle?
         USING_UOBJECT(applyResolutionSettingsFunc, UE4::UFunction,
                       "Function Engine.GameUserSettings.ApplyResolutionSettings")
         auto applyParams = UE4::ApplyResolutionSettingsParams();
         gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyParams);
+        
         Resized = true;
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
