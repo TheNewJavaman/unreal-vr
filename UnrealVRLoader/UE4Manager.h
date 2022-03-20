@@ -6,6 +6,7 @@
 
 namespace UnrealVR
 {
+    // TODO: Use a map to store static UObjects, instead of individual variables
     class UE4Manager
     {
     public:
@@ -35,11 +36,14 @@ namespace UnrealVR
         
         /** SetViewTarget */
         inline static UE4::AActor* viewTarget = nullptr;
+        inline static UE4::UObject* cameraComponent = nullptr;
         inline static UE4::APlayerController* playerController = nullptr;
         inline static UE4::UFunction* getViewTargetFunc = nullptr;
         inline static UE4::UClass* cameraActorActorClass = nullptr;
-        inline static UE4::UFunction* getCameraComponentFunc = nullptr;
-        inline static UE4::UFunction* setFOVFunc = nullptr;
+        inline static UE4::UFunction* getComponentByClassFunc = nullptr;
+        inline static UE4::UClass* cameraComponentClass = nullptr;
+        inline static UE4::UFunction* setFieldOfViewFunc = nullptr;
+        inline static UE4::UFunction* setConstraintAspectRatioFunc = nullptr;
         inline static UE4::UFunction* attachToActorFunc = nullptr;
         inline static UE4::UFunction* setViewTargetFunc = nullptr;
 

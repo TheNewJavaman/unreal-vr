@@ -82,7 +82,17 @@ namespace UnrealVR
             Log::Info("[UnrealVR] Spawned new view target");
 
             // Get camera component from new view target actor
-            USING_UOBJECT(getCameraComponentFunc, UE4::UFunction, "")
+            USING_UOBJECT(getComponentByClassFunc, UE4::UFunction, "Function Engine.Actor.GetComponentByClass")
+            auto getComponentByClassParams = UE4::GetComponentByClassParams();
+            USING_UOBJECT(cameraComponentClass, UE4::UClass, "Class Engine.CameraComponent")
+            getComponentByClassParams.ComponentClass = cameraComponentClass;
+            viewTarget->ProcessEvent(getComponentByClassFunc, &getComponentByClassParams);
+            if (getComponentByClassParams.Result == nullptr)
+            {
+                Log::Warn("[UnrealVR] Couldn't find camera component in new view target");
+                return;
+            }
+            cameraComponent = getComponentByClassParams.Result;
         }
 
         // Set new view target if needed
@@ -99,13 +109,27 @@ namespace UnrealVR
             const auto a = getViewTargetParams.ViewTarget->GetActorLocation();
             const auto b = viewTarget->GetActorLocation();
             AddRelativeLocation(Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z));
-            
+
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
             setViewTargetParams.NewViewTarget = viewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
+        
+        // Set camera component field of view
+        // TODO: Get headset's actual FOV
+        // TODO: Should we check the FOV first?
+        USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
+        auto setFieldOfViewParams = UE4::SetFieldOfViewParams();
+        cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
+
+        // Prevent letterboxing when setting the field of view manually
+        // TODO: Do I need to set this every frame?
+        USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
+                      "Function Engine.CameraComponent.SetConstraintAspectRatio")
+        auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
+        cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
     }
 
     void UE4Manager::Resize()
@@ -136,7 +160,7 @@ namespace UnrealVR
                       "Function Engine.GameUserSettings.ApplyResolutionSettings")
         auto applyParams = UE4::ApplyResolutionSettingsParams();
         gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyParams);
-        
+
         Resized = true;
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }

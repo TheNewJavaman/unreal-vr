@@ -20,11 +20,11 @@ Note: VS 2022 is still needed for some tasks:
 - Compiling HLSL shaders; there are a few custom settings, contact me for more info
 - Profiling C++ code
 
-## Rewrite Todolist
+## Features Todolist
 
 - [x] Switch to OpenXR
 - [x] Optimize graphics pipeline (WIP; can always do more)
-- [ ] Fix resolution
+- [x] Fix resolution
 - [ ] Head tracking
 - [ ] GUI for editing options/launching games
 - [ ] Allow remapping actions to VR controllers

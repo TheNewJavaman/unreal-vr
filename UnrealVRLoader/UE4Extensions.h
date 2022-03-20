@@ -2,6 +2,8 @@
 
 #include "Ue4.hpp"
 
+// TODO: Write full structs/classes for undefined types instead of using generic UObjects
+// TODO: Sort these structs
 namespace UE4
 {
     struct GetViewTargetParams
@@ -74,18 +76,27 @@ namespace UE4
         bool bCheckForCommandLineOverrides = false;
     };
 
-    struct GetAttachParentActorParams
-    {
-        AActor* Result = nullptr;
-    };
-    
-    struct GetRootComponentParams
-    {
-        UObject* RootComponent = nullptr;  
-    };
-
     struct AddActorWorldOffsetParams
     {
-        
+        FVector DeltaLocation = FVector();
+        bool bSweep = false;
+        void* SweepHitResult = nullptr;
+        bool bTeleport = true;
+    };
+    
+    struct GetComponentByClassParams
+    {
+        TSubclassOf<UObject> ComponentClass = TSubclassOf<UObject>(UObject::StaticClass());
+        UObject* Result = nullptr;
+    };
+
+    struct SetFieldOfViewParams
+    {
+        float InFieldOfView = 90.0f;
+    };
+
+    struct SetConstraintAspectRatioParams
+    {
+        bool bInConstrainAspectRatio = false;
     };
 }
