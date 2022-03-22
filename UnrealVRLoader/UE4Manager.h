@@ -1,12 +1,13 @@
 ﻿#pragma once
 
+#include <map>
 #include <Ue4.hpp>
 
 #include "Vector3.h"
+#include "Vector4.h"
 
 namespace UnrealVR
 {
-    // TODO: Use a map to store static UObjects, instead of individual variables
     class UE4Manager
     {
     public:
@@ -27,10 +28,16 @@ namespace UnrealVR
          */
         static void AddRelativeLocation(Vector3 relativeLocation);
 
-        /** Sets the absolute rotation of the view target (camera) */
-        static void SetAbsoluteRotation(Vector3 absoluteRotation);
+        /** Adds a rotational offset, relative to the world */
+        static void AddWorldRotation(Vector4 quat);
+        inline static Vector3 lastRotation = Vector3();
         
     private:
+        /** Map of cached (static) UObjects */
+        template<class T>
+        static bool GetUObject(T** ptr, std::string name);
+        inline static std::map<std::string, UE4::UObject*> uobjects;
+        
         /** Called once per scene start */
         static void BeginPlaySingleCallback();
         
@@ -38,26 +45,8 @@ namespace UnrealVR
         inline static UE4::AActor* viewTarget = nullptr;
         inline static UE4::UObject* cameraComponent = nullptr;
         inline static UE4::APlayerController* playerController = nullptr;
-        inline static UE4::UFunction* getViewTargetFunc = nullptr;
-        inline static UE4::UClass* cameraActorActorClass = nullptr;
-        inline static UE4::UFunction* getComponentByClassFunc = nullptr;
-        inline static UE4::UClass* cameraComponentClass = nullptr;
-        inline static UE4::UFunction* setFieldOfViewFunc = nullptr;
-        inline static UE4::UFunction* setConstraintAspectRatioFunc = nullptr;
-        inline static UE4::UFunction* attachToActorFunc = nullptr;
-        inline static UE4::UFunction* setViewTargetFunc = nullptr;
 
         /** Resize */
-        inline static UE4::UObject* defaultGameUserSettings = nullptr;
-        inline static UE4::UFunction* getGameUserSettingsFunc = nullptr;
         inline static UE4::UObject* gameUserSettings = nullptr;
-        inline static UE4::UFunction* setScreenResolutionFunc = nullptr;
-        inline static UE4::UFunction* applyResolutionSettingsFunc = nullptr;
-
-        /** AddRelativeLocation */
-        inline static UE4::UFunction* addActorLocalOffsetFunc = nullptr;
-
-        /** SetAbsoluteRotation */
-        inline static UE4::UFunction* setActorRotationFunc = nullptr;
     };
 }

@@ -9,6 +9,8 @@
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
+#include "Vector3.h"
+
 namespace UnrealVR
 {
     /** UnrealVR currently uses alternate eye rendering (AER), so we must keep track of which eye was last rendered */
@@ -31,6 +33,8 @@ namespace UnrealVR
         /** Get the recommended headset render resolution for Unreal Engine */
         static bool GetRecommendedResolution(uint32_t* width, uint32_t* height);
 
+        static void GetRecommendedFieldOfView(float* ptr);
+        
         /**
          * Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain
          *
@@ -106,5 +110,7 @@ namespace UnrealVR
         inline static XrFrameState xrFrameState = {};
         inline static std::vector<XrCompositionLayerProjectionView> xrProjectionViews;
         inline static uint32_t xrProjectionViewCount = 0;
+        inline static float fov = 0.0f;
+        inline static bool fovLogged = false;
     };
 }

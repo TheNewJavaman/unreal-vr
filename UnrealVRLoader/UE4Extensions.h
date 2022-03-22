@@ -17,7 +17,7 @@ namespace UE4
         KeepWorld,
         SnapToTarget
     };
-    
+
     struct AttachToActorParams
     {
         AActor* ParentActor = nullptr;
@@ -37,7 +37,7 @@ namespace UE4
         VTBlend_EaseInOut,
         VTBlend_MAX,
     };
-    
+
     struct SetViewTargetWithBlendParams
     {
         AActor* NewViewTarget = nullptr;
@@ -83,7 +83,7 @@ namespace UE4
         void* SweepHitResult = nullptr;
         bool bTeleport = true;
     };
-    
+
     struct GetComponentByClassParams
     {
         TSubclassOf<UObject> ComponentClass = TSubclassOf<UObject>(UObject::StaticClass());
@@ -98,5 +98,36 @@ namespace UE4
     struct SetConstraintAspectRatioParams
     {
         bool bInConstrainAspectRatio = false;
+    };
+
+    namespace EWindowMode
+    {
+        enum Type
+        {
+            Fullscreen,
+            WindowedFullscreen,
+            Windowed,
+        };
+    }
+
+    struct SetFullscreenModeParams
+    {
+        EWindowMode::Type InFullscreenMode = EWindowMode::Fullscreen;
+    };
+
+    struct AddActorWorldRotationParams
+    {
+        FRotator DeltaRotation = FRotator();
+        bool bSweep = false;
+        void* SweepHitResult = nullptr;
+        bool bTeleport = true;
+    };
+
+    struct QuatRotatorParams
+    {
+        QuatRotatorParams(const FQuat q) : Q(q) {}
+        
+        const FQuat& Q;
+        FRotator Result = FRotator();
     };
 }

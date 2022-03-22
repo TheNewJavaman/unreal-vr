@@ -34,8 +34,6 @@ namespace UnrealVR
          *
          * When Unreal Engine indicates to DXGI that the frame is ready to be presented, we must call the analogous
          * function on OpenXR's side, and switch eyes
-         *
-         * TODO: Is there a way to add black borders so that the VR resolution isn't squashed on the desktop display?
          */
         typedef HRESULT (__stdcall PresentFunc)(
             IDXGISwapChain* pSwapChain,

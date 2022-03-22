@@ -6,18 +6,34 @@
 #include "VRManager.h"
 #include "UE4Extensions.h"
 
-#define USING_UOBJECT(ptr, t, name) \
-    if ((ptr) == nullptr) \
-    { \
-        (ptr) = UE4::UObject::FindObject<t>(name); \
-        if ((ptr) == nullptr) { \
-            Log::Warn(std::format("[UnrealVR] Couldn't find ({})", name)); \
-            return; \
-        } \
-    }
+#define USING_UOBJECT(ptr, T, name) \
+    T* ptr; \
+    if (!GetUObject<T>(&(ptr), name)) return;
 
 namespace UnrealVR
 {
+    template <class T>
+    bool UE4Manager::GetUObject(T** ptr, std::string name)
+    {
+        const auto cached = uobjects.find(name);
+        if (cached == uobjects.end())
+        {
+            auto found = UE4::UObject::FindObject<T>(name);
+            if (found == nullptr)
+            {
+                Log::Warn(std::format("[UnrealVR] Couldn't find ({})", name));
+                return false;
+            }
+            uobjects.insert(std::pair(name, found));
+            *ptr = found;
+        }
+        else
+        {
+            *ptr = static_cast<T*>(cached->second);
+        }
+        return true;
+    }
+
     void UE4Manager::AddEvents()
     {
         Global::GetGlobals()->eventSystem.registerEvent(new Event<>("BeginPlaySingle", &BeginPlaySingleCallback));
@@ -116,12 +132,12 @@ namespace UnrealVR
             setViewTargetParams.NewViewTarget = viewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
-        
+
         // Set camera component field of view
-        // TODO: Get headset's actual FOV
         // TODO: Should we check the FOV first?
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
-        auto setFieldOfViewParams = UE4::SetFieldOfViewParams();
+        UE4::SetFieldOfViewParams setFieldOfViewParams;
+        VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
         cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
         // Prevent letterboxing when setting the field of view manually
@@ -154,6 +170,11 @@ namespace UnrealVR
         setResParams.Resolution.Y = static_cast<int>(height);
         gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setResParams);
 
+        // Set to fullscreen mode for better performance
+        USING_UOBJECT(setFullscreenModeFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetFullscreenMode")
+        auto setModeParams = UE4::SetFullscreenModeParams();
+        gameUserSettings->ProcessEvent(setFullscreenModeFunc, &setModeParams);
+
         // Apply the resolution changes
         // TODO: Does this need to be run every BeginPlaySingle?
         USING_UOBJECT(applyResolutionSettingsFunc, UE4::UFunction,
@@ -165,21 +186,34 @@ namespace UnrealVR
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
 
-    void UE4Manager::AddRelativeLocation(Vector3 relativeLocation)
+    void UE4Manager::AddRelativeLocation(const Vector3 relativeLocation)
     {
         if (viewTarget == nullptr) return;
-        USING_UOBJECT(addActorLocalOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
+        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
         auto params = UE4::AddActorLocalOffsetParams();
         params.DeltaLocation = UE4::FVector(relativeLocation.X, relativeLocation.Y, relativeLocation.Z);
-        viewTarget->ProcessEvent(addActorLocalOffsetFunc, &params);
+        viewTarget->ProcessEvent(func, &params);
     }
 
-    void UE4Manager::SetAbsoluteRotation(Vector3 absoluteRotation)
+    void UE4Manager::AddWorldRotation(const Vector4 quat)
     {
         if (viewTarget == nullptr) return;
-        USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
-        auto params = UE4::SetActorRotationParams();
-        params.NewRotation = UE4::FRotator(absoluteRotation.X, absoluteRotation.Y, absoluteRotation.Z);
-        viewTarget->ProcessEvent(setActorRotationFunc, &params);
+
+        // Convert the quaternion to a rotator
+        USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
+        USING_UOBJECT(toRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
+        auto convertParams = UE4::QuatRotatorParams(UE4::FQuat(quat.X, quat.Y, quat.Z, quat.W));
+        mathLibrary->ProcessEvent(toRotatorFunc, &convertParams);
+
+        // OpenXR's coordinate system is different from Unreal Engine's, so convert here and calculate delta rotation
+        const Vector3 newRotation = {convertParams.Result.Yaw,convertParams.Result.Yaw,convertParams.Result.Roll};
+        const Vector3 delta = newRotation - lastRotation;
+        lastRotation = newRotation;
+
+        // Add the delta rotation to the view target
+        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldRotation")
+        auto params = UE4::AddActorWorldRotationParams();
+        params.DeltaRotation = UE4::FRotator(delta.X, delta.Y, delta.Z);
+        viewTarget->ProcessEvent(func, &params);
     }
 }
