@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "UnrealVRLauncher (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "UnrealVRLauncher (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
