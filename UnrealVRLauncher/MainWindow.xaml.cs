@@ -1,30 +1,39 @@
-﻿using Microsoft.UI.Xaml;
+﻿using System;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 namespace UnrealVRLauncher
 {
-    public sealed partial class MainWindow : Window
+    public sealed partial class MainWindow
     {
         public MainWindow()
         {
-            this.InitializeComponent();
+            InitializeComponent();
         }
 
-        private void myButton_Click(object sender, RoutedEventArgs e)
+        private void NavigationView_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
         {
-            myButton.Content = "Clicked";
+            
+            Type pageType;
+            var item = (NavigationViewItem) sender.SelectedItem;
+            if (item == GeneralItem)
+            {
+                pageType = typeof(GeneralPage);
+            }
+            else if (item == ProfileItem)
+            {
+                pageType = typeof(ProfilePage);
+            }
+            else
+            {
+                pageType = typeof(AboutPage);
+            }
+            var navOptions = new FrameNavigationOptions
+            {
+                TransitionInfoOverride = args.RecommendedNavigationTransitionInfo
+            };
+            ContentFrame.NavigateToType(pageType, null, navOptions);
+            sender.Header = item.Content;
         }
     }
 }
