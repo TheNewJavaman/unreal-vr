@@ -5,5 +5,19 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
-    <TextBlock Text="General"/>
+    <ScrollViewer Style="{StaticResource Page.ScrollViewer}">
+        <StackPanel Style="{StaticResource Page.Body}">
+            <CommandBar DefaultLabelPosition="Right" VerticalContentAlignment="Center">
+                <CommandBar.Content>
+                    <StackPanel>
+                        <ComboBox>
+                            <ComboBoxItem Content="Ghostrunner"/>
+                        </ComboBox>
+                    </StackPanel>
+                </CommandBar.Content>
+                <AppBarButton Icon="Play" Label="Launch"/>
+                <AppBarButton Icon="Stop" Label="Exit" IsEnabled="False"/>
+            </CommandBar>
+        </StackPanel>
+    </ScrollViewer>
 </Page>

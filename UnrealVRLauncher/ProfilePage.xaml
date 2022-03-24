@@ -7,11 +7,13 @@
     mc:Ignorable="d">
     <ScrollViewer Style="{StaticResource Page.ScrollViewer}">
         <StackPanel Style="{StaticResource Page.Body}">
-            <CommandBar DefaultLabelPosition="Right">
+            <CommandBar DefaultLabelPosition="Right" VerticalContentAlignment="Center">
                 <CommandBar.Content>
-                    <ComboBox Margin="0,8,0,0">
-                        <ComboBoxItem Content="Ghostrunner"/>
-                    </ComboBox>
+                    <StackPanel>
+                        <ComboBox>
+                            <ComboBoxItem Content="Ghostrunner"/>
+                        </ComboBox>
+                    </StackPanel>
                 </CommandBar.Content>
                 <AppBarButton Icon="Add" Label="New"/>
                 <AppBarButton Icon="Document" Label="Clone"/>
@@ -24,7 +26,7 @@
                 <TextBlock Style="{StaticResource Page.Header}" Text="General"/>
                 <RelativePanel Style="{StaticResource Page.Panel}">
                     <StackPanel Style="{StaticResource Page.OneLinePanel.Key}">
-                        <SymbolIcon Style="{StaticResource Page.Panel.Key.Icon}" Symbol="Rename"/>
+                        <SymbolIcon Style="{StaticResource Page.Panel.Key.HighIcon}" Symbol="Rename"/>
                         <TextBlock Style="{StaticResource Page.Panel.Key.Header}" Text="Name"/>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Page.Panel.Value}">
@@ -33,19 +35,19 @@
                 </RelativePanel>
                 <RelativePanel Style="{StaticResource Page.Panel}">
                     <StackPanel Style="{StaticResource Page.TwoLinePanel.Key}">
-                        <SymbolIcon Style="{StaticResource Page.Panel.Key.Icon}" Symbol="Share"/>
+                        <SymbolIcon Symbol="Share"/>
                         <StackPanel Spacing="4">
                             <TextBlock Style="{StaticResource Page.Panel.Key.Header}" Text="Shipping Executable"/>
                             <TextBlock Style="{StaticResource Page.Panel.Key.Sub}" Text="C:\ExampleGame\ExampleGame-Win64-Shipping.exe"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Page.Panel.Value}">
-                        <Button Style="{StaticResource Page.TwoLinePanel.Value.Button}" Content="Select"/>
+                        <Button Margin="0,7,0,0" Content="Select"/>
                     </StackPanel>
                 </RelativePanel>
                 <RelativePanel Style="{StaticResource Page.Panel}">
                     <StackPanel Style="{StaticResource Page.OneLinePanel.Key}">
-                        <SymbolIcon Style="{StaticResource Page.Panel.Key.Icon}" Symbol="OpenPane"/>
+                        <SymbolIcon Style="{StaticResource Page.Panel.Key.HighIcon}" Symbol="OpenPane"/>
                         <TextBlock Style="{StaticResource Page.Panel.Key.Header}" Text="Command Line Arguments"/>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Page.Panel.Value}">
@@ -55,7 +57,7 @@
                 <TextBlock Style="{StaticResource Page.Header}" Text="Gameplay"/>
                 <RelativePanel Style="{StaticResource Page.Panel}">
                     <StackPanel Style="{StaticResource Page.OneLinePanel.Key}">
-                        <SymbolIcon Style="{StaticResource Page.Panel.Key.Icon}" Symbol="FullScreen"/>
+                        <SymbolIcon Symbol="FullScreen"/>
                         <TextBlock Style="{StaticResource Page.Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Page.Panel.Value.Increment}">

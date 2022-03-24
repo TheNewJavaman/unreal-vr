@@ -32,23 +32,21 @@
             <Style x:Key="Page.Panel.Key" TargetType="StackPanel">
                 <Setter Property="Orientation" Value="Horizontal"/>
                 <Setter Property="Spacing" Value="22"/>
+                <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
             <Style x:Key="Page.OneLinePanel.Key" TargetType="StackPanel" BasedOn="{StaticResource Page.Panel.Key}">
                 <Setter Property="Margin" Value="0,4,0,0"/>
             </Style>
             <Style x:Key="Page.TwoLinePanel.Key" TargetType="StackPanel" BasedOn="{StaticResource Page.Panel.Key}"/>
-            <Style x:Key="Page.TwoLinePanel.Value.Button" TargetType="Button">
-                <Setter Property="Margin" Value="0,7,0,0"/>
-            </Style>
-            <Style x:Key="Page.Panel.Key.Icon" TargetType="SymbolIcon">
-                <Setter Property="Margin" Value="0,3,0,0"/>
-            </Style>
             <Style x:Key="Page.Panel.Key.Header" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="16"/>
             </Style>
             <Style x:Key="Page.Panel.Key.Sub" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Foreground" Value="#bbbbbb"/>
+            </Style>
+            <Style x:Key="Page.Panel.Key.HighIcon" TargetType="SymbolIcon">
+                <Setter Property="Margin" Value="0,3,0,0"/>
             </Style>
             <Style x:Key="Page.Panel.Value" TargetType="StackPanel">
                 <Setter Property="RelativePanel.AlignRightWithPanel" Value="True"/>
