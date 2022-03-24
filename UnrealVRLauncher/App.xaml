@@ -8,76 +8,70 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
-            <Style x:Key="Page.ScrollViewer" TargetType="ScrollViewer">
-                <Setter Property="Margin" Value="0,23,0,0"/>
-            </Style>
-            <Style x:Key="Page.Body" TargetType="StackPanel">
-                <Setter Property="Margin" Value="53,0,53,23"/>
-            </Style>
-            <Style x:Key="Page.Content" TargetType="StackPanel">
-                <Setter Property="Spacing" Value="10"/>
-            </Style>
-            <Style x:Key="Page.Header" TargetType="TextBlock">
+            <Style x:Key="Header" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="18"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="#dddddd"/>
-                <Setter Property="Margin" Value="0,12,0,0"/>
             </Style>
-            <Style x:Key="Page.Panel" TargetType="RelativePanel">
-                <Setter Property="Background" Value="#232323"/>
+            <Style x:Key="Panel" TargetType="RelativePanel">
+                <Setter Property="Background" Value="#2b2b2b"/>
                 <Setter Property="CornerRadius" Value="3"/>
                 <Setter Property="Padding" Value="22,18,22,18"/>
                 <Setter Property="HorizontalAlignment" Value="Stretch"/>
             </Style>
-            <Style x:Key="Page.Panel.Key" TargetType="StackPanel">
+            <Style x:Key="Panel.Key" TargetType="StackPanel">
                 <Setter Property="Orientation" Value="Horizontal"/>
                 <Setter Property="Spacing" Value="22"/>
                 <Setter Property="VerticalAlignment" Value="Center"/>
             </Style>
-            <Style x:Key="Page.OneLinePanel.Key" TargetType="StackPanel" BasedOn="{StaticResource Page.Panel.Key}">
+            <Style x:Key="OneLinePanel.Key" TargetType="StackPanel" BasedOn="{StaticResource Panel.Key}">
                 <Setter Property="Margin" Value="0,4,0,0"/>
             </Style>
-            <Style x:Key="Page.TwoLinePanel.Key" TargetType="StackPanel" BasedOn="{StaticResource Page.Panel.Key}"/>
-            <Style x:Key="Page.Panel.Key.Header" TargetType="TextBlock">
+            <Style x:Key="TwoLinePanel.Key" TargetType="StackPanel" BasedOn="{StaticResource Panel.Key}"/>
+            <Style x:Key="Panel.Key.Header" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="16"/>
             </Style>
-            <Style x:Key="Page.Panel.Key.Sub" TargetType="TextBlock">
+            <Style x:Key="Panel.Key.Sub" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="14"/>
-                <Setter Property="Foreground" Value="#bbbbbb"/>
+                <Setter Property="Foreground" Value="#c5c5c5"/>
             </Style>
-            <Style x:Key="Page.Panel.Key.HighIcon" TargetType="SymbolIcon">
+            <Style x:Key="Panel.Key.HighIcon" TargetType="SymbolIcon">
                 <Setter Property="Margin" Value="0,3,0,0"/>
             </Style>
-            <Style x:Key="Page.Panel.Value" TargetType="StackPanel">
+            <Style x:Key="Panel.Value" TargetType="StackPanel">
                 <Setter Property="RelativePanel.AlignRightWithPanel" Value="True"/>
             </Style>
-            <Style x:Key="Page.Panel.Value.Increment" TargetType="StackPanel" BasedOn="{StaticResource Page.Panel.Value}">
+            <Style x:Key="Panel.Value.Increment" TargetType="StackPanel" BasedOn="{StaticResource Panel.Value}">
                 <Setter Property="Orientation" Value="Horizontal"/>
                 <Setter Property="BorderBrush" Value="#383838"/>
                 <Setter Property="BorderThickness" Value="1"/>
                 <Setter Property="Background" Value="#303030"/>
                 <Setter Property="CornerRadius" Value="4"/>
             </Style>
-            <Style x:Key="Page.Panel.Value.Increment.Button" TargetType="Button">
+            <Style x:Key="Panel.Value.Increment.Button" TargetType="Button">
                 <Setter Property="Padding" Value="4,6,4,6"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
                 <Setter Property="CornerRadius" Value="0"/>
             </Style>
-            <Style x:Key="Page.Panel.Value.Increment.Button.Icon" TargetType="SymbolIcon">
+            <Style x:Key="Panel.Value.Increment.Button.Icon" TargetType="SymbolIcon">
                 <Setter Property="RenderTransform">
                     <Setter.Value>
                         <ScaleTransform ScaleX="0.6" ScaleY="0.6" CenterX="11" CenterY="11"/>
                     </Setter.Value>
                 </Setter>
             </Style>
-            <Style x:Key="Page.Panel.Value.Increment.Text" TargetType="TextBox">
+            <Style x:Key="Panel.Value.Increment.Text" TargetType="TextBox">
                 <Setter Property="Margin" Value="0,-1,0,0"/>
                 <Setter Property="Padding" Value="0,7,0,6"/>
                 <Setter Property="TextAlignment" Value="Center"/>
                 <Setter Property="CornerRadius" Value="0"/>
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
+            </Style>
+            <Style x:Key="Footer" TargetType="TextBlock">
+                <Setter Property="Foreground" Value="#c5c5c5"/>
+                <Setter Property="TextAlignment" Value="Center"/>
             </Style>
         </ResourceDictionary>
     </Application.Resources>

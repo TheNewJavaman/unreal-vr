@@ -5,17 +5,86 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
     mc:Ignorable="d">
-    <NavigationView IsSettingsVisible="False"
-                    IsBackButtonVisible="Collapsed"
-                    ItemInvoked="NavigationView_ItemInvoked"
-                    Header="General">
-        <NavigationView.MenuItems>
-            <NavigationViewItem Content="General" Icon="Setting" x:Name="GeneralItem"/>
-            <NavigationViewItem Content="Profile" Icon="Save" x:Name="ProfileItem"/>
-        </NavigationView.MenuItems>
-        <NavigationView.FooterMenuItems>
-            <NavigationViewItem Content="About" Icon="Globe" x:Name="AboutItem"/>
-        </NavigationView.FooterMenuItems>
-        <Frame x:Name="ContentFrame"/>
-    </NavigationView>
+    <ScrollViewer  Background="#202020" >
+        <StackPanel>
+            <CommandBar Margin="17,17,17,0" MaxWidth="910" DefaultLabelPosition="Right" VerticalContentAlignment="Center">
+                <CommandBar.Content>
+                    <StackPanel>
+                        <ComboBox>
+                            <ComboBoxItem Content="Ghostrunner"/>
+                        </ComboBox>
+                    </StackPanel>
+                </CommandBar.Content>
+                <AppBarButton Icon="Play" Label="Start"/>
+                <AppBarButton Icon="Stop" Label="Stop" IsEnabled="False"/>
+                <AppBarSeparator/>
+                <AppBarButton Icon="Add" Label="New"/>
+                <AppBarButton Icon="Copy" Label="Clone"/>
+                <AppBarButton Icon="Remove" Label="Delete"/>
+                <AppBarSeparator/>
+                <AppBarButton Icon="Download" Label="Import"/>
+                <AppBarButton Icon="Upload" Label="Export"/>
+            </CommandBar>
+            <StackPanel Spacing="10" Margin="22,28,22,22" MaxWidth="900">
+                <TextBlock Style="{StaticResource Header}" Text="General"/>
+                <RelativePanel Style="{StaticResource Panel}">
+                    <StackPanel Style="{StaticResource OneLinePanel.Key}">
+                        <SymbolIcon Style="{StaticResource Panel.Key.HighIcon}" Symbol="Rename"/>
+                        <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Name"/>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Panel.Value}">
+                        <TextBox Text="Ghostrunner"/>
+                    </StackPanel>
+                </RelativePanel>
+                <RelativePanel Style="{StaticResource Panel}">
+                    <StackPanel Style="{StaticResource TwoLinePanel.Key}">
+                        <SymbolIcon Symbol="Share"/>
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Shipping Executable"/>
+                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="C:\ExampleGame\ExampleGame-Win64-Shipping.exe"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Panel.Value}">
+                        <Button Margin="0,7,0,0" Content="Select"/>
+                    </StackPanel>
+                </RelativePanel>
+                <RelativePanel Style="{StaticResource Panel}">
+                    <StackPanel Style="{StaticResource OneLinePanel.Key}">
+                        <SymbolIcon Style="{StaticResource Panel.Key.HighIcon}" Symbol="OpenPane"/>
+                        <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Command Line Arguments"/>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Panel.Value}">
+                        <TextBox Text="-dx11"/>
+                    </StackPanel>
+                </RelativePanel>
+                <TextBlock Style="{StaticResource Header}" Margin="0,24,0,0" Text="Gameplay"/>
+                <RelativePanel Style="{StaticResource Panel}">
+                    <StackPanel Style="{StaticResource OneLinePanel.Key}">
+                        <SymbolIcon Symbol="FullScreen"/>
+                        <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Panel.Value.Increment}">
+                        <Button Style="{StaticResource Panel.Value.Increment.Button}">
+                            <Button.Content>
+                                <SymbolIcon Style="{StaticResource Panel.Value.Increment.Button.Icon}" Symbol="Remove"/>
+                            </Button.Content>
+                        </Button>
+                        <TextBox Style="{StaticResource Panel.Value.Increment.Text}" Text="1.10"></TextBox>
+                        <Button Style="{StaticResource Panel.Value.Increment.Button}">
+                            <Button.Content>
+                                <SymbolIcon Style="{StaticResource Panel.Value.Increment.Button.Icon}" Symbol="Add"/>
+                            </Button.Content>
+                        </Button>
+                    </StackPanel>
+                </RelativePanel>
+                <StackPanel Margin="0,42,0,0" Spacing="1">
+                    <TextBlock Style="{StaticResource Footer}" Text="UnrealVR 0.1.0"/>
+                    <TextBlock Style="{StaticResource Footer}" Text="Adds virtual reality to flatscreen Unreal Engine games"/>
+                    <TextBlock Style="{StaticResource Footer}">
+                        <Hyperlink NavigateUri="https://github.com/TheNewJavaman/unreal-vr">github.com/TheNewJavaman/unreal-vr</Hyperlink>
+                    </TextBlock>
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
 </Window>
