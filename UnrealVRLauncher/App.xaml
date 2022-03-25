@@ -12,6 +12,7 @@
                 <Setter Property="FontSize" Value="18"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="#dddddd"/>
+                <Setter Property="Margin" Value="0,24,0,0"/>
             </Style>
             <Style x:Key="Panel" TargetType="RelativePanel">
                 <Setter Property="Background" Value="#2b2b2b"/>
@@ -41,33 +42,10 @@
             <Style x:Key="Panel.Value" TargetType="StackPanel">
                 <Setter Property="RelativePanel.AlignRightWithPanel" Value="True"/>
             </Style>
-            <Style x:Key="Panel.Value.Increment" TargetType="StackPanel" BasedOn="{StaticResource Panel.Value}">
-                <Setter Property="Orientation" Value="Horizontal"/>
-                <Setter Property="BorderBrush" Value="#383838"/>
-                <Setter Property="BorderThickness" Value="1"/>
-                <Setter Property="Background" Value="#303030"/>
-                <Setter Property="CornerRadius" Value="4"/>
-            </Style>
-            <Style x:Key="Panel.Value.Increment.Button" TargetType="Button">
-                <Setter Property="Padding" Value="4,6,4,6"/>
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="CornerRadius" Value="0"/>
-            </Style>
-            <Style x:Key="Panel.Value.Increment.Button.Icon" TargetType="SymbolIcon">
-                <Setter Property="RenderTransform">
-                    <Setter.Value>
-                        <ScaleTransform ScaleX="0.6" ScaleY="0.6" CenterX="11" CenterY="11"/>
-                    </Setter.Value>
-                </Setter>
-            </Style>
-            <Style x:Key="Panel.Value.Increment.Text" TargetType="TextBox">
-                <Setter Property="Margin" Value="0,-1,0,0"/>
-                <Setter Property="Padding" Value="0,7,0,6"/>
-                <Setter Property="TextAlignment" Value="Center"/>
-                <Setter Property="CornerRadius" Value="0"/>
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="BorderThickness" Value="0"/>
+            <Style x:Key="Panel.Value.NumberBox" TargetType="NumberBox">
+                <Setter Property="SmallChange" Value="0.01"/>
+                <Setter Property="Minimum" Value="0.001"/>
+                <Setter Property="SpinButtonPlacementMode" Value="Compact"/>
             </Style>
             <Style x:Key="Footer" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="#c5c5c5"/>
