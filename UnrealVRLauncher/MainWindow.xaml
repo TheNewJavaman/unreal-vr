@@ -11,7 +11,7 @@
             <CommandBar Margin="17,17,17,0" MaxWidth="1010" DefaultLabelPosition="Right" VerticalContentAlignment="Center">
                 <CommandBar.Content>
                     <StackPanel>
-                        <ComboBox ItemsSource="{x:Bind Profiles, Mode=OneWay}" DisplayMemberPath="Name" SelectionChanged="Profile_SelectionChanged"/>
+                        <ComboBox x:Name="ProfileSelector" ItemsSource="{x:Bind Profiles, Mode=OneWay}" DisplayMemberPath="Name" SelectionChanged="Profile_SelectionChanged"/>
                     </StackPanel>
                 </CommandBar.Content>
                 <AppBarButton Icon="Play" Label="Start" IsEnabled="{x:Bind Stopped}"/>

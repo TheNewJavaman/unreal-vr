@@ -3,7 +3,6 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Globalization.NumberFormatting;
@@ -22,16 +21,20 @@ namespace UnrealVRLauncher
             Profiles.Add(new ProfileModel("Ghostrunner", "Ghostrunner-1.json", "C:\\Ghostrunner\\Shipping.exe", "-dx11", 1.1f));
             Profiles.Add(new ProfileModel("Borderlands 3", "Borderlands 3-1.json", "C:\\Borderlands 3\\Shipping.exe", "-dx11", 1.1f));
             Profiles.Add(new ProfileModel("Astroneer", "Astroneer-1.json", "", "-dx11", 1.1f));
-            var rounder = new IncrementNumberRounder();
-            rounder.Increment = 0.001;
-            rounder.RoundingAlgorithm = RoundingAlgorithm.RoundHalfUp;
-            var formatter = new DecimalFormatter();
-            formatter.FractionDigits = 3;
-            formatter.NumberRounder = rounder;
+            var rounder = new IncrementNumberRounder
+            {
+                Increment = 0.001,
+                RoundingAlgorithm = RoundingAlgorithm.RoundHalfUp
+            };
+            var formatter = new DecimalFormatter
+            {
+                FractionDigits = 3,
+                NumberRounder = rounder
+            };
             ScaleIncrement.NumberFormatter = formatter;
         }
 
-        public ObservableCollection<ProfileModel> Profiles = new();
+        public BindingList<ProfileModel> Profiles = new();
         public bool ProfileSelected = false;
         public ProfileModel Profile;
         public string FormattedExe = DEFAULT_FORMATTED_EXE;
@@ -87,18 +90,6 @@ namespace UnrealVRLauncher
         {
             IntPtr WindowHandle { get; }
         }
-
-        private void ScaleDecrement_Click(object sender, RoutedEventArgs e)
-        {
-            Profile.CmUnitsScale -= 0.01f;
-            Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
-        }
-
-        private void ScaleIncrement_Click(object sender, RoutedEventArgs e)
-        {
-            Profile.CmUnitsScale += 0.01f;
-            Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
-        }
     }
 
     public class ProfileModel : INotifyPropertyChanged
@@ -112,7 +103,19 @@ namespace UnrealVRLauncher
             CmUnitsScale = cmUnitsScale;
         }
 
-        public string Name { get; set; } = "Untitled";
+        private string _name = "Untitled";
+        public string Name
+        {
+            get
+            {
+                return _name;
+            }
+            set
+            {
+                _name = value;
+                NotifyPropertyChanged(nameof(Name));
+            }
+        }
         public string Filename { get; set; } = "";
         public string ShippingExe { get; set; } = "";
         public string CommandLineArgs { get; set; } = "";
