@@ -1,11 +1,15 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Windows.Globalization.NumberFormatting;
+using Windows.Security.Cryptography;
+using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT;
 
@@ -13,14 +17,11 @@ namespace UnrealVRLauncher
 {
     public sealed partial class MainWindow : INotifyPropertyChanged
     {
-        public static string DEFAULT_FORMATTED_EXE = "Ex. [Game]\\Binaries\\Win64\\[Game]-Win64-Shipping.exe";
+        private const string DEFAULT_FORMATTED_EXE = "Ex. [Game]\\Binaries\\Win64\\[Game]-Win64-Shipping.exe";
 
         public MainWindow()
         {
             InitializeComponent();
-            Profiles.Add(new ProfileModel("Ghostrunner", "Ghostrunner-1.json", "C:\\Ghostrunner\\Shipping.exe", "-dx11", 1.1f));
-            Profiles.Add(new ProfileModel("Borderlands 3", "Borderlands 3-1.json", "C:\\Borderlands 3\\Shipping.exe", "-dx11", 1.1f));
-            Profiles.Add(new ProfileModel("Astroneer", "Astroneer-1.json", "", "-dx11", 1.1f));
             var rounder = new IncrementNumberRounder
             {
                 Increment = 0.001,
@@ -32,14 +33,29 @@ namespace UnrealVRLauncher
                 NumberRounder = rounder
             };
             ScaleIncrement.NumberFormatter = formatter;
+            Task.Factory.StartNew(() => GetProfiles());
         }
 
-        public BindingList<ProfileModel> Profiles = new();
-        public bool ProfileSelected = false;
-        public ProfileModel Profile;
-        public string FormattedExe = DEFAULT_FORMATTED_EXE;
-        public bool Started = false;
-        public bool Stopped = true;
+        private async void GetProfiles()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+            var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
+            var profileFiles = await profileFolder.GetFilesAsync();
+            foreach (var profileFile in profileFiles)
+            {
+                var text = await FileIO.ReadTextAsync(profileFile);
+                dynamic model = JObject.Parse(text);
+                var profile = new ProfileModel(profileFile.Name, model);
+                Profiles.Add(profile);
+            }
+        }
+
+        private BindingList<ProfileModel> Profiles = new();
+        private bool ProfileSelected = false;
+        private ProfileModel Profile;
+        private string FormattedExe = DEFAULT_FORMATTED_EXE;
+        private bool Started = false;
+        private bool Stopped = true;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -61,7 +77,7 @@ namespace UnrealVRLauncher
         }
 
         /** Credit: https://github.com/microsoft/microsoft-ui-xaml/issues/4100#issuecomment-774346918 */
-        private async void ExeSelect_Clicked(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+        private async void ExeSelect_Clicked(object sender, RoutedEventArgs e)
         {
             var filePicker = new FileOpenPicker();
             var hwnd = this.As<IWindowNative>().WindowHandle;
@@ -90,39 +106,130 @@ namespace UnrealVRLauncher
         {
             IntPtr WindowHandle { get; }
         }
+
+        private void Add_Click(object sender, RoutedEventArgs e)
+        {
+            var profile = new ProfileModel();
+            Profiles.Add(profile);
+            //ProfileSelector.SelectedItem = profile;
+        }
+
+        private void Name_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            Profile.Name = textBox.Text;
+            Profile.NotifyPropertyChanged(nameof(Profile.Name));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void Args_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var textBox = sender as TextBox;
+            Profile.CommandLineArgs = textBox.Text;
+            Profile.NotifyPropertyChanged(nameof(Profile.CommandLineArgs));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void UsesFChunkedFixedUObjectArray_Toggled(object sender, RoutedEventArgs e)
+        {
+            var toggleSwitch = sender as ToggleSwitch;
+            Profile.UsesFChunkedFixedUObjectArray = toggleSwitch.IsOn;
+            Profile.NotifyPropertyChanged(nameof(Profile.UsesFChunkedFixedUObjectArray));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void Uses422NamePool_Toggled(object sender, RoutedEventArgs e)
+        {
+            var toggleSwitch = sender as ToggleSwitch;
+            Profile.Uses422NamePool = toggleSwitch.IsOn;
+            Profile.NotifyPropertyChanged(nameof(Profile.Uses422NamePool));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void UsesFNamePool_Toggled(object sender, RoutedEventArgs e)
+        {
+            var toggleSwitch = sender as ToggleSwitch;
+            Profile.UsesFNamePool = toggleSwitch.IsOn;
+            Profile.NotifyPropertyChanged(nameof(Profile.UsesFNamePool));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void UsesDeferredSpawn_Toggled(object sender, RoutedEventArgs e)
+        {
+            var toggleSwitch = sender as ToggleSwitch;
+            Profile.UsesDeferredSpawn = toggleSwitch.IsOn;
+            Profile.NotifyPropertyChanged(nameof(Profile.UsesDeferredSpawn));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            var numberBox = sender as NumberBox;
+            Profile.CmUnitsScale = (float) numberBox.Value;
+            Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
+            Task.Factory.StartNew(() => Profile.Save());
+        }
     }
 
     public class ProfileModel : INotifyPropertyChanged
     {
-        public ProfileModel(string name, string filename, string shippingExe, string commandLineArgs, float cmUnitsScale)
+        public ProfileModel()
         {
-            Name = name;
-            Filename = filename;
-            ShippingExe = shippingExe;
-            CommandLineArgs = commandLineArgs;
-            CmUnitsScale = cmUnitsScale;
+            Filename = Guid.NewGuid().ToString() + ".json";
+            Task.Factory.StartNew(() => Save());
         }
 
+        public ProfileModel(string filename, dynamic model)
+        {
+            Filename = filename;
+            if (model._Version == 1)
+            {
+                Name = model.Name;
+                ShippingExe = model.ShippingExe;
+                CommandLineArgs = model.CommandLineArgs;
+                CmUnitsScale = model.CmUnitsScale;
+                UsesFChunkedFixedUObjectArray = model.UsesFChunkedFixedUObjectArray;
+                Uses422NamePool = model.Uses422NamePool;
+                UsesFNamePool = model.UsesFNamePool;
+                UsesDeferredSpawn = model.UsesDeferredSpawn;
+            }
+        }
+
+        public async void Save()
+        {
+            dynamic model = new
+            {
+                _Version = 1,
+                Name,
+                ShippingExe,
+                CommandLineArgs,
+                CmUnitsScale,
+                UsesFChunkedFixedUObjectArray,
+                Uses422NamePool,
+                UsesFNamePool,
+                UsesDeferredSpawn
+            };
+            string text = JsonConvert.SerializeObject(model);
+            var buffer = CryptographicBuffer.ConvertStringToBinary(text, BinaryStringEncoding.Utf8);
+            var localFolder = ApplicationData.Current.LocalFolder;
+            var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
+            var profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
+            await FileIO.WriteBufferAsync(profileFile, buffer);
+        }
+
+        public string Filename { get; set; }
         private string _name = "Untitled";
         public string Name
         {
-            get
-            {
-                return _name;
-            }
-            set
-            {
-                _name = value;
-                NotifyPropertyChanged(nameof(Name));
-            }
+            get { return _name; }
+            set { _name = value; NotifyPropertyChanged(nameof(Name)); }
         }
-        public string Filename { get; set; } = "";
         public string ShippingExe { get; set; } = "";
         public string CommandLineArgs { get; set; } = "";
         public float CmUnitsScale { get; set; } = 1.0f;
         public bool UsesFChunkedFixedUObjectArray { get; set; } = true;
-        public bool UsesFNamePool { get; set; } = true;
         public bool Uses422NamePool { get; set; } = false;
+        public bool UsesFNamePool { get; set; } = true;
         public bool UsesDeferredSpawn { get; set; } = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
