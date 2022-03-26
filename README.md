@@ -1,5 +1,5 @@
 ![](https://img.shields.io/github/license/TheNewJavaman/unreal-vr?color=blue&label=License)
-![](https://img.shields.io/badge/Flatscreen%20to%20VR--blue)
+![](https://img.shields.io/badge/Discord-Flatscreen%20to%20VR-blue)
 
 # UnrealVR
 
