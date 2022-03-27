@@ -45,7 +45,6 @@ namespace UnrealVRLauncher
             var localFolder = ApplicationData.Current.LocalFolder;
             var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
             var profileFiles = await profileFolder.GetFilesAsync();
-            var profiles = new List<ProfileModel>();
             foreach (var profileFile in profileFiles)
             {
                 var text = await FileIO.ReadTextAsync(profileFile);
@@ -72,8 +71,9 @@ namespace UnrealVRLauncher
         private bool ProfileSelected = false;
         private ProfileModel Profile;
         private string FormattedExe = DEFAULT_FORMATTED_EXE;
-        private bool Started = false;
-        private bool Stopped = true;
+        private bool running = false;
+        private bool ShowStart { get { return !running && ProfileSelected; } }
+        private bool ShowStop { get { return running && ProfileSelected; } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -89,6 +89,8 @@ namespace UnrealVRLauncher
             NotifyPropertyChanged(nameof(Profile));
             ProfileSelected = true;
             NotifyPropertyChanged(nameof(ProfileSelected));
+            NotifyPropertyChanged(nameof(ShowStart));
+            NotifyPropertyChanged(nameof(ShowStop));
             if (Profile == null) return;
             else if (Profile.ShippingExe == "") FormattedExe = DEFAULT_FORMATTED_EXE;
             else FormattedExe = Profile.ShippingExe;
@@ -138,11 +140,16 @@ namespace UnrealVRLauncher
 
         private void Name_TextChanged(object sender, TextChangedEventArgs e)
         {
-            if (Profile == null) return;
+            var profile = Profile;
+            if (profile == null) return;
             var textBox = sender as TextBox;
-            Profile.Name = textBox.Text;
-            Profile.NotifyPropertyChanged(nameof(Profile.Name));
-            Task.Factory.StartNew(() => Profile.Save());
+            profile.Name = textBox.Text;
+            profile.NotifyPropertyChanged(nameof(profile.Name));
+            Task.Factory.StartNew(() => profile.Save());
+            var newList = (new List<ProfileModel>(Profiles)).OrderBy(it => it.Name).ToList();
+            Profiles = new BindingList<ProfileModel>(newList);
+            NotifyPropertyChanged(nameof(Profiles));
+            ProfileSelector.SelectedItem = profile;
         }
 
         private void Args_TextChanged(object sender, TextChangedEventArgs e)
@@ -229,6 +236,8 @@ namespace UnrealVRLauncher
                     ProfileSelector.SelectedIndex = -1;
                     ProfileSelected = false;
                     NotifyPropertyChanged(nameof(ProfileSelected));
+                    NotifyPropertyChanged(nameof(ShowStart));
+                    NotifyPropertyChanged(nameof(ShowStop));
                     NameBox.Text = "";
                     ArgsBox.Text = "";
                     UsesFChunkedFixedUObjectArraySwitch.IsOn = false;
@@ -242,6 +251,26 @@ namespace UnrealVRLauncher
             {
                 ProfileSelector.SelectedIndex = i - 1;
             }
+        }
+
+        private async void Import_Click(object sender, RoutedEventArgs e)
+        {
+            var filePicker = new FileOpenPicker();
+            var hwnd = this.As<IWindowNative>().WindowHandle;
+            var initializeWithWindow = filePicker.As<IInitializeWithWindow>();
+            initializeWithWindow.Initialize(hwnd);
+            filePicker.FileTypeFilter.Add(".json");
+            var result = await filePicker.PickSingleFileAsync();
+            if (result == null) return;
+            var text = await FileIO.ReadTextAsync(result);
+            dynamic model = JObject.Parse(text);
+            var profile = new ProfileModel(Guid.NewGuid().ToString() + ".json", model);
+            profile.Save();
+            var newProfiles = new List<ProfileModel>(Profiles);
+            newProfiles.Add(profile);
+            Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
+            NotifyPropertyChanged(nameof(Profiles));
+            ProfileSelector.SelectedItem = profile;
         }
     }
 
