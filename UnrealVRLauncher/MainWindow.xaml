@@ -21,7 +21,7 @@
                 <AppBarButton Icon="Remove" Label="Delete" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Click="Remove_Click"/>
                 <AppBarSeparator/>
                 <AppBarButton Icon="Download" Label="Import" Click="Import_Click"/>
-                <AppBarButton Icon="Upload" Label="Export" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}"/>
+                <AppBarButton Icon="Upload" Label="Export" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Click="Export_Click"/>
             </CommandBar>
             <StackPanel Spacing="10" Margin="22,4,22,22" MaxWidth="1000">
                 <TextBlock Style="{StaticResource Header}" Text="General"/>

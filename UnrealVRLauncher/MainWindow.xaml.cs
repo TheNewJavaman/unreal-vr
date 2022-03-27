@@ -145,7 +145,7 @@ namespace UnrealVRLauncher
             var textBox = sender as TextBox;
             profile.Name = textBox.Text;
             profile.NotifyPropertyChanged(nameof(profile.Name));
-            Task.Factory.StartNew(() => profile.Save());
+            Task.Factory.StartNew(() => profile.SaveToAppData());
             var newList = (new List<ProfileModel>(Profiles)).OrderBy(it => it.Name).ToList();
             Profiles = new BindingList<ProfileModel>(newList);
             NotifyPropertyChanged(nameof(Profiles));
@@ -158,7 +158,7 @@ namespace UnrealVRLauncher
             var textBox = sender as TextBox;
             Profile.CommandLineArgs = textBox.Text;
             Profile.NotifyPropertyChanged(nameof(Profile.CommandLineArgs));
-            Task.Factory.StartNew(() => Profile.Save());
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
         }
 
         private void UsesFChunkedFixedUObjectArray_Toggled(object sender, RoutedEventArgs e)
@@ -167,7 +167,7 @@ namespace UnrealVRLauncher
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesFChunkedFixedUObjectArray = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesFChunkedFixedUObjectArray));
-            Task.Factory.StartNew(() => Profile.Save());
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
         }
 
         private void Uses422NamePool_Toggled(object sender, RoutedEventArgs e)
@@ -176,7 +176,7 @@ namespace UnrealVRLauncher
             var toggleSwitch = sender as ToggleSwitch;
             Profile.Uses422NamePool = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.Uses422NamePool));
-            Task.Factory.StartNew(() => Profile.Save());
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
         }
 
         private void UsesFNamePool_Toggled(object sender, RoutedEventArgs e)
@@ -185,7 +185,7 @@ namespace UnrealVRLauncher
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesFNamePool = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesFNamePool));
-            Task.Factory.StartNew(() => Profile.Save());
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
         }
 
         private void UsesDeferredSpawn_Toggled(object sender, RoutedEventArgs e)
@@ -194,7 +194,7 @@ namespace UnrealVRLauncher
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesDeferredSpawn = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesDeferredSpawn));
-            Task.Factory.StartNew(() => Profile.Save());
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
         }
 
         private void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
@@ -203,13 +203,13 @@ namespace UnrealVRLauncher
             var numberBox = sender as NumberBox;
             Profile.CmUnitsScale = (float)numberBox.Value;
             Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
-            Task.Factory.StartNew(() => Profile.Save());
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
         }
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
             var profile = Profile.Clone();
-            Task.Factory.StartNew(() => profile.Save());
+            Task.Factory.StartNew(() => profile.SaveToAppData());
             var newProfiles = new List<ProfileModel>(Profiles);
             newProfiles.Add(profile);
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
@@ -245,6 +245,8 @@ namespace UnrealVRLauncher
                     UsesFNamePoolSwitch.IsOn = false;
                     UsesDeferredSpawnSwitch.IsOn = false;
                     ScaleIncrement.Value = 1.0f;
+                    FormattedExe = DEFAULT_FORMATTED_EXE;
+                    NotifyPropertyChanged(nameof(FormattedExe));
                 }
             }
             else
@@ -265,12 +267,25 @@ namespace UnrealVRLauncher
             var text = await FileIO.ReadTextAsync(result);
             dynamic model = JObject.Parse(text);
             var profile = new ProfileModel(Guid.NewGuid().ToString() + ".json", model);
-            profile.Save();
+            profile.SaveToAppData();
             var newProfiles = new List<ProfileModel>(Profiles);
             newProfiles.Add(profile);
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
             ProfileSelector.SelectedItem = profile;
+        }
+
+        private async void Export_Click(object sender, RoutedEventArgs e)
+        {
+            var filePicker = new FileSavePicker();
+            var hwnd = this.As<IWindowNative>().WindowHandle;
+            var initializeWithWindow = filePicker.As<IInitializeWithWindow>();
+            initializeWithWindow.Initialize(hwnd);
+            filePicker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+            filePicker.FileTypeChoices.Add("JSON", new List<string>() { ".json" });
+            var result = await filePicker.PickSaveFileAsync();
+            if (result == null) return;
+            Profile.Save(result);
         }
     }
 
@@ -279,7 +294,7 @@ namespace UnrealVRLauncher
         public ProfileModel()
         {
             Filename = Guid.NewGuid().ToString() + ".json";
-            Task.Factory.StartNew(() => Save());
+            Task.Factory.StartNew(() => SaveToAppData());
         }
 
         public ProfileModel(string filename, dynamic model)
@@ -298,7 +313,27 @@ namespace UnrealVRLauncher
             }
         }
 
-        public async void Save()
+        public async void SaveToAppData()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+            var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
+            while (true)
+            {
+                try
+                {
+                    StorageFile profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
+                    Save(profileFile);
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine("Caught file exception: " + e);
+                    Thread.Sleep(50);
+                }
+            }
+        }
+
+        public async void Save(StorageFile profileFile)
         {
             dynamic model = new
             {
@@ -314,19 +349,17 @@ namespace UnrealVRLauncher
             };
             string text = JsonConvert.SerializeObject(model);
             var buffer = CryptographicBuffer.ConvertStringToBinary(text, BinaryStringEncoding.Utf8);
-            var localFolder = ApplicationData.Current.LocalFolder;
-            var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
             while (true)
             {
                 try
                 {
-                    StorageFile profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
                     await FileIO.WriteBufferAsync(profileFile, buffer);
                     break;
                 }
-                catch (Exception)
+                catch (Exception e)
                 {
-                    Thread.Sleep(10);
+                    Console.WriteLine("Caught file exception: " + e);
+                    Thread.Sleep(50);
                 }
             }
         }
@@ -372,9 +405,10 @@ namespace UnrealVRLauncher
                     await profileFile.DeleteAsync();
                     break;
                 }
-                catch (FileLoadException)
+                catch (Exception e)
                 {
-                    Thread.Sleep(10);
+                    Console.WriteLine("Caught file exception: " + e);
+                    Thread.Sleep(50);
                 }
             }
         }
