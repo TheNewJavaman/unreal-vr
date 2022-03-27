@@ -1,16 +1,23 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Core;
 using Windows.Globalization.NumberFormatting;
 using Windows.Security.Cryptography;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.UI.Core;
 using WinRT;
 
 namespace UnrealVRLauncher
@@ -41,12 +48,26 @@ namespace UnrealVRLauncher
             var localFolder = ApplicationData.Current.LocalFolder;
             var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
             var profileFiles = await profileFolder.GetFilesAsync();
+            var profiles = new List<ProfileModel>();
             foreach (var profileFile in profileFiles)
             {
                 var text = await FileIO.ReadTextAsync(profileFile);
                 dynamic model = JObject.Parse(text);
                 var profile = new ProfileModel(profileFile.Name, model);
-                Profiles.Add(profile);
+                var i = 0;
+                while (i < ProfileSelector.Items.Count)
+                {
+                    if (profile.Name.CompareTo(Profiles[i].Name) < 0)
+                    {
+                        Profiles.Insert(i, profile);
+                        break;
+                    }
+                    i++;
+                }
+                if (i == Profiles.Count)
+                {
+                    Profiles.Insert(i, profile);
+                }
             }
         }
 
@@ -71,6 +92,7 @@ namespace UnrealVRLauncher
             NotifyPropertyChanged(nameof(Profile));
             ProfileSelected = true;
             NotifyPropertyChanged(nameof(ProfileSelected));
+            if (Profile == null) return;
             if (Profile.ShippingExe == "") FormattedExe = DEFAULT_FORMATTED_EXE;
             else FormattedExe = Profile.ShippingExe;
             NotifyPropertyChanged(nameof(FormattedExe));
@@ -110,7 +132,10 @@ namespace UnrealVRLauncher
         private void Add_Click(object sender, RoutedEventArgs e)
         {
             var profile = new ProfileModel();
-            Profiles.Add(profile);
+            var newProfiles = new List<ProfileModel>(Profiles);
+            newProfiles.Add(profile);
+            Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
+            NotifyPropertyChanged(nameof(Profiles));
             //ProfileSelector.SelectedItem = profile;
         }
 
@@ -213,17 +238,24 @@ namespace UnrealVRLauncher
             var buffer = CryptographicBuffer.ConvertStringToBinary(text, BinaryStringEncoding.Utf8);
             var localFolder = ApplicationData.Current.LocalFolder;
             var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
-            var profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
-            await FileIO.WriteBufferAsync(profileFile, buffer);
+            StorageFile profileFile;
+            while (true)
+            {
+                try
+                {
+                    profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
+                    await FileIO.WriteBufferAsync(profileFile, buffer);
+                    break;
+                }
+                catch (FileLoadException)
+                {
+                    Thread.Sleep(10);
+                }
+            }
         }
 
         public string Filename { get; set; }
-        private string _name = "Untitled";
-        public string Name
-        {
-            get { return _name; }
-            set { _name = value; NotifyPropertyChanged(nameof(Name)); }
-        }
+        public string Name { get; set; } = "Untitled";
         public string ShippingExe { get; set; } = "";
         public string CommandLineArgs { get; set; } = "";
         public float CmUnitsScale { get; set; } = 1.0f;
