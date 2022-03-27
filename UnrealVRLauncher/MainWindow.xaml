@@ -13,8 +13,8 @@
                         <ComboBox x:Name="ProfileSelector" ItemsSource="{x:Bind Profiles, Mode=OneWay}" DisplayMemberPath="Name" SelectionChanged="Profile_SelectionChanged"/>
                     </StackPanel>
                 </CommandBar.Content>
-                <AppBarButton Icon="Play" Label="Start" IsEnabled="{x:Bind ShowStart, Mode=OneWay}"/>
-                <AppBarButton Icon="Stop" Label="Stop" IsEnabled="{x:Bind ShowStop, Mode=OneWay}"/>
+                <AppBarButton Icon="Play" Label="Start" IsEnabled="{x:Bind ShowStart, Mode=OneWay}" Click="Start_Click"/>
+                <AppBarButton Icon="Stop" Label="Stop" IsEnabled="{x:Bind ShowStop, Mode=OneWay}" Click="Stop_Click"/>
                 <AppBarSeparator/>
                 <AppBarButton Icon="Add" Label="New" Click="Add_Click"/>
                 <AppBarButton Icon="Copy" Label="Clone" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Click="Copy_Click"/>

@@ -7,8 +7,8 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="7fb36e40-5bcc-4476-8319-5b2c57c29611"
-    Publisher="CN=gpiza"
+    Name="18566GabrielPizarro.UnrealVR"
+    Publisher="CN=750AC370-BBD3-4586-9365-EDB8D93A58AA"
     Version="1.0.0.0" />
 
   <Properties>
@@ -44,6 +44,5 @@
 
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
-    <rescap:Capability Name="broadFileSystemAccess" />
   </Capabilities>
 </Package>

@@ -5,7 +5,6 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -286,6 +285,16 @@ namespace UnrealVRLauncher
             var result = await filePicker.PickSaveFileAsync();
             if (result == null) return;
             Profile.Save(result);
+        }
+
+        private void Start_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void Stop_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 
