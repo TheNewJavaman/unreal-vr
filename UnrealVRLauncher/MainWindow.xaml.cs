@@ -1,6 +1,5 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Data;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -12,12 +11,10 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Core;
 using Windows.Globalization.NumberFormatting;
 using Windows.Security.Cryptography;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.UI.Core;
 using WinRT;
 
 namespace UnrealVRLauncher
@@ -93,7 +90,7 @@ namespace UnrealVRLauncher
             ProfileSelected = true;
             NotifyPropertyChanged(nameof(ProfileSelected));
             if (Profile == null) return;
-            if (Profile.ShippingExe == "") FormattedExe = DEFAULT_FORMATTED_EXE;
+            else if (Profile.ShippingExe == "") FormattedExe = DEFAULT_FORMATTED_EXE;
             else FormattedExe = Profile.ShippingExe;
             NotifyPropertyChanged(nameof(FormattedExe));
         }
@@ -136,11 +133,12 @@ namespace UnrealVRLauncher
             newProfiles.Add(profile);
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
-            //ProfileSelector.SelectedItem = profile;
+            ProfileSelector.SelectedItem = profile;
         }
 
         private void Name_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (Profile == null) return;
             var textBox = sender as TextBox;
             Profile.Name = textBox.Text;
             Profile.NotifyPropertyChanged(nameof(Profile.Name));
@@ -149,6 +147,7 @@ namespace UnrealVRLauncher
 
         private void Args_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (Profile == null) return;
             var textBox = sender as TextBox;
             Profile.CommandLineArgs = textBox.Text;
             Profile.NotifyPropertyChanged(nameof(Profile.CommandLineArgs));
@@ -157,6 +156,7 @@ namespace UnrealVRLauncher
 
         private void UsesFChunkedFixedUObjectArray_Toggled(object sender, RoutedEventArgs e)
         {
+            if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesFChunkedFixedUObjectArray = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesFChunkedFixedUObjectArray));
@@ -165,6 +165,7 @@ namespace UnrealVRLauncher
 
         private void Uses422NamePool_Toggled(object sender, RoutedEventArgs e)
         {
+            if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.Uses422NamePool = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.Uses422NamePool));
@@ -173,6 +174,7 @@ namespace UnrealVRLauncher
 
         private void UsesFNamePool_Toggled(object sender, RoutedEventArgs e)
         {
+            if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesFNamePool = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesFNamePool));
@@ -181,6 +183,7 @@ namespace UnrealVRLauncher
 
         private void UsesDeferredSpawn_Toggled(object sender, RoutedEventArgs e)
         {
+            if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesDeferredSpawn = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesDeferredSpawn));
@@ -189,10 +192,56 @@ namespace UnrealVRLauncher
 
         private void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
         {
+            if (Profile == null) return;
             var numberBox = sender as NumberBox;
-            Profile.CmUnitsScale = (float) numberBox.Value;
+            Profile.CmUnitsScale = (float)numberBox.Value;
             Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
             Task.Factory.StartNew(() => Profile.Save());
+        }
+
+        private void Copy_Click(object sender, RoutedEventArgs e)
+        {
+            var profile = Profile.Clone();
+            Task.Factory.StartNew(() => profile.Save());
+            var newProfiles = new List<ProfileModel>(Profiles);
+            newProfiles.Add(profile);
+            Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
+            NotifyPropertyChanged(nameof(Profiles));
+            ProfileSelector.SelectedItem = profile;
+        }
+
+        private void Remove_Click(object sender, RoutedEventArgs e)
+        {
+            Task.Factory.StartNew(() => Profile.Delete());
+            var i = ProfileSelector.SelectedIndex;
+            var newList = new List<ProfileModel>(Profiles);
+            newList.RemoveAt(i);
+            Profiles = new BindingList<ProfileModel>(newList);
+            NotifyPropertyChanged(nameof(Profiles));
+            if (i == 0)
+            {
+                if (newList.Count > 0)
+                {
+                    ProfileSelector.SelectedIndex = 0;
+                }
+                else
+                {
+                    ProfileSelector.SelectedIndex = -1;
+                    ProfileSelected = false;
+                    NotifyPropertyChanged(nameof(ProfileSelected));
+                    NameBox.Text = "";
+                    ArgsBox.Text = "";
+                    UsesFChunkedFixedUObjectArraySwitch.IsOn = false;
+                    Uses422NamePoolSwitch.IsOn = false;
+                    UsesFNamePoolSwitch.IsOn = false;
+                    UsesDeferredSpawnSwitch.IsOn = false;
+                    ScaleIncrement.Value = 1.0f;
+                }
+            }
+            else
+            {
+                ProfileSelector.SelectedIndex = i - 1;
+            }
         }
     }
 
@@ -238,16 +287,15 @@ namespace UnrealVRLauncher
             var buffer = CryptographicBuffer.ConvertStringToBinary(text, BinaryStringEncoding.Utf8);
             var localFolder = ApplicationData.Current.LocalFolder;
             var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
-            StorageFile profileFile;
             while (true)
             {
                 try
                 {
-                    profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
+                    StorageFile profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
                     await FileIO.WriteBufferAsync(profileFile, buffer);
                     break;
                 }
-                catch (FileLoadException)
+                catch (Exception)
                 {
                     Thread.Sleep(10);
                 }
@@ -269,6 +317,37 @@ namespace UnrealVRLauncher
         public void NotifyPropertyChanged([CallerMemberName] string propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public ProfileModel Clone() => new()
+        {
+            Name = Name + " (Copy)",
+            ShippingExe = ShippingExe,
+            CommandLineArgs = CommandLineArgs,
+            CmUnitsScale = CmUnitsScale,
+            UsesFChunkedFixedUObjectArray = UsesFChunkedFixedUObjectArray,
+            Uses422NamePool = Uses422NamePool,
+            UsesFNamePool = UsesFNamePool,
+            UsesDeferredSpawn = UsesDeferredSpawn
+        };
+
+        public async void Delete()
+        {
+            var localFolder = ApplicationData.Current.LocalFolder;
+            var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
+            while (true)
+            {
+                try
+                {
+                    StorageFile profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.ReplaceExisting);
+                    await profileFile.DeleteAsync();
+                    break;
+                }
+                catch (FileLoadException)
+                {
+                    Thread.Sleep(10);
+                }
+            }
         }
     }
 }
