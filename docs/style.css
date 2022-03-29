@@ -73,12 +73,15 @@ a {
     width: 100%;
     flex-direction: row;
     justify-content: space-between;
+    gap: 22px;
 }
 
 .navbar-link {
     flex-direction: row;
     height: 20px;
     gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .navbar-link-icon {
@@ -89,6 +92,7 @@ a {
 .navbar-link-text {
     line-height: 20px;
     font-size: 12pt;
+    white-space: nowrap;
 }
 
 .header {
@@ -112,7 +116,7 @@ a {
 .section {
     display: grid;
     grid-template-rows: auto;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(292px, 1fr));
     gap: 22px;
 }
 
