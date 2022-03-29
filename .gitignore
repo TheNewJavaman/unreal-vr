@@ -364,3 +364,8 @@ FodyWeavers.xsd
 
 # Generated shader headers
 *Shader.h
+
+# IDEs
+.idea/
+.vs/
+.vscode/
