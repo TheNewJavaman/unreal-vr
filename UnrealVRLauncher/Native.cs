@@ -16,7 +16,7 @@ namespace UnrealVRLauncher
     {
         /** Get dwSize using Marshal.SizeOf(typeof(TYPE)) */
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
-        static extern IntPtr VirtualAllocEx(
+        public static extern IntPtr VirtualAllocEx(
             IntPtr hProcess, 
             IntPtr lpAddress,
             uint dwSize, 
@@ -56,28 +56,21 @@ namespace UnrealVRLauncher
 
         [DllImport("kernel32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
-        static extern bool CreateProcess(
+        public static extern bool CreateProcess(
             string lpApplicationName, 
             string lpCommandLine,
-            ref SECURITY_ATTRIBUTES lpProcessAttributes,
-            ref SECURITY_ATTRIBUTES lpThreadAttributes,
+            IntPtr lpProcessAttributes,
+            IntPtr lpThreadAttributes,
             bool bInheritHandles,
             uint dwCreationFlags,
             IntPtr lpEnvironment,
             string lpCurrentDirectory,
-            [In] ref STARTUPINFOEX lpStartupInfo,
+            [In] ref STARTUPINFO lpStartupInfo,
             out PROCESS_INFORMATION lpProcessInformation
         );
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        struct STARTUPINFOEX
-        {
-            public STARTUPINFO StartupInfo;
-            public IntPtr lpAttributeList;
-        }
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        struct STARTUPINFO
+        public struct STARTUPINFO
         {
             public Int32 cb;
             public string lpReserved;
@@ -100,7 +93,7 @@ namespace UnrealVRLauncher
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        internal struct PROCESS_INFORMATION
+        public struct PROCESS_INFORMATION
         {
             public IntPtr hProcess;
             public IntPtr hThread;
@@ -120,7 +113,7 @@ namespace UnrealVRLauncher
         static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll")]
-        static extern bool WriteProcessMemory(
+        public static extern bool WriteProcessMemory(
              IntPtr hProcess,
              IntPtr lpBaseAddress,
              byte[] lpBuffer,
@@ -130,7 +123,7 @@ namespace UnrealVRLauncher
 
         /** Example at https://docs.microsoft.com/en-us/archive/blogs/jmstall/using-createremotethread-from-c */
         [DllImport("kernel32.dll")]
-        static extern IntPtr CreateRemoteThread(
+        public static extern IntPtr CreateRemoteThread(
             IntPtr hProcess,
             IntPtr lpThreadAttributes,
             uint dwStackSize, 
