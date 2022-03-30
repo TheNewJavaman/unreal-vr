@@ -142,4 +142,9 @@ namespace UE4
         bool bNewAbsoluteRotation = false;
         bool bNewAbsoluteScale = false;
     };
+
+    struct GetControlRotationParams
+    {
+        FRotator Result = FRotator();
+    };
 }

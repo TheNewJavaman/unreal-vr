@@ -109,26 +109,13 @@ namespace UnrealVR
                 return;
             }
             cameraComponent = getComponentByClassParams.Result;
-
-            // Get root component (handles actor's transform)
-            USING_UOBJECT(getRootComponentFunc, UE4::UFunction, "Function Engine.Actor.K2_GetRootComponent")
-            auto getRootComponentParams = UE4::GetRootComponentParams();
-            viewTarget->ProcessEvent(getRootComponentFunc, &getRootComponentParams);
-            if (getRootComponentParams.Result == nullptr)
-            {
-                Log::Warn("[UnrealVR] Couldn't find root component in new view target");
-                return;
-            }
-
-            // Use relative transform for location, rotation, and scale
-            USING_UOBJECT(setAbsoluteFunc, UE4::UFunction, "Function Engine.SceneComponent.SetAbsolute");
-            auto setAbsoluteParams = UE4::SetAbsoluteParams();
-            getRootComponentParams.Result->ProcessEvent(setAbsoluteFunc, &setAbsoluteParams);
         }
 
         // Set new view target if needed
         if (getViewTargetParams.ViewTarget != viewTarget)
         {
+            originalViewTarget = getViewTargetParams.ViewTarget;
+
             // Attach new view target to original (follows positioning, rotation, etc.)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
@@ -154,16 +141,27 @@ namespace UnrealVR
             // Set camera component field of view
             // TODO: Should we check the FOV first?
             USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
-                UE4::SetFieldOfViewParams setFieldOfViewParams;
+            UE4::SetFieldOfViewParams setFieldOfViewParams;
             VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
             cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
             // Prevent letterboxing when setting the field of view manually
             // TODO: Do I need to set this every frame?
             USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
-                "Function Engine.CameraComponent.SetConstraintAspectRatio")
-                auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
+                          "Function Engine.CameraComponent.SetConstraintAspectRatio")
+            auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
             cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+
+            // Get control rotation
+            USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
+            auto getControlRotationParams = UE4::GetControlRotationParams();
+            playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
+
+            // Update rotation to match parent's
+            USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
+            auto setActorRotationParams = UE4::SetActorRotationParams();
+            setActorRotationParams.NewRotation = UE4::FRotator(getControlRotationParams.Result);
+            viewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
         }
     }
 
@@ -225,7 +223,7 @@ namespace UnrealVR
         mathLibrary->ProcessEvent(toRotatorFunc, &convertParams);
 
         // OpenXR's coordinate system is different from Unreal Engine's, so convert here and calculate delta rotation
-        const Vector3 newRotation = {convertParams.Result.Yaw,convertParams.Result.Yaw,convertParams.Result.Roll};
+        const Vector3 newRotation = {convertParams.Result.Yaw, convertParams.Result.Yaw, convertParams.Result.Roll};
         const Vector3 delta = newRotation - lastRotation;
         lastRotation = newRotation;
 

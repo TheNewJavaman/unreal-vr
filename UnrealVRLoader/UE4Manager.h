@@ -45,6 +45,7 @@ namespace UnrealVR
         inline static UE4::AActor* viewTarget = nullptr;
         inline static UE4::UObject* cameraComponent = nullptr;
         inline static UE4::APlayerController* playerController = nullptr;
+        inline static UE4::AActor* originalViewTarget = nullptr;
 
         /** Resize */
         inline static UE4::UObject* gameUserSettings = nullptr;
