@@ -116,9 +116,9 @@
                 </RelativePanel>
                 <StackPanel Margin="0,42,0,0" Spacing="1">
                     <TextBlock Style="{StaticResource Footer}" Text="UnrealVR 0.1.0"/>
-                    <TextBlock Style="{StaticResource Footer}" Text="Adds virtual reality to flatscreen Unreal Engine games"/>
+                    <TextBlock Style="{StaticResource Footer}" Text="Adds virtual reality support to flatscreen Unreal Engine games"/>
                     <TextBlock Style="{StaticResource Footer}">
-                        <Hyperlink NavigateUri="https://github.com/TheNewJavaman/unreal-vr">github.com/TheNewJavaman/unreal-vr</Hyperlink>
+                        <Hyperlink NavigateUri="https://unrealvr.dev">https://unrealvr.dev</Hyperlink>
                     </TextBlock>
                 </StackPanel>
             </StackPanel>

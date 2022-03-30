@@ -52,8 +52,4 @@
   <ItemGroup Condition="'$(DisableMsixProjectCapabilityAddedByProject)'!='true' and '$(EnablePreviewMsixTooling)'=='true'">
     <ProjectCapability Include="Msix" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader.vcxproj" />
-    <ProjectReference Include="..\UnrealVRLoader\UnrealVRLoader.vcxproj" />
-  </ItemGroup>
 </Project>

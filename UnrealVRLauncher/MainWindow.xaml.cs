@@ -1,5 +1,6 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,10 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using Windows.ApplicationModel;
 using Windows.Globalization.NumberFormatting;
 using Windows.Storage;
 using Windows.Storage.Pickers;
@@ -18,10 +22,11 @@ namespace UnrealVRLauncher
 {
     public sealed partial class MainWindow : INotifyPropertyChanged
     {
-        private const string DEFAULT_FORMATTED_EXE = "Ex. [Game]\\Binaries\\Win64\\[Game]-Win64-Shipping.exe";
+        private static string DEFAULT_FORMATTED_EXE = "Ex. [Game]\\Binaries\\Win64\\[Game]-Win64-Shipping.exe";
 
         public MainWindow()
         {
+            Title = "UnrealVR";
             InitializeComponent();
             var rounder = new IncrementNumberRounder
             {
@@ -45,7 +50,15 @@ namespace UnrealVRLauncher
             foreach (var profileFile in profileFiles)
             {
                 var text = await FileIO.ReadTextAsync(profileFile);
-                dynamic model = JObject.Parse(text);
+                dynamic model;
+                try
+                {
+                    model = JObject.Parse(text);
+                } catch (JsonReaderException)
+                {
+                    DispatcherQueue.TryEnqueue(() => _ = ShowError("Failed to parse game profile " + profileFile.DisplayName + "!"));
+                    continue;
+                }
                 var profile = new ProfileModel(profileFile.Name, model);
                 var i = 0;
                 while (i < ProfileSelector.Items.Count)
@@ -68,9 +81,9 @@ namespace UnrealVRLauncher
         private bool ProfileSelected = false;
         private ProfileModel Profile;
         private string FormattedExe = DEFAULT_FORMATTED_EXE;
-        private bool running = false;
-        private bool ShowStart { get { return !running && ProfileSelected; } }
-        private bool ShowStop { get { return running && ProfileSelected; } }
+        private IntPtr proc = IntPtr.Zero;
+        private bool ShowStart { get { return proc == IntPtr.Zero && ProfileSelected; } }
+        private bool ShowStop { get { return proc != IntPtr.Zero && ProfileSelected; } }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -107,6 +120,7 @@ namespace UnrealVRLauncher
             Profile.ShippingExe = result.Path;
             FormattedExe = result.Path;
             NotifyPropertyChanged(nameof(FormattedExe));
+            Profile.SaveToAppData();
         }
 
         [ComImport]
@@ -125,7 +139,7 @@ namespace UnrealVRLauncher
             IntPtr WindowHandle { get; }
         }
 
-        private void Add_Click(object sender, RoutedEventArgs e)
+        private async void Add_Click(object sender, RoutedEventArgs e)
         {
             var profile = new ProfileModel();
             var newProfiles = new List<ProfileModel>(Profiles);
@@ -207,8 +221,7 @@ namespace UnrealVRLauncher
         {
             var profile = Profile.Clone();
             Task.Factory.StartNew(() => profile.SaveToAppData());
-            var newProfiles = new List<ProfileModel>(Profiles);
-            newProfiles.Add(profile);
+            var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
             ProfileSelector.SelectedItem = profile;
@@ -262,11 +275,19 @@ namespace UnrealVRLauncher
             var result = await filePicker.PickSingleFileAsync();
             if (result == null) return;
             var text = await FileIO.ReadTextAsync(result);
-            dynamic model = JObject.Parse(text);
+            dynamic model;
+            try
+            {
+                model = JObject.Parse(text);
+            }
+            catch (JsonReaderException)
+            {
+                await ShowError("Failed to parse game profile!");
+                return;
+            }
             var profile = new ProfileModel(Guid.NewGuid().ToString() + ".json", model);
             profile.SaveToAppData();
-            var newProfiles = new List<ProfileModel>(Profiles);
-            newProfiles.Add(profile);
+            var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
             ProfileSelector.SelectedItem = profile;
@@ -285,24 +306,105 @@ namespace UnrealVRLauncher
             Profile.Save(result);
         }
 
-        private void Start_Click(object sender, RoutedEventArgs e)
+        private async void Start_Click(object sender, RoutedEventArgs e)
         {
+            await Profile.WriteUMLProfile();
             var startupInfo = new STARTUPINFO();
             startupInfo.cb = Marshal.SizeOf(startupInfo);
             var shippingDir = Profile.ShippingExe[..Profile.ShippingExe.LastIndexOf("\\")];
-            var procInfo = new PROCESS_INFORMATION();
-            if (!CreateProcess(Profile.ShippingExe, null, IntPtr.Zero, IntPtr.Zero, true, 0, IntPtr.Zero, shippingDir, ref startupInfo, out procInfo))
+            if (!CreateProcess(Profile.ShippingExe, null, IntPtr.Zero, IntPtr.Zero, true, 0, IntPtr.Zero, shippingDir, ref startupInfo, out PROCESS_INFORMATION procInfo))
             {
-                Console.WriteLine("Couldn't create process");
+                await ShowError("Failed to create game process!");
                 return;
             }
-
-
+            if (!await InjectDLL("UnrealEngineModLoader.dll", procInfo)) return;
+            if (!await InjectDLL("UnrealVRLoader.dll", procInfo)) return;
+            if (!CloseHandle(procInfo.hThread))
+            {
+                await ShowError("Failed to close process thread handle!");
+            }
+            proc = procInfo.hProcess;
+            NotifyPropertyChanged(nameof(ShowStart));
+            NotifyPropertyChanged(nameof(ShowStop));
+            //_ = Task.Factory.StartNew(CheckStopped);
         }
 
-        private void Stop_Click(object sender, RoutedEventArgs e)
+        private async Task<bool> InjectDLL(string name, PROCESS_INFORMATION procInfo)
         {
+            var installDir = Package.Current.InstalledLocation.Path;
+            var loc = VirtualAllocEx(procInfo.hProcess, IntPtr.Zero, MAX_PATH, (uint)AllocationType.Commit | (uint)AllocationType.Reserve, (uint)MemoryProtection.ReadWrite);
+            if (loc == IntPtr.Zero)
+            {
+                await ShowError("Failed to allocate memory in game process!");
+                return false;
+            }
+            var dllPath = Encoding.ASCII.GetBytes(installDir + "\\" + name);
+            if (!WriteProcessMemory(procInfo.hProcess, loc, dllPath, dllPath.Length + 1, out _))
+            {
+                await ShowError("Failed to write DLL path to memory!");
+                return false;
+            }
+            var loadLibrary = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+            var hThread = CreateRemoteThread(procInfo.hProcess, IntPtr.Zero, 0, loadLibrary, loc, 0, out _);
+            if (hThread == IntPtr.Zero)
+            {
+                await ShowError("Failed to create remote thread!");
+                return false;
+            }
+            if (!CloseHandle(hThread))
+            {
+                await ShowError("Failed to close DLL thread handle!");
+                return false;
+            }
+            return true;
+        }
 
+        private async void CheckStopped()
+        {
+            while (true)
+            {
+                if (!GetExitCodeProcess(proc, out UIntPtr lpExitCode))
+                {
+                    await ShowError("Failed to get exit code process!");
+                    return;
+                }
+                if (lpExitCode.ToUInt32() != STILL_ACTIVE)
+                {
+                    await ResetProcess();
+                    return;
+                }
+                Thread.Sleep(500);
+            }
+        }
+
+        private async void Stop_Click(object sender, RoutedEventArgs e)
+        {
+            TerminateProcess(proc, SUCCESS);
+            await ResetProcess();
+        }
+
+        private async Task ResetProcess()
+        {
+            if (!CloseHandle(proc))
+            {
+                await ShowError("Failed to close process handle!");
+            }
+            proc = IntPtr.Zero;
+            NotifyPropertyChanged(nameof(ShowStart));
+            NotifyPropertyChanged(nameof(ShowStop));
+        }
+
+        private async Task ShowError(string message, bool shouldReport = true)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Unexpected Error",
+                Content = shouldReport ? message + "\n\nPlease report this issue on GitHub." : message,
+                CloseButtonText = "Ok",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = Content.XamlRoot
+            };
+            await dialog.ShowAsync();
         }
     }
 }

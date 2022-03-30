@@ -14,6 +14,10 @@ namespace UnrealVRLauncher
      */
     public class Native
     {
+        public static uint MAX_PATH = 260;
+        public static uint STILL_ACTIVE = 259;
+        public static uint SUCCESS = 0;
+
         /** Get dwSize using Marshal.SizeOf(typeof(TYPE)) */
         [DllImport("kernel32.dll", SetLastError = true, ExactSpelling = true)]
         public static extern IntPtr VirtualAllocEx(
@@ -110,7 +114,7 @@ namespace UnrealVRLauncher
         }
 
         [DllImport("kernel32.dll", SetLastError = true)]
-        static extern bool CloseHandle(IntPtr hObject);
+        public static extern bool CloseHandle(IntPtr hObject);
 
         [DllImport("kernel32.dll")]
         public static extern bool WriteProcessMemory(
@@ -132,5 +136,19 @@ namespace UnrealVRLauncher
             uint dwCreationFlags,
             out IntPtr lpThreadId
         );
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("kernel32.dll")]
+        public static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetExitCodeProcess(IntPtr hProcess, out UIntPtr lpExitCode);
+
+        [DllImport("kernel32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool TerminateProcess(IntPtr hProcess, uint uExitCode);
     }
 }

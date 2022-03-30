@@ -125,9 +125,21 @@ namespace UE4
 
     struct QuatRotatorParams
     {
-        QuatRotatorParams(const FQuat q) : Q(q) {}
+        QuatRotatorParams(FQuat q) : Q(q) {}
         
-        const FQuat& Q;
+        FQuat& Q;
         FRotator Result = FRotator();
+    };
+
+    struct GetRootComponentParams
+    {
+        UObject* Result = nullptr;
+    };
+
+    struct SetAbsoluteParams
+    {
+        bool bNewAbsoluteLocation = false;
+        bool bNewAbsoluteRotation = false;
+        bool bNewAbsoluteScale = false;
     };
 }

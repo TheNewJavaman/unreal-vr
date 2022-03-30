@@ -109,6 +109,21 @@ namespace UnrealVR
                 return;
             }
             cameraComponent = getComponentByClassParams.Result;
+
+            // Get root component (handles actor's transform)
+            USING_UOBJECT(getRootComponentFunc, UE4::UFunction, "Function Engine.Actor.K2_GetRootComponent")
+            auto getRootComponentParams = UE4::GetRootComponentParams();
+            viewTarget->ProcessEvent(getRootComponentFunc, &getRootComponentParams);
+            if (getRootComponentParams.Result == nullptr)
+            {
+                Log::Warn("[UnrealVR] Couldn't find root component in new view target");
+                return;
+            }
+
+            // Use relative transform for location, rotation, and scale
+            USING_UOBJECT(setAbsoluteFunc, UE4::UFunction, "Function Engine.SceneComponent.SetAbsolute");
+            auto setAbsoluteParams = UE4::SetAbsoluteParams();
+            getRootComponentParams.Result->ProcessEvent(setAbsoluteFunc, &setAbsoluteParams);
         }
 
         // Set new view target if needed
@@ -133,19 +148,23 @@ namespace UnrealVR
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
 
-        // Set camera component field of view
-        // TODO: Should we check the FOV first?
-        USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
-        UE4::SetFieldOfViewParams setFieldOfViewParams;
-        VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
-        cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
+        // Adjust camera settings as necessary
+        if (viewTarget != nullptr)
+        {
+            // Set camera component field of view
+            // TODO: Should we check the FOV first?
+            USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
+                UE4::SetFieldOfViewParams setFieldOfViewParams;
+            VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
+            cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
-        // Prevent letterboxing when setting the field of view manually
-        // TODO: Do I need to set this every frame?
-        USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
-                      "Function Engine.CameraComponent.SetConstraintAspectRatio")
-        auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
-        cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+            // Prevent letterboxing when setting the field of view manually
+            // TODO: Do I need to set this every frame?
+            USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
+                "Function Engine.CameraComponent.SetConstraintAspectRatio")
+                auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
+            cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+        }
     }
 
     void UE4Manager::Resize()

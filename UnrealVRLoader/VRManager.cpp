@@ -288,7 +288,7 @@ namespace UnrealVR
                 fovLogged = true;
             }
             auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-            UE4Manager::AddWorldRotation(Vector4(qx, qy, qz, qw));
+            //UE4Manager::AddWorldRotation(Vector4(qx, qy, qz, qw));
             xrProjectionViews.at(0).subImage.swapchain = xrSwapChains.at(0);
             xrProjectionViews.at(0).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(0).subImage.imageRect.extent = {

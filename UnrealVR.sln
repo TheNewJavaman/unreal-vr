@@ -15,6 +15,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnrealVRLauncher", "UnrealVRLauncher\UnrealVRLauncher.csproj", "{F8C4A549-E621-4AA5-A8ED-8C2C12250C79}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D6615132-07AE-494B-91B0-84C8BD5EFF23} = {D6615132-07AE-494B-91B0-84C8BD5EFF23}
+		{DE3BC2AD-2683-4D76-AD72-95D98164E9C7} = {DE3BC2AD-2683-4D76-AD72-95D98164E9C7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

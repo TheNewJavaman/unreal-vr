@@ -16,6 +16,7 @@ namespace UnrealVR
 
     DWORD __stdcall Loader::InitThread(LPVOID)
     {
+        Sleep(10'000);
         UE4::InitSDK();
         if (!VRManager::Init())
         {
