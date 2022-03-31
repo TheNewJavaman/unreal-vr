@@ -307,7 +307,7 @@ namespace UnrealVR
             xr = xrReleaseSwapchainImage(xrSwapChains.at(0), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image")
             LastEyeShown = Eye::Left;
-            UE4Manager::AddRelativeLocation({0.0f, 6.35f, 0.0f});
+            UE4Manager::SetRelativeLocation({0.0f, 3.175f, 0.0f});
         }
         else
         {
@@ -344,7 +344,7 @@ namespace UnrealVR
             xr = xrEndFrame(xrSession, &endInfo);
             CHECK_XR(xr, "Could not end OpenXR frame")
             LastEyeShown = Eye::Right;
-            UE4Manager::AddRelativeLocation({0.0f, -6.35f, 0.0f});
+            UE4Manager::SetRelativeLocation({0.0f, -3.175f, 0.0f});
         }
         return true;
     }

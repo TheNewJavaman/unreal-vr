@@ -26,7 +26,7 @@ namespace UnrealVR
          *
          * TODO: Support scaling the offset in case the game's units do not match real-world centimeters
          */
-        static void AddRelativeLocation(Vector3 relativeLocation);
+        static void SetRelativeLocation(Vector3 relativeLocation);
 
         /** Adds a rotational offset, relative to the world */
         static void AddWorldRotation(Vector4 quat);

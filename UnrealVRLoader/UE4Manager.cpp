@@ -126,7 +126,7 @@ namespace UnrealVR
             // TODO: Use world offset, not relative offset
             const auto a = getViewTargetParams.ViewTarget->GetActorLocation();
             const auto b = viewTarget->GetActorLocation();
-            AddRelativeLocation(Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z));
+            SetRelativeLocation(Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z));
 
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
@@ -143,6 +143,7 @@ namespace UnrealVR
             USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
             UE4::SetFieldOfViewParams setFieldOfViewParams;
             VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
+            setFieldOfViewParams.InFieldOfView = 170.0f;
             cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
             // Prevent letterboxing when setting the field of view manually
@@ -203,10 +204,10 @@ namespace UnrealVR
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
 
-    void UE4Manager::AddRelativeLocation(const Vector3 relativeLocation)
+    void UE4Manager::SetRelativeLocation(const Vector3 relativeLocation)
     {
         if (viewTarget == nullptr) return;
-        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
+        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto params = UE4::AddActorLocalOffsetParams();
         params.DeltaLocation = UE4::FVector(relativeLocation.X, relativeLocation.Y, relativeLocation.Z);
         viewTarget->ProcessEvent(func, &params);
