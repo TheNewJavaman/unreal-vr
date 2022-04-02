@@ -177,3 +177,7 @@ img {
     min-height: 250px;
     flex-grow: 1;
 }
+
+.bottom {
+    padding-bottom: 22px;
+}
