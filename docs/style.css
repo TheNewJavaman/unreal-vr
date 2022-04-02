@@ -21,6 +21,10 @@ a {
     text-decoration: none;
 }
 
+img {
+    max-width: 100%;
+}
+
 .material-icons {
     color: white;
 }
@@ -67,6 +71,7 @@ a {
     max-width: 1200px;
     width: calc(100% - 44px);
     flex-direction: column;
+    gap: 25px;
 }
 
 .navbar {
@@ -99,8 +104,8 @@ a {
     flex-direction: column;
     text-align: center;
     gap: 10px;
-    margin-top: 90px;
-    margin-bottom: 90px;
+    margin-top: 60px;
+    margin-bottom: 60px;
 }
 
 .header-header {
@@ -136,6 +141,7 @@ a {
     padding: 18px 22px 18px 22px;
     border-radius: 5px;
     gap: 22px;
+    flex-grow: 1;
 }
 
 .section-item-icon {
@@ -162,15 +168,12 @@ a {
     font-size: 11pt;
 }
 
-.preview {
-    padding-top: 22px;
-    padding-bottom: 22px;
-    flex-direction: column;
-    gap: 10px;
+.section-preview {
+    border-radius: 5px;
+    overflow: hidden;
 }
 
-.preview img {
-    max-width: 100%;
-    border-radius: 5px;
-    border: 2px solid #2b2b2b;
+.section-preview-discord {
+    min-height: 250px;
+    flex-grow: 1;
 }
