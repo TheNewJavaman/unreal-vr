@@ -115,9 +115,9 @@ namespace UE4
         EWindowMode::Type InFullscreenMode = EWindowMode::Fullscreen;
     };
 
-    struct AddActorWorldRotationParams
+    struct SetActorRelativeRotationParams
     {
-        FRotator DeltaRotation = FRotator();
+        FRotator NewRelativeRotation = FRotator();
         bool bSweep = false;
         void* SweepHitResult = nullptr;
         bool bTeleport = true;
@@ -125,9 +125,7 @@ namespace UE4
 
     struct QuatRotatorParams
     {
-        QuatRotatorParams(FQuat q) : Q(q) {}
-        
-        FQuat& Q;
+        FQuat Q = FQuat();
         FRotator Result = FRotator();
     };
 
@@ -146,5 +144,17 @@ namespace UE4
     struct GetControlRotationParams
     {
         FRotator Result = FRotator();
+    };
+
+    struct GetPlayerCameraManagerParams
+    {
+        UObject* WorldContextObject = nullptr;
+        int PlayerIndex = 0;
+        UObject* Result = nullptr;
+    };
+
+    struct GetCameraLocationParams
+    {
+        FVector Result = FVector();
     };
 }

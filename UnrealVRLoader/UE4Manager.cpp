@@ -45,6 +45,9 @@ namespace UnrealVR
         gameUserSettings = nullptr;
         playerController = nullptr;
         viewTarget = nullptr;
+        originalViewTarget = nullptr;
+        playerCameraManager = nullptr;
+        viewTargetOffset = UE4::FVector();
     }
 
     void UE4Manager::SetViewTarget()
@@ -116,6 +119,24 @@ namespace UnrealVR
         {
             originalViewTarget = getViewTargetParams.ViewTarget;
 
+            // Get player camera manager if needed
+            if (playerCameraManager == nullptr)
+            {
+                USING_UOBJECT(defaultGameplayStatics, UE4::UClass, "GameplayStatics Engine.Default__GameplayStatics")
+                USING_UOBJECT(getPlayerCameraManagerFunc, UE4::UFunction,
+                              "Function Engine.GameplayStatics.GetPlayerCameraManager")
+                auto getPlayerCameraManagerParams = UE4::GetPlayerCameraManagerParams();
+                getPlayerCameraManagerParams.WorldContextObject = originalViewTarget;
+                defaultGameplayStatics->ProcessEvent(getPlayerCameraManagerFunc, &getPlayerCameraManagerParams);
+                playerCameraManager = getPlayerCameraManagerParams.Result;
+            }
+
+            // Get original effective camera location
+            USING_UOBJECT(getCameraLocationFunc, UE4::UFunction,
+                          "Function Engine.PlayerCameraManager.GetCameraLocation")
+            auto getCameraLocationParams = UE4::GetCameraLocationParams();
+            playerCameraManager->ProcessEvent(getCameraLocationFunc, &getCameraLocationParams);
+
             // Attach new view target to original (follows positioning, rotation, etc.)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
@@ -123,10 +144,9 @@ namespace UnrealVR
             viewTarget->ProcessEvent(attachToActorFunc, &attachParams);
 
             // Adjust new view target to match the eyeline of the previous view target
-            // TODO: Use world offset, not relative offset
-            const auto a = getViewTargetParams.ViewTarget->GetActorLocation();
+            const auto a = getCameraLocationParams.Result;
             const auto b = viewTarget->GetActorLocation();
-            SetRelativeLocation(Vector3(a.X - b.X, a.Y - b.Y, a.Z - b.Z));
+            //viewTargetOffset = UE4::FVector(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
 
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
@@ -143,7 +163,7 @@ namespace UnrealVR
             USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
             UE4::SetFieldOfViewParams setFieldOfViewParams;
             VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
-            setFieldOfViewParams.InFieldOfView = 170.0f;
+            setFieldOfViewParams.InFieldOfView = 160.0f;
             cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
             // Prevent letterboxing when setting the field of view manually
@@ -204,34 +224,38 @@ namespace UnrealVR
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
 
-    void UE4Manager::SetRelativeLocation(const Vector3 relativeLocation)
+    void UE4Manager::SetRelativeLocation(const UE4::FVector relativeLocation)
     {
         if (viewTarget == nullptr) return;
         USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto params = UE4::AddActorLocalOffsetParams();
-        params.DeltaLocation = UE4::FVector(relativeLocation.X, relativeLocation.Y, relativeLocation.Z);
+        params.DeltaLocation = UE4::FVector(
+            relativeLocation.X + viewTargetOffset.X,
+            relativeLocation.Y + viewTargetOffset.Y,
+            relativeLocation.Z + viewTargetOffset.Z
+        );
         viewTarget->ProcessEvent(func, &params);
     }
 
-    void UE4Manager::AddWorldRotation(const Vector4 quat)
+    void UE4Manager::SetRelativeRotation(const UE4::FQuat quat)
     {
         if (viewTarget == nullptr) return;
 
         // Convert the quaternion to a rotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(toRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
-        auto convertParams = UE4::QuatRotatorParams(UE4::FQuat(quat.X, quat.Y, quat.Z, quat.W));
-        mathLibrary->ProcessEvent(toRotatorFunc, &convertParams);
-
-        // OpenXR's coordinate system is different from Unreal Engine's, so convert here and calculate delta rotation
-        const Vector3 newRotation = {convertParams.Result.Yaw, convertParams.Result.Yaw, convertParams.Result.Roll};
-        const Vector3 delta = newRotation - lastRotation;
-        lastRotation = newRotation;
+        auto toRotatorParams = UE4::QuatRotatorParams();
+        toRotatorParams.Q = quat;
+        mathLibrary->ProcessEvent(toRotatorFunc, &toRotatorParams);
 
         // Add the delta rotation to the view target
-        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldRotation")
-        auto params = UE4::AddActorWorldRotationParams();
-        params.DeltaRotation = UE4::FRotator(delta.X, delta.Y, delta.Z);
+        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeRotation")
+        auto params = UE4::SetActorRelativeRotationParams();
+        params.NewRelativeRotation = UE4::FRotator(
+            -toRotatorParams.Result.Roll,
+            toRotatorParams.Result.Pitch,
+            -toRotatorParams.Result.Yaw
+        );
         viewTarget->ProcessEvent(func, &params);
     }
 }

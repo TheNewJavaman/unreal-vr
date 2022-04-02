@@ -45,7 +45,7 @@ namespace UnrealVRLauncher
         private async void GetProfiles()
         {
             var localFolder = ApplicationData.Current.LocalFolder;
-            var profileFolder = await localFolder.CreateFolderAsync("profiles", CreationCollisionOption.OpenIfExists);
+            var profileFolder = await localFolder.CreateFolderAsync("UnrealVRProfiles", CreationCollisionOption.OpenIfExists);
             var profileFiles = await profileFolder.GetFilesAsync();
             foreach (var profileFile in profileFiles)
             {

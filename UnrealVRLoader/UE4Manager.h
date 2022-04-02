@@ -3,9 +3,6 @@
 #include <map>
 #include <Ue4.hpp>
 
-#include "Vector3.h"
-#include "Vector4.h"
-
 namespace UnrealVR
 {
     class UE4Manager
@@ -26,11 +23,10 @@ namespace UnrealVR
          *
          * TODO: Support scaling the offset in case the game's units do not match real-world centimeters
          */
-        static void SetRelativeLocation(Vector3 relativeLocation);
+        static void SetRelativeLocation(UE4::FVector relativeLocation);
 
         /** Adds a rotational offset, relative to the world */
-        static void AddWorldRotation(Vector4 quat);
-        inline static Vector3 lastRotation = Vector3();
+        static void SetRelativeRotation(UE4::FQuat quat);
         
     private:
         /** Map of cached (static) UObjects */
@@ -46,7 +42,9 @@ namespace UnrealVR
         inline static UE4::UObject* cameraComponent = nullptr;
         inline static UE4::APlayerController* playerController = nullptr;
         inline static UE4::AActor* originalViewTarget = nullptr;
-
+        inline static UE4::UObject* playerCameraManager = nullptr;
+        inline static UE4::FVector viewTargetOffset = UE4::FVector();
+        
         /** Resize */
         inline static UE4::UObject* gameUserSettings = nullptr;
     };

@@ -288,7 +288,7 @@ namespace UnrealVR
                 fovLogged = true;
             }
             auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-            //UE4Manager::AddWorldRotation(Vector4(qx, qy, qz, qw));
+            UE4Manager::SetRelativeRotation({qx, qy, qz, qw});
             xrProjectionViews.at(0).subImage.swapchain = xrSwapChains.at(0);
             xrProjectionViews.at(0).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(0).subImage.imageRect.extent = {
@@ -324,6 +324,8 @@ namespace UnrealVR
             xrProjectionViews.at(1) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
             xrProjectionViews.at(1).pose = xrViews.at(1).pose;
             xrProjectionViews.at(1).fov = xrViews.at(1).fov;
+            auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
+            UE4Manager::SetRelativeRotation({qx, qy, qz, qw});
             xrProjectionViews.at(1).subImage.swapchain = xrSwapChains.at(1);
             xrProjectionViews.at(1).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(1).subImage.imageRect.extent = {
