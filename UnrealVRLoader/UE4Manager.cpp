@@ -9,22 +9,31 @@
 #define USING_UOBJECT(ptr, T, name) \
     T* ptr; \
     if (!GetUObject<T>(&(ptr), name)) return;
+#define ASSERT(var, name) \
+    if ((var) == nullptr) \
+    { \
+        Log::Warn("[UnrealVR] Couldn't find %s", name); \
+        return; \
+    }
+#define ASSERT_ASSIGN(src, dst) \
+    ASSERT(src, #dst) \
+    (dst) = src;
 
 namespace UnrealVR
 {
     template <class T>
     bool UE4Manager::GetUObject(T** ptr, std::string name)
     {
-        const auto cached = uobjects.find(name);
-        if (cached == uobjects.end())
+        const auto cached = uObjects.find(name);
+        if (cached == uObjects.end())
         {
             auto found = UE4::UObject::FindObject<T>(name);
             if (found == nullptr)
             {
-                Log::Warn(std::format("[UnrealVR] Couldn't find ({})", name));
+                Log::Warn("[UnrealVR] Couldn't find %s", name);
                 return false;
             }
-            uobjects.insert(std::pair(name, found));
+            uObjects.insert(std::pair(name, found));
             *ptr = found;
         }
         else
@@ -42,42 +51,36 @@ namespace UnrealVR
     void UE4Manager::BeginPlaySingleCallback()
     {
         Resize();
-        gameUserSettings = nullptr;
         playerController = nullptr;
-        viewTarget = nullptr;
-        originalViewTarget = nullptr;
-        playerCameraManager = nullptr;
-        viewTargetOffset = UE4::FVector();
+        vrViewTarget = nullptr;
+        cameraComponent = nullptr;
     }
 
     void UE4Manager::SetViewTarget()
     {
         // Get player controller
-        if (playerController == nullptr)
-        {
-            playerController = UE4::UGameplayStatics::GetPlayerController(0);
-            if (playerController == nullptr)
-            {
-                Log::Error("[UnrealVR] Couldn't find PlayerController(0)");
-                return;
-            }
-        }
+        USING_UOBJECT(gameplayStatics, UE4::UObject, "GameplayStatics Engine.Default__GameplayStatics")
+        USING_UOBJECT(getPlayerControllerFunc, UE4::UFunction, "Function Engine.GameplayStatics.GetPlayerController")
+        auto getPlayerControllerParams = UE4::GetPlayerControllerParams();
+        getPlayerControllerParams.WorldContextObject = UE4::UWorld::GetWorld();
+        gameplayStatics->ProcessEvent(getPlayerControllerFunc, &getPlayerControllerParams);
+        ASSERT_ASSIGN(getPlayerControllerParams.Result, playerController)
 
-        // Get original view target
+        // Get old view target
         USING_UOBJECT(getViewTargetFunc, UE4::UFunction, "Function Engine.Controller.GetViewTarget")
         auto getViewTargetParams = UE4::GetViewTargetParams();
         playerController->ProcessEvent(getViewTargetFunc, &getViewTargetParams);
-        if (getViewTargetParams.ViewTarget == nullptr) return;
+        UE4::AActor* currentViewTarget;
+        ASSERT_ASSIGN(getViewTargetParams.ViewTarget, currentViewTarget)
 
-        // Spawn new view target if nonexistent
-        if (viewTarget == nullptr)
+        if (vrViewTarget == nullptr)
         {
-            // Spawn the view target actor
-            USING_UOBJECT(cameraActorActorClass, UE4::UClass, "Class Engine.CameraActor")
+            // Spawn new view target
+            USING_UOBJECT(cameraActorClass, UE4::UClass, "Class Engine.CameraActor")
             if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn)
             {
-                viewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
-                    cameraActorActorClass,
+                vrViewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
+                    cameraActorClass,
                     UE4::FTransform(),
                     UE4::ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
                     nullptr
@@ -87,138 +90,92 @@ namespace UnrealVR
             {
                 const auto transform = UE4::FTransform();
                 const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
-                viewTarget = UE4::UWorld::GetWorld()->SpawnActor(
-                    cameraActorActorClass,
+                vrViewTarget = UE4::UWorld::GetWorld()->SpawnActor(
+                    cameraActorClass,
                     &transform,
                     &params
                 );
             }
-            if (viewTarget == nullptr)
-            {
-                Log::Warn("[UnrealVR] Couldn't spawn view target actor");
-                return;
-            }
-            Log::Info("[UnrealVR] Spawned new view target");
 
-            // Get camera component from new view target actor
+            // Get camera component
             USING_UOBJECT(getComponentByClassFunc, UE4::UFunction, "Function Engine.Actor.GetComponentByClass")
             auto getComponentByClassParams = UE4::GetComponentByClassParams();
             USING_UOBJECT(cameraComponentClass, UE4::UClass, "Class Engine.CameraComponent")
             getComponentByClassParams.ComponentClass = cameraComponentClass;
-            viewTarget->ProcessEvent(getComponentByClassFunc, &getComponentByClassParams);
-            if (getComponentByClassParams.Result == nullptr)
-            {
-                Log::Warn("[UnrealVR] Couldn't find camera component in new view target");
-                return;
-            }
-            cameraComponent = getComponentByClassParams.Result;
+            vrViewTarget->ProcessEvent(getComponentByClassFunc, &getComponentByClassParams);
+            ASSERT_ASSIGN(getComponentByClassParams.Result, cameraComponent)
         }
 
-        // Set new view target if needed
-        if (getViewTargetParams.ViewTarget != viewTarget)
+        if (currentViewTarget != vrViewTarget)
         {
-            originalViewTarget = getViewTargetParams.ViewTarget;
-
-            // Get player camera manager if needed
-            if (playerCameraManager == nullptr)
-            {
-                USING_UOBJECT(defaultGameplayStatics, UE4::UClass, "GameplayStatics Engine.Default__GameplayStatics")
-                USING_UOBJECT(getPlayerCameraManagerFunc, UE4::UFunction,
-                              "Function Engine.GameplayStatics.GetPlayerCameraManager")
-                auto getPlayerCameraManagerParams = UE4::GetPlayerCameraManagerParams();
-                getPlayerCameraManagerParams.WorldContextObject = originalViewTarget;
-                defaultGameplayStatics->ProcessEvent(getPlayerCameraManagerFunc, &getPlayerCameraManagerParams);
-                playerCameraManager = getPlayerCameraManagerParams.Result;
-            }
-
-            // Get original effective camera location
-            USING_UOBJECT(getCameraLocationFunc, UE4::UFunction,
-                          "Function Engine.PlayerCameraManager.GetCameraLocation")
-            auto getCameraLocationParams = UE4::GetCameraLocationParams();
-            playerCameraManager->ProcessEvent(getCameraLocationFunc, &getCameraLocationParams);
-
-            // Attach new view target to original (follows positioning, rotation, etc.)
+            // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
-            attachParams.ParentActor = getViewTargetParams.ViewTarget;
-            viewTarget->ProcessEvent(attachToActorFunc, &attachParams);
-
-            // Adjust new view target to match the eyeline of the previous view target
-            const auto a = getCameraLocationParams.Result;
-            const auto b = viewTarget->GetActorLocation();
-            //viewTargetOffset = UE4::FVector(a.X - b.X, a.Y - b.Y, a.Z - b.Z);
+            attachParams.ParentActor = currentViewTarget;
+            vrViewTarget->ProcessEvent(attachToActorFunc, &attachParams);
 
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
-            setViewTargetParams.NewViewTarget = viewTarget;
+            setViewTargetParams.NewViewTarget = vrViewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
 
-        // Adjust camera settings as necessary
-        if (viewTarget != nullptr)
-        {
-            // Set camera component field of view
-            // TODO: Should we check the FOV first?
-            USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
-            UE4::SetFieldOfViewParams setFieldOfViewParams;
-            VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
-            setFieldOfViewParams.InFieldOfView = 160.0f;
-            cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
+        // Set field of view
+        // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
+        USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
+        UE4::SetFieldOfViewParams setFieldOfViewParams;
+        VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
+        setFieldOfViewParams.InFieldOfView = VRManager::FOV * 16.0f / 9.0f;
+        cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
-            // Prevent letterboxing when setting the field of view manually
-            // TODO: Do I need to set this every frame?
-            USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
-                          "Function Engine.CameraComponent.SetConstraintAspectRatio")
-            auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
-            cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+        // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
+        USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
+                      "Function Engine.CameraComponent.SetConstraintAspectRatio")
+        auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
+        cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
 
-            // Get control rotation
-            USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
-            auto getControlRotationParams = UE4::GetControlRotationParams();
-            playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
+        // Get control rotation
+        USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
+        auto getControlRotationParams = UE4::GetControlRotationParams();
+        playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
 
-            // Update rotation to match parent's
-            USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
-            auto setActorRotationParams = UE4::SetActorRotationParams();
-            setActorRotationParams.NewRotation = UE4::FRotator(getControlRotationParams.Result);
-            viewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
-        }
+        // Update rotation to match parent's
+        USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
+        auto setActorRotationParams = UE4::SetActorRotationParams();
+        setActorRotationParams.NewRotation = UE4::FRotator(getControlRotationParams.Result);
+        vrViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
     }
 
     void UE4Manager::Resize()
     {
-        // Get VR resolution
-        uint32_t width, height;
-        VRManager::GetRecommendedResolution(&width, &height);
-
-        // Get default instance of settings
+        // Get local settings
         USING_UOBJECT(defaultGameUserSettings, UE4::UObject, "GameUserSettings Engine.Default__GameUserSettings")
-
-        // Call static function on default instance to get the actual local settings
         USING_UOBJECT(getGameUserSettingsFunc, UE4::UFunction, "Function Engine.GameUserSettings.GetGameUserSettings")
         auto getGameUserSettingsParams = UE4::GetGameUserSettingsParams();
         defaultGameUserSettings->ProcessEvent(getGameUserSettingsFunc, &getGameUserSettingsParams);
-        gameUserSettings = getGameUserSettingsParams.Result;
+        ASSERT_ASSIGN(getGameUserSettingsParams.Result, gameUserSettings)
 
         // Set the resolution
+        uint32_t width, height;
+        VRManager::GetRecommendedResolution(&width, &height);
         USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
-        UE4::SetScreenResolutionParams setResParams;
-        setResParams.Resolution.X = static_cast<int>(width);
-        setResParams.Resolution.Y = static_cast<int>(height);
-        gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setResParams);
+        UE4::SetScreenResolutionParams setScreenResolutionParams;
+        setScreenResolutionParams.Resolution.X = static_cast<int>(width);
+        setScreenResolutionParams.Resolution.Y = static_cast<int>(height);
+        gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setScreenResolutionParams);
 
         // Set to fullscreen mode for better performance
         USING_UOBJECT(setFullscreenModeFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetFullscreenMode")
-        auto setModeParams = UE4::SetFullscreenModeParams();
-        gameUserSettings->ProcessEvent(setFullscreenModeFunc, &setModeParams);
+        auto setFullscreenModeParams = UE4::SetFullscreenModeParams();
+        gameUserSettings->ProcessEvent(setFullscreenModeFunc, &setFullscreenModeParams);
 
         // Apply the resolution changes
         // TODO: Does this need to be run every BeginPlaySingle?
         USING_UOBJECT(applyResolutionSettingsFunc, UE4::UFunction,
                       "Function Engine.GameUserSettings.ApplyResolutionSettings")
-        auto applyParams = UE4::ApplyResolutionSettingsParams();
-        gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyParams);
+        auto applyResolutionSettingsParams = UE4::ApplyResolutionSettingsParams();
+        gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyResolutionSettingsParams);
 
         Resized = true;
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
@@ -226,20 +183,18 @@ namespace UnrealVR
 
     void UE4Manager::SetRelativeLocation(const UE4::FVector relativeLocation)
     {
-        if (viewTarget == nullptr) return;
-        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
-        auto params = UE4::AddActorLocalOffsetParams();
-        params.DeltaLocation = UE4::FVector(
-            relativeLocation.X + viewTargetOffset.X,
-            relativeLocation.Y + viewTargetOffset.Y,
-            relativeLocation.Z + viewTargetOffset.Z
-        );
-        viewTarget->ProcessEvent(func, &params);
+        if (vrViewTarget == nullptr) return;
+
+        // Set the view target's relative location
+        USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
+        auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
+        setActorRelativeLocationParams.RelativeLocation = relativeLocation;
+        vrViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
     }
 
     void UE4Manager::SetRelativeRotation(const UE4::FQuat quat)
     {
-        if (viewTarget == nullptr) return;
+        if (vrViewTarget == nullptr) return;
 
         // Convert the quaternion to a rotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
@@ -248,14 +203,47 @@ namespace UnrealVR
         toRotatorParams.Q = quat;
         mathLibrary->ProcessEvent(toRotatorFunc, &toRotatorParams);
 
-        // Add the delta rotation to the view target
-        USING_UOBJECT(func, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeRotation")
-        auto params = UE4::SetActorRelativeRotationParams();
-        params.NewRelativeRotation = UE4::FRotator(
+        // Fix the axis assignments (OpenXR and Unreal Engine use different axis orientations)
+        const auto newRotation = UE4::FRotator(
             -toRotatorParams.Result.Roll,
             toRotatorParams.Result.Pitch,
             -toRotatorParams.Result.Yaw
         );
-        viewTarget->ProcessEvent(func, &params);
+
+        // Get control rotation
+        USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
+        auto getControlRotationParams = UE4::GetControlRotationParams();
+        playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
+
+        // Compose rotation
+        // TODO: Allow configurable axis rotations; default is great for FPS games
+        USING_UOBJECT(composeRotatorsFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.ComposeRotators")
+        auto composeRotatorsParams = UE4::ComposeRotatorsParams();
+        composeRotatorsParams.A = UE4::FRotator(
+            0.0f,
+            getControlRotationParams.Result.Yaw,
+            getControlRotationParams.Result.Roll
+        );
+        composeRotatorsParams.B = UE4::FRotator(
+            newRotation.Pitch,
+            newRotation.Yaw - lastRotation.Yaw,
+            newRotation.Roll - lastRotation.Roll
+        );
+        mathLibrary->ProcessEvent(composeRotatorsFunc, &composeRotatorsParams);
+
+        // Set control rotation
+        USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
+        UE4::SetControlRotationParams setControlRotationParams;
+        setControlRotationParams.NewRotation = composeRotatorsParams.Result;
+        playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
+        lastRotation = newRotation;
+    }
+
+    float UE4Manager::Normalize(const float a)
+    {
+        float b = a;
+        while (b < 0.0f) b += 360.0f;
+        while (b >= 360.0f) b -= 360.0f;
+        return b;
     }
 }

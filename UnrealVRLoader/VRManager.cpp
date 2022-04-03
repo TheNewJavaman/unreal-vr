@@ -42,7 +42,7 @@ namespace UnrealVR
         std::vector<XrExtensionProperties> allExtensions(extensionCount, {XR_TYPE_EXTENSION_PROPERTIES});
         xr = xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, allExtensions.data());
         CHECK_XR(xr, "Could not query OpenXR extensions")
-        Log::Info("[UnrealVR] OpenXR extensions available:");
+        Log::Info("[UnrealVR] Found (%d) OpenXR extensions:", extensionCount);
         for (auto& allExtension : allExtensions)
         {
             Log::Info(std::format("[UnrealVR] - {}", allExtension.extensionName) + "");
@@ -173,8 +173,8 @@ namespace UnrealVR
 
     void VRManager::GetRecommendedFieldOfView(float* ptr)
     {
-        if (fov == 0.0f) return;
-        *ptr = fov;
+        if (FOV == 0.0f) return;
+        *ptr = FOV;
     }
 
     bool VRManager::CreateSwapChains(uint32_t sampleCount)
@@ -210,7 +210,7 @@ namespace UnrealVR
             CHECK_XR(xr, "Could not enumerate OpenXR swapchain image count")
             xrSwapChains.push_back(swapchain);
             std::vector<XrSwapchainImageD3D11KHR> surfaces;
-            surfaces.resize(surfaceCount);
+            surfaces.resize(surfaceCount, {XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR});
             xr = xrEnumerateSwapchainImages(swapchain, surfaceCount, &surfaceCount,
                                             reinterpret_cast<XrSwapchainImageBaseHeader*>(surfaces.data()));
             CHECK_XR(xr, "Could not enumerate OpenXR swapchain images")
@@ -281,10 +281,10 @@ namespace UnrealVR
             xrProjectionViews.at(0) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
             xrProjectionViews.at(0).pose = xrViews.at(0).pose;
             xrProjectionViews.at(0).fov = xrViews.at(0).fov;
-            fov = (xrViews.at(0).fov.angleRight - xrViews.at(0).fov.angleLeft) * 180.0f / PI;
+            FOV = (xrViews.at(0).fov.angleRight - xrViews.at(0).fov.angleLeft) * 180.0f / PI;
             if (!fovLogged)
             {
-                Log::Info("[UnrealVR] VR fov is (%.0f) degrees, will now use for camera", fov);
+                Log::Info("[UnrealVR] VR fov is (%.0f) degrees, will now use for camera", FOV);
                 fovLogged = true;
             }
             auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;

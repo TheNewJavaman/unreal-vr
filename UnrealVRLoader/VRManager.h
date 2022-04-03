@@ -50,6 +50,7 @@ namespace UnrealVR
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);
         inline static Eye LastEyeShown = Eye::Right;
+        inline static float FOV = 0.0f;
         
         /** Releases OpenXR resources */
         static void Stop();
@@ -110,7 +111,6 @@ namespace UnrealVR
         inline static XrFrameState xrFrameState = {};
         inline static std::vector<XrCompositionLayerProjectionView> xrProjectionViews;
         inline static uint32_t xrProjectionViewCount = 0;
-        inline static float fov = 0.0f;
         inline static bool fovLogged = false;
     };
 }

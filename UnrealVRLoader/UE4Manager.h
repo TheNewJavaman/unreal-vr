@@ -32,20 +32,22 @@ namespace UnrealVR
         /** Map of cached (static) UObjects */
         template<class T>
         static bool GetUObject(T** ptr, std::string name);
-        inline static std::map<std::string, UE4::UObject*> uobjects;
+        inline static std::map<std::string, UE4::UObject*> uObjects;
         
         /** Called once per scene start */
         static void BeginPlaySingleCallback();
-        
+
         /** SetViewTarget */
-        inline static UE4::AActor* viewTarget = nullptr;
-        inline static UE4::UObject* cameraComponent = nullptr;
         inline static UE4::APlayerController* playerController = nullptr;
-        inline static UE4::AActor* originalViewTarget = nullptr;
-        inline static UE4::UObject* playerCameraManager = nullptr;
-        inline static UE4::FVector viewTargetOffset = UE4::FVector();
-        
+        inline static UE4::AActor* vrViewTarget = nullptr;
+        inline static UE4::UObject* cameraComponent = nullptr;
+
         /** Resize */
         inline static UE4::UObject* gameUserSettings = nullptr;
+
+        /** SetRelativeRotation */
+        inline static UE4::FRotator lastRotation = UE4::FRotator();
+
+        static float Normalize(float a);
     };
 }

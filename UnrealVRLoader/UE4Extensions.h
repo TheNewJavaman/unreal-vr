@@ -47,9 +47,9 @@ namespace UE4
         bool bLockOutgoing = false;
     };
 
-    struct AddActorLocalOffsetParams
+    struct SetActorRelativeLocationParams
     {
-        FVector DeltaLocation = FVector();
+        FVector RelativeLocation = FVector();
         bool bSweep = false;
         void* SweepHitResult = nullptr;
         bool bTeleport = true;
@@ -115,14 +115,6 @@ namespace UE4
         EWindowMode::Type InFullscreenMode = EWindowMode::Fullscreen;
     };
 
-    struct SetActorRelativeRotationParams
-    {
-        FRotator NewRelativeRotation = FRotator();
-        bool bSweep = false;
-        void* SweepHitResult = nullptr;
-        bool bTeleport = true;
-    };
-
     struct QuatRotatorParams
     {
         FQuat Q = FQuat();
@@ -156,5 +148,24 @@ namespace UE4
     struct GetCameraLocationParams
     {
         FVector Result = FVector();
+    };
+
+    struct GetPlayerControllerParams
+    {
+        UObject* WorldContextObject = nullptr;
+        int PlayerIndex = 0;
+        APlayerController* Result = nullptr;
+    };
+
+    struct SetControlRotationParams
+    {
+        FRotator NewRotation = FRotator();
+    };
+
+    struct ComposeRotatorsParams
+    {
+        FRotator A = FRotator();
+        FRotator B = FRotator();
+        FRotator Result = FRotator();
     };
 }
