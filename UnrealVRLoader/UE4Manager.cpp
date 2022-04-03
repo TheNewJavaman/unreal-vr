@@ -210,6 +210,7 @@ namespace UnrealVR
             -toRotatorParams.Result.Yaw
         );
 
+        /*
         // Get control rotation
         USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
         auto getControlRotationParams = UE4::GetControlRotationParams();
@@ -230,11 +231,17 @@ namespace UnrealVR
             newRotation.Roll - lastRotation.Roll
         );
         mathLibrary->ProcessEvent(composeRotatorsFunc, &composeRotatorsParams);
+        */
 
         // Set control rotation
         USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
         UE4::SetControlRotationParams setControlRotationParams;
-        setControlRotationParams.NewRotation = composeRotatorsParams.Result;
+        //setControlRotationParams.NewRotation = composeRotatorsParams.Result;
+        setControlRotationParams.NewRotation = UE4::FRotator(
+            Normalize(newRotation.Pitch),
+            Normalize(newRotation.Yaw),
+            Normalize(newRotation.Roll)
+        );
         playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
         lastRotation = newRotation;
     }
@@ -242,8 +249,8 @@ namespace UnrealVR
     float UE4Manager::Normalize(const float a)
     {
         float b = a;
-        while (b < 0.0f) b += 360.0f;
-        while (b >= 360.0f) b -= 360.0f;
+        while (b < -180.0f) b += 360.0f;
+        while (b >= 180.0f) b -= 360.0f;
         return b;
     }
 }

@@ -9,8 +9,6 @@
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
-#include "Vector3.h"
-
 namespace UnrealVR
 {
     /** UnrealVR currently uses alternate eye rendering (AER), so we must keep track of which eye was last rendered */
