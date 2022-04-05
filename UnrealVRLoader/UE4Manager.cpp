@@ -6,6 +6,8 @@
 #include "VRManager.h"
 #include "UE4Extensions.h"
 
+#define RAD_DEG (180.f / 3.141592653589793f)
+#define SINGULARITY_THRESHOLD 0.4999995f
 #define USING_UOBJECT(ptr, T, name) \
     T* ptr; \
     if (!GetUObject<T>(&(ptr), name)) return;
@@ -52,7 +54,7 @@ namespace UnrealVR
     {
         Resize();
         playerController = nullptr;
-        vrViewTarget = nullptr;
+        childViewTarget = nullptr;
         cameraComponent = nullptr;
     }
 
@@ -73,13 +75,13 @@ namespace UnrealVR
         UE4::AActor* currentViewTarget;
         ASSERT_ASSIGN(getViewTargetParams.ViewTarget, currentViewTarget)
 
-        if (vrViewTarget == nullptr)
+        if (childViewTarget == nullptr)
         {
             // Spawn new view target
             USING_UOBJECT(cameraActorClass, UE4::UClass, "Class Engine.CameraActor")
             if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn)
             {
-                vrViewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
+                childViewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
                     cameraActorClass,
                     UE4::FTransform(),
                     UE4::ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
@@ -90,7 +92,7 @@ namespace UnrealVR
             {
                 const auto transform = UE4::FTransform();
                 const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
-                vrViewTarget = UE4::UWorld::GetWorld()->SpawnActor(
+                childViewTarget = UE4::UWorld::GetWorld()->SpawnActor(
                     cameraActorClass,
                     &transform,
                     &params
@@ -102,22 +104,24 @@ namespace UnrealVR
             auto getComponentByClassParams = UE4::GetComponentByClassParams();
             USING_UOBJECT(cameraComponentClass, UE4::UClass, "Class Engine.CameraComponent")
             getComponentByClassParams.ComponentClass = cameraComponentClass;
-            vrViewTarget->ProcessEvent(getComponentByClassFunc, &getComponentByClassParams);
+            childViewTarget->ProcessEvent(getComponentByClassFunc, &getComponentByClassParams);
             ASSERT_ASSIGN(getComponentByClassParams.Result, cameraComponent)
         }
 
-        if (currentViewTarget != vrViewTarget)
+        if (currentViewTarget != childViewTarget)
         {
+            parentViewTarget = currentViewTarget;
+            
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
             attachParams.ParentActor = currentViewTarget;
-            vrViewTarget->ProcessEvent(attachToActorFunc, &attachParams);
+            childViewTarget->ProcessEvent(attachToActorFunc, &attachParams);
 
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
-            setViewTargetParams.NewViewTarget = vrViewTarget;
+            setViewTargetParams.NewViewTarget = childViewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
 
@@ -144,7 +148,7 @@ namespace UnrealVR
         USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
         auto setActorRotationParams = UE4::SetActorRotationParams();
         setActorRotationParams.NewRotation = UE4::FRotator(getControlRotationParams.Result);
-        vrViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
+        childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
     }
 
     void UE4Manager::Resize()
@@ -181,35 +185,47 @@ namespace UnrealVR
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
 
-    void UE4Manager::SetRelativeLocation(const UE4::FVector relativeLocation)
+    void UE4Manager::SetChildRelativeLocation(const UE4::FVector relativeLocation)
     {
-        if (vrViewTarget == nullptr) return;
+        if (childViewTarget == nullptr) return;
 
         // Set the view target's relative location
         USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
         setActorRelativeLocationParams.RelativeLocation = relativeLocation;
-        vrViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
+        childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
     }
 
-    void UE4Manager::SetRelativeRotation(const UE4::FQuat quat)
+    void UE4Manager::SetParentRelativeLocation(const UE4::FVector relativeLocation)
     {
-        if (vrViewTarget == nullptr) return;
-
-        // Convert the quaternion to a rotator
-        USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
-        USING_UOBJECT(toRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
-        auto toRotatorParams = UE4::QuatRotatorParams();
-        toRotatorParams.Q = quat;
-        mathLibrary->ProcessEvent(toRotatorFunc, &toRotatorParams);
-
-        // Fix the axis assignments (OpenXR and Unreal Engine use different axis orientations)
-        const auto newRotation = UE4::FRotator(
-            -toRotatorParams.Result.Roll,
-            toRotatorParams.Result.Pitch,
-            -toRotatorParams.Result.Yaw
+        if (parentViewTarget == nullptr) return;
+        const auto correctedLocation = UE4::FVector(-relativeLocation.Z, relativeLocation.X, relativeLocation.Y);
+        
+        USING_UOBJECT(addActorWorldOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldOffset")
+        auto addActorWorldOffsetParams = UE4::AddActorWorldOffsetParams();
+        addActorWorldOffsetParams.DeltaLocation = UE4::FVector(
+            correctedLocation.X - lastParentRelativeLocation.X,
+            correctedLocation.Y - lastParentRelativeLocation.Y,
+            correctedLocation.Z - lastParentRelativeLocation.Z
         );
+        parentViewTarget->ProcessEvent(addActorWorldOffsetFunc, &addActorWorldOffsetParams);
+        
+        lastParentRelativeLocation = correctedLocation;
+    }
 
+
+    void UE4Manager::SetRelativeRotation(const UE4::FQuat q)
+    {
+        if (childViewTarget == nullptr) return;
+
+        USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
+        USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
+        auto quatRotatorParams = UE4::QuatRotatorParams();
+        quatRotatorParams.Q = UE4::FQuat(-q.Z, q.X, q.Y, q.W);
+        mathLibrary->ProcessEvent(quatRotatorFunc, &quatRotatorParams);
+
+        quatRotatorParams.Result.Yaw *= -1.f;
+        
         /*
         // Get control rotation
         USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
@@ -237,13 +253,10 @@ namespace UnrealVR
         USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
         UE4::SetControlRotationParams setControlRotationParams;
         //setControlRotationParams.NewRotation = composeRotatorsParams.Result;
-        setControlRotationParams.NewRotation = UE4::FRotator(
-            Normalize(newRotation.Pitch),
-            Normalize(newRotation.Yaw),
-            Normalize(newRotation.Roll)
-        );
-        playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
-        lastRotation = newRotation;
+        setControlRotationParams.NewRotation = quatRotatorParams.Result;
+        playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);\
+        
+        lastRotation = quatRotatorParams.Result;
     }
 
     float UE4Manager::Normalize(const float a)

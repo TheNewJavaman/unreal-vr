@@ -54,7 +54,8 @@ namespace UnrealVRLauncher
                 try
                 {
                     model = JObject.Parse(text);
-                } catch (JsonReaderException)
+                } 
+                catch (JsonReaderException)
                 {
                     DispatcherQueue.TryEnqueue(() => _ = ShowError("Failed to parse game profile " + profileFile.DisplayName + "!"));
                     continue;

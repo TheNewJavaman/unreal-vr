@@ -307,7 +307,11 @@ namespace UnrealVR
             xr = xrReleaseSwapchainImage(xrSwapChains.at(0), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image")
             LastEyeShown = Eye::Left;
-            UE4Manager::SetRelativeLocation({0.0f, 3.175f, 0.0f});
+            UE4Manager::SetParentRelativeLocation({
+                xrViews.at(0).pose.position.x * 100.f,
+                xrViews.at(0).pose.position.y * 100.f,
+                xrViews.at(0).pose.position.z * 100.f
+            });
         }
         else
         {
@@ -346,7 +350,11 @@ namespace UnrealVR
             xr = xrEndFrame(xrSession, &endInfo);
             CHECK_XR(xr, "Could not end OpenXR frame")
             LastEyeShown = Eye::Right;
-            UE4Manager::SetRelativeLocation({0.0f, -3.175f, 0.0f});
+            UE4Manager::SetParentRelativeLocation({
+                xrViews.at(1).pose.position.x * 100.f,
+                xrViews.at(1).pose.position.y * 100.f,
+                xrViews.at(1).pose.position.z * 100.f
+            });
         }
         return true;
     }
