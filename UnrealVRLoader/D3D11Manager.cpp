@@ -10,7 +10,8 @@
 
 #define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
 #define CHECK_HR(hr, message) \
-    if ((hr) != S_OK) { \
+    if ((hr) != S_OK) \
+    { \
         Log::Error("[UnrealVR] %s; error code (%X)", message, hr); \
         return false; \
     }

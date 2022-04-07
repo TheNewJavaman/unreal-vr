@@ -18,18 +18,17 @@ namespace UnrealVR
 
         private void ServerThread()
         {
-            server = new NamedPipeServerStream("UnrealVR", PipeDirection.InOut, 1);
+            server = new NamedPipeServerStream("UnrealVR", PipeDirection.Out, 1);
             server.WaitForConnection();
             stream = new PipeStream(server);
-            while (server.IsConnected)
-                stream.HandleCommand();
         }
 
         public bool IsConnected { get { return server != null && server.IsConnected; } }
 
         public void Stop()
         {
-            server.Close();
+            if (server.IsConnected)
+                server.Close();
         }
         
         public void SendSettingChange(Setting setting, float value)
@@ -39,7 +38,7 @@ namespace UnrealVR
             var buffer = new byte[bufferLength];
             buffer[0] = (byte) setting;
             valueBuffer.CopyTo(buffer, 1);
-            stream.SendCommand(PipeCommand.SettingChange, buffer);
+            stream.SendCommand(buffer);
         }
     }
 
@@ -52,25 +51,11 @@ namespace UnrealVR
             this.stream = stream;
         }
 
-        public void HandleCommand()
+        public void SendCommand(byte[] buffer)
         {
-            switch ((PipeCommand) stream.ReadByte())
-            {
-                default:
-                    break;
-            }
-        }
-
-        public void SendCommand(PipeCommand command, byte[] buffer)
-        {
-            stream.WriteByte((byte) command);
             stream.Write(buffer);
+            stream.Flush();
         }
-    }
-
-    enum PipeCommand : int
-    {
-        SettingChange = 0x00
     }
 
     public enum Setting : int

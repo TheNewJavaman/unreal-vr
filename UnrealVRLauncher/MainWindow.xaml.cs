@@ -333,7 +333,7 @@ namespace UnrealVR
             NotifyPropertyChanged(nameof(ShowStart));
             NotifyPropertyChanged(nameof(ShowStop));
             server.Start();
-            _ = Task.Factory.StartNew(CheckStopped);
+            //_ = Task.Factory.StartNew(CheckStopped);
         }
 
         private async Task<bool> InjectDLL(string name, PROCESS_INFORMATION procInfo)
@@ -377,6 +377,7 @@ namespace UnrealVR
                 }
                 if (lpExitCode.ToUInt32() != STILL_ACTIVE)
                 {
+                    server.Stop();
                     await ResetProcess();
                     return;
                 }

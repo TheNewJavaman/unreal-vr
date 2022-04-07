@@ -9,7 +9,8 @@
 
 #define PI 3.141592653589793f
 #define CHECK_XR(xr, message) \
-    if ((xr) != XR_SUCCESS) { \
+    if ((xr) != XR_SUCCESS) \
+    { \
         Log::Error( \
             std::format("[UnrealVR] {}; error code ({})", message, static_cast<int>(xr)) \
         ); \
@@ -277,7 +278,7 @@ namespace UnrealVR
             xrProjectionViews.at(0).fov = xrViews.at(0).fov;
             FOV = (xrViews.at(0).fov.angleRight - xrViews.at(0).fov.angleLeft) * 180.0f / PI;
             auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-            UE4Manager::SetParentRelativeRotation({qx, qy, qz, qw});
+            UE4Manager::SetParentRelativeRotation({-qz, qx, qy, -qw});
             xrProjectionViews.at(0).subImage.swapchain = xrSwapChains.at(0);
             xrProjectionViews.at(0).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(0).subImage.imageRect.extent = {
@@ -296,10 +297,10 @@ namespace UnrealVR
             xr = xrReleaseSwapchainImage(xrSwapChains.at(0), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image")
             LastEyeShown = Eye::Left;
-            UE4Manager::SetParentRelativeLocation({
+            UE4Manager::SetChildRelativeLocation({
+                -xrViews.at(0).pose.position.z * 100.f,
                 xrViews.at(0).pose.position.x * 100.f,
-                xrViews.at(0).pose.position.y * 100.f,
-                xrViews.at(0).pose.position.z * 100.f
+                xrViews.at(0).pose.position.y * 100.f
             });
         }
         else
@@ -317,8 +318,8 @@ namespace UnrealVR
             xrProjectionViews.at(1) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
             xrProjectionViews.at(1).pose = xrViews.at(1).pose;
             xrProjectionViews.at(1).fov = xrViews.at(1).fov;
-            auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-            UE4Manager::SetParentRelativeRotation({qx, qy, qz, qw});
+            auto [qx, qy, qz, qw] = xrViews.at(1).pose.orientation;
+            UE4Manager::SetParentRelativeRotation({-qz, qx, qy, -qw});
             xrProjectionViews.at(1).subImage.swapchain = xrSwapChains.at(1);
             xrProjectionViews.at(1).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(1).subImage.imageRect.extent = {
@@ -339,10 +340,10 @@ namespace UnrealVR
             xr = xrEndFrame(xrSession, &endInfo);
             CHECK_XR(xr, "Could not end OpenXR frame")
             LastEyeShown = Eye::Right;
-            UE4Manager::SetParentRelativeLocation({
+            UE4Manager::SetChildRelativeLocation({
+                -xrViews.at(1).pose.position.z * 100.f,
                 xrViews.at(1).pose.position.x * 100.f,
-                xrViews.at(1).pose.position.y * 100.f,
-                xrViews.at(1).pose.position.z * 100.f
+                xrViews.at(1).pose.position.y * 100.f
             });
         }
         return true;

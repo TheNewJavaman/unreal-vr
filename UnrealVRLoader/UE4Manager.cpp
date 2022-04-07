@@ -196,36 +196,23 @@ namespace UnrealVR
         // Set the view target's relative location
         USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
-        setActorRelativeLocationParams.RelativeLocation = relativeLocation;
+        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(
+            relativeLocation.X * CmUnitsScale,
+            relativeLocation.Y * CmUnitsScale,
+            relativeLocation.Z * CmUnitsScale
+        );
         childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
     }
-
-    void UE4Manager::SetParentRelativeLocation(const UE4::FVector relativeLocation)
-    {
-        if (parentViewTarget == nullptr) return;
-        const auto correctedLocation = UE4::FVector(-relativeLocation.Z, relativeLocation.X, relativeLocation.Y);
-
-        USING_UOBJECT(addActorWorldOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldOffset")
-        auto addActorWorldOffsetParams = UE4::AddActorWorldOffsetParams();
-        addActorWorldOffsetParams.DeltaLocation = UE4::FVector(
-            correctedLocation.X - lastParentVRLocation.X,
-            correctedLocation.Y - lastParentVRLocation.Y,
-            correctedLocation.Z - lastParentVRLocation.Z
-        );
-        parentViewTarget->ProcessEvent(addActorWorldOffsetFunc, &addActorWorldOffsetParams);
-
-        lastParentVRLocation = correctedLocation;
-    }
-
 
     void UE4Manager::SetParentRelativeRotation(const UE4::FQuat q)
     {
         if (childViewTarget == nullptr) return;
 
+        // Convert the quat to a UE4 FRotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
         auto quatRotatorParams = UE4::QuatRotatorParams();
-        quatRotatorParams.Q = UE4::FQuat(-q.Z, q.X, q.Y, -q.W);
+        quatRotatorParams.Q = q;
         mathLibrary->ProcessEvent(quatRotatorFunc, &quatRotatorParams);
 
         // Get control rotation

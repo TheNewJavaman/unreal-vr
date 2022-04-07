@@ -20,19 +20,11 @@ namespace UnrealVR
         /** Set the render resolution to match the VR headset */
         static void Resize();
 
-        /**
-         * Sets the translational offset of the view target (camera) from its parent, the original view target
-         *
-         * TODO: Support scaling the offset in case the game's units do not match real-world centimeters
-         */
+        /** May be changed at runtime via the PipeClient */
+        static inline float CmUnitsScale = 1.f;
+        
+        /** Sets the translational offset of the view target (camera) from its parent, the original view target */
         static void SetChildRelativeLocation(UE4::FVector relativeLocation);
-
-        /**
-         * Sets the translational offset of the parent from its game-given position
-         *
-         * TODO: Support scaling the offset in case the game's units do not match real-world centimeters
-         */
-        static void SetParentRelativeLocation(UE4::FVector relativeLocation);
 
         /** Sets the rotational orientation of the view target, according to the user's preferences */
         static void SetParentRelativeRotation(UE4::FQuat q);

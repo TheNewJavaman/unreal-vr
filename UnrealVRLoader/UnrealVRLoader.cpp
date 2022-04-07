@@ -4,6 +4,7 @@
 
 #include "D3D11Manager.h"
 #include "HookManager.h"
+#include "PipeClient.h"
 #include "UE4Manager.h"
 #include "VRManager.h"
 
@@ -30,6 +31,11 @@ namespace UnrealVR
             Log::Error("[UnrealVR] Failed to init VR");
             return NULL;
         }
+        if (!PipeClient::Init())
+        {
+            Log::Error("[UnrealVR] Failed to init pipe client");
+            return NULL;
+        }
         if (!HookManager::Init())
         {
             Log::Error("[UnrealVR] Failed to init hooks");
@@ -44,6 +50,7 @@ namespace UnrealVR
     {
         D3D11Manager::Stop();
         HookManager::Stop();
+        PipeClient::Stop();
         VRManager::Stop();
     }
 }
