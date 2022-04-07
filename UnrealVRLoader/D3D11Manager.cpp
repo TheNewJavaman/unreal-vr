@@ -130,32 +130,67 @@ namespace UnrealVR
 
     bool D3D11Manager::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv)
     {
+        // Get general resources
         ID3D11Device* device;
         rtv->GetDevice(&device);
         ID3D11DeviceContext* context;
         device->GetImmediateContext(&context);
-        D3D11_TEXTURE2D_DESC textureDesc;
-        source->GetDesc(&textureDesc);
-        D3D11_RENDER_TARGET_VIEW_DESC rtvDesc;
-        rtv->GetDesc(&rtvDesc);
-        if (!convertResourcesCreated)
+
+        // Create shaders
+        if (!shadersCreated)
         {
-            HRESULT hr = device->CreateVertexShader(VertexShader, ARRAYSIZE(VertexShader), nullptr, &vertexShader);
+            HRESULT hr = device->CreateVertexShader(
+                VertexShader,
+                ARRAYSIZE(VertexShader),
+                nullptr,
+                &vertexShader
+            );
             CHECK_HR(hr, "Couldn't create vertex shader")
-            hr = device->CreatePixelShader(PixelShader, ARRAYSIZE(PixelShader), nullptr, &pixelShader);
+            hr = device->CreatePixelShader(
+                PixelShader,
+                ARRAYSIZE(PixelShader),
+                nullptr,
+                &pixelShader
+            );
             CHECK_HR(hr, "Couldn't create pixel shader")
-            textureDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-            hr = device->CreateTexture2D(&textureDesc, nullptr, &copy);
+            shadersCreated = true;
+        }
+
+        // Create shader resource view and its writeable texture
+        bool shouldCreateSRV = false;
+        if (srv == nullptr) shouldCreateSRV = true;
+        else
+        {
+            D3D11_TEXTURE2D_DESC sourceDesc;
+            source->GetDesc(&sourceDesc);
+            D3D11_TEXTURE2D_DESC copyDesc;
+            copy->GetDesc(&copyDesc);
+            if (copyDesc.Format != sourceDesc.Format
+                || copyDesc.Width != sourceDesc.Width
+                || copyDesc.Height != sourceDesc.Height)
+            {
+                shouldCreateSRV = true;
+                srv->Release();
+                copy->Release();
+            }
+        }
+        if (shouldCreateSRV)
+        {
+            D3D11_TEXTURE2D_DESC sourceDesc;
+            source->GetDesc(&sourceDesc);
+            sourceDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+            HRESULT hr = device->CreateTexture2D(&sourceDesc, nullptr, &copy);
             CHECK_HR(hr, "Couldn't create copy texture")
             D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
-            srvDesc.Format = textureDesc.Format;
+            srvDesc.Format = sourceDesc.Format;
             srvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
             srvDesc.Texture2D.MipLevels = 1;
             srvDesc.Texture2D.MostDetailedMip = 0;
             hr = device->CreateShaderResourceView(copy, &srvDesc, &srv);
             CHECK_HR(hr, "Couldn't create shader resource view")
-            convertResourcesCreated = true;
         }
+
+        // Draw the frame
         context->CopyResource(copy, source);
         context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
         context->IASetIndexBuffer(nullptr, static_cast<DXGI_FORMAT>(0), 0);
@@ -168,15 +203,15 @@ namespace UnrealVR
         context->Draw(3, 0);
         context->Release();
         device->Release();
+
         return true;
     }
 
     void D3D11Manager::Stop()
     {
-        if (convertResourcesCreated)
-        {
-            srv->Release();
-            copy->Release();
-        }
+        if (pixelShader != nullptr) pixelShader->Release();
+        if (vertexShader != nullptr) vertexShader->Release();
+        if (srv != nullptr) srv->Release();
+        if (copy != nullptr) copy->Release();
     }
 }

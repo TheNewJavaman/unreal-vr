@@ -135,7 +135,7 @@ namespace UnrealVR
         // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
         UE4::SetFieldOfViewParams setFieldOfViewParams;
-        setFieldOfViewParams.InFieldOfView = VRManager::FOV * 16.0f / 9.0f;
+        setFieldOfViewParams.InFieldOfView = VRManager::FOV * 16.f / 9.f;
         cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
         // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)

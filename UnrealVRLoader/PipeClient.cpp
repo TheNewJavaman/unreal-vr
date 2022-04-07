@@ -23,12 +23,6 @@ namespace UnrealVR
             Log::Error("[UnrealVR] Couldn't open named pipe; error %d", GetLastError());
             return false;
         }
-        DWORD dwMode = PIPE_READMODE_BYTE;
-        if (!SetNamedPipeHandleState(hPipe, &dwMode, nullptr, nullptr))
-        {
-            Log::Error("[UnrealVR] Couldn't set pipe mode to read|byte");
-            return false;
-        }
         CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
         return true;
     }

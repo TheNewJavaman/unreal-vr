@@ -45,7 +45,7 @@ namespace UnrealVR
         inline static PresentFunc* PresentOriginal = nullptr;
 
         /** ConvertFrame */
-        inline static bool convertResourcesCreated = false;
+        inline static bool shadersCreated = false;
         inline static ID3D11PixelShader* pixelShader = nullptr;
         inline static ID3D11VertexShader* vertexShader = nullptr;
         inline static ID3D11Texture2D* copy = nullptr;
