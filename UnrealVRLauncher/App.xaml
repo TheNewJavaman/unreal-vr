@@ -1,5 +1,5 @@
 ﻿<Application
-    x:Class="UnrealVRLauncher.App"
+    x:Class="UnrealVR.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     RequestedTheme="Dark">
@@ -46,6 +46,7 @@
                 <Setter Property="SmallChange" Value="0.01"/>
                 <Setter Property="Minimum" Value="0.001"/>
                 <Setter Property="SpinButtonPlacementMode" Value="Compact"/>
+                <Setter Property="Margin" Value="0,7,0,0"/>
             </Style>
             <Style x:Key="Footer" TargetType="TextBlock">
                 <Setter Property="Foreground" Value="#c5c5c5"/>

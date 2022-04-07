@@ -146,10 +146,9 @@ namespace UnrealVR
         CHECK_XR(xr, "Could not create OpenXR session")
         XrReferenceSpaceCreateInfo spaceInfo = {XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
         spaceInfo.poseInReferenceSpace = xrPoseIdentity;
-        spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
+        spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
         xr = xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
         CHECK_XR(xr, "Could not create OpenXR reference space")
-        ContinueInitDone = true;
         Log::Info("[UnrealVR] Finished initializing OpenXR");
         return true;
     }
@@ -171,13 +170,7 @@ namespace UnrealVR
         return true;
     }
 
-    void VRManager::GetRecommendedFieldOfView(float* ptr)
-    {
-        if (FOV == 0.0f) return;
-        *ptr = FOV;
-    }
-
-    bool VRManager::CreateSwapChains(uint32_t sampleCount)
+    bool VRManager::CreateSwapChains(const uint32_t sampleCount)
     {
         uint32_t formatCount = 0;
         XrResult xr = xrEnumerateSwapchainFormats(xrSession, 0, &formatCount, nullptr);
@@ -234,18 +227,19 @@ namespace UnrealVR
             }
             xrRTVs.insert(std::pair(i, rtvs));
         }
-        CreateSwapChainsDone = true;
         Log::Info("[UnrealVR] Created OpenXR swapchains");
         return true;
     }
 
-    bool VRManager::FinalizeInit()
+    bool VRManager::FinalizeInit(ID3D11Device* device, const DXGI_SWAP_CHAIN_DESC desc)
     {
+        if (!ContinueInit(device)) return false;
+        if (!CreateSwapChains(desc.SampleDesc.Count)) return false;
         XrSessionBeginInfo beginInfo = {XR_TYPE_SESSION_BEGIN_INFO};
         beginInfo.primaryViewConfigurationType = xrViewType;
-        CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not being OpenXR session")
-        FinalizeInitDone = true;
+        CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not begin OpenXR session")
         Log::Info("[UnrealVR] Started OpenXR session");
+        VRLoaded = true;
         return true;
     }
 
@@ -282,13 +276,8 @@ namespace UnrealVR
             xrProjectionViews.at(0).pose = xrViews.at(0).pose;
             xrProjectionViews.at(0).fov = xrViews.at(0).fov;
             FOV = (xrViews.at(0).fov.angleRight - xrViews.at(0).fov.angleLeft) * 180.0f / PI;
-            if (!fovLogged)
-            {
-                Log::Info("[UnrealVR] VR fov is (%.0f) degrees, will now use for camera", FOV);
-                fovLogged = true;
-            }
             auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-            UE4Manager::SetRelativeRotation({qx, qy, qz, qw});
+            UE4Manager::SetParentRelativeRotation({qx, qy, qz, qw});
             xrProjectionViews.at(0).subImage.swapchain = xrSwapChains.at(0);
             xrProjectionViews.at(0).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(0).subImage.imageRect.extent = {
@@ -329,7 +318,7 @@ namespace UnrealVR
             xrProjectionViews.at(1).pose = xrViews.at(1).pose;
             xrProjectionViews.at(1).fov = xrViews.at(1).fov;
             auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-            UE4Manager::SetRelativeRotation({qx, qy, qz, qw});
+            UE4Manager::SetParentRelativeRotation({qx, qy, qz, qw});
             xrProjectionViews.at(1).subImage.swapchain = xrSwapChains.at(1);
             xrProjectionViews.at(1).subImage.imageRect.offset = {0, 0};
             xrProjectionViews.at(1).subImage.imageRect.extent = {
@@ -367,27 +356,15 @@ namespace UnrealVR
             xrRTVs.at(1).at(i)->Release();
         }
         for (uint32_t i = 0; i < xrViewCount; i++)
-        {
             if (xrSwapChains.at(i) != XR_NULL_HANDLE && xrDestroySwapchain(xrSwapChains.at(i)))
-            {
                 Log::Error("[UnrealVR] Failed to destroy OpenXR swapchain");
-            }
-        }
         if (xrAppSpace != XR_NULL_HANDLE && xrDestroySpace(xrAppSpace) != XR_SUCCESS)
-        {
             Log::Error("[UnrealVR] Failed to destroy OpenXR app space");
-        }
         if (xrSession != XR_NULL_HANDLE && xrDestroySession(xrSession) != XR_SUCCESS)
-        {
             Log::Error("[UnrealVR] Failed to destroy OpenXR session");
-        }
         if (xrDebug != XR_NULL_HANDLE && xrExtDestroyDebugUtilsMessenger(xrDebug) != XR_SUCCESS)
-        {
             Log::Error("[UnrealVR] Failed to destroy OpenXR debug");
-        }
         if (xrInstance != XR_NULL_HANDLE && xrDestroyInstance(xrInstance) != XR_SUCCESS)
-        {
             Log::Error("[UnrealVR] Failed to destroy OpenXR instance");
-        }
     }
 }

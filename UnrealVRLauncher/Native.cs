@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace UnrealVRLauncher
+namespace UnrealVR
 {
     /**
      * DLL functions, translated to C#

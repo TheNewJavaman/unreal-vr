@@ -1,5 +1,5 @@
 ﻿<Window
-    x:Class="UnrealVRLauncher.MainWindow"
+    x:Class="UnrealVR.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -106,9 +106,12 @@
                 </RelativePanel>
                 <TextBlock Style="{StaticResource Header}" Text="Gameplay"/>
                 <RelativePanel Style="{StaticResource Panel}">
-                    <StackPanel Style="{StaticResource OneLinePanel.Key}">
+                    <StackPanel Style="{StaticResource TwoLinePanel.Key}">
                         <SymbolIcon Symbol="FullScreen"/>
-                        <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
+                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Updatable while in-game"/>
+                        </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}">
                         <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="ScaleIncrement" Value="{x:Bind Profile.CmUnitsScale, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="ScaleIncrement_ValueChanged"/>

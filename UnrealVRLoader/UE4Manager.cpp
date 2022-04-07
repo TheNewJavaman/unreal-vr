@@ -6,8 +6,6 @@
 #include "VRManager.h"
 #include "UE4Extensions.h"
 
-#define RAD_DEG (180.f / 3.141592653589793f)
-#define SINGULARITY_THRESHOLD 0.4999995f
 #define USING_UOBJECT(ptr, T, name) \
     T* ptr; \
     if (!GetUObject<T>(&(ptr), name)) return;
@@ -47,15 +45,23 @@ namespace UnrealVR
 
     void UE4Manager::AddEvents()
     {
-        Global::GetGlobals()->eventSystem.registerEvent(new Event<>("BeginPlaySingle", &BeginPlaySingleCallback));
+        Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
     }
 
-    void UE4Manager::BeginPlaySingleCallback()
+    void UE4Manager::InitGameStateCallback()
     {
-        Resize();
+        if (!GameLoaded)
+        {
+            Resize();
+            GameLoaded = true;
+        }
         playerController = nullptr;
+        parentViewTarget = nullptr;
         childViewTarget = nullptr;
         cameraComponent = nullptr;
+        gameUserSettings = nullptr;
+        lastParentVRLocation = UE4::FVector();
+        lastParentVRRotation = UE4::FRotator();
     }
 
     void UE4Manager::SetViewTarget()
@@ -111,7 +117,7 @@ namespace UnrealVR
         if (currentViewTarget != childViewTarget)
         {
             parentViewTarget = currentViewTarget;
-            
+
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
@@ -129,7 +135,6 @@ namespace UnrealVR
         // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
         UE4::SetFieldOfViewParams setFieldOfViewParams;
-        VRManager::GetRecommendedFieldOfView(&setFieldOfViewParams.InFieldOfView);
         setFieldOfViewParams.InFieldOfView = VRManager::FOV * 16.0f / 9.0f;
         cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
@@ -181,7 +186,6 @@ namespace UnrealVR
         auto applyResolutionSettingsParams = UE4::ApplyResolutionSettingsParams();
         gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyResolutionSettingsParams);
 
-        Resized = true;
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
 
@@ -200,33 +204,30 @@ namespace UnrealVR
     {
         if (parentViewTarget == nullptr) return;
         const auto correctedLocation = UE4::FVector(-relativeLocation.Z, relativeLocation.X, relativeLocation.Y);
-        
+
         USING_UOBJECT(addActorWorldOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldOffset")
         auto addActorWorldOffsetParams = UE4::AddActorWorldOffsetParams();
         addActorWorldOffsetParams.DeltaLocation = UE4::FVector(
-            correctedLocation.X - lastParentRelativeLocation.X,
-            correctedLocation.Y - lastParentRelativeLocation.Y,
-            correctedLocation.Z - lastParentRelativeLocation.Z
+            correctedLocation.X - lastParentVRLocation.X,
+            correctedLocation.Y - lastParentVRLocation.Y,
+            correctedLocation.Z - lastParentVRLocation.Z
         );
         parentViewTarget->ProcessEvent(addActorWorldOffsetFunc, &addActorWorldOffsetParams);
-        
-        lastParentRelativeLocation = correctedLocation;
+
+        lastParentVRLocation = correctedLocation;
     }
 
 
-    void UE4Manager::SetRelativeRotation(const UE4::FQuat q)
+    void UE4Manager::SetParentRelativeRotation(const UE4::FQuat q)
     {
         if (childViewTarget == nullptr) return;
 
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
         auto quatRotatorParams = UE4::QuatRotatorParams();
-        quatRotatorParams.Q = UE4::FQuat(-q.Z, q.X, q.Y, q.W);
+        quatRotatorParams.Q = UE4::FQuat(-q.Z, q.X, q.Y, -q.W);
         mathLibrary->ProcessEvent(quatRotatorFunc, &quatRotatorParams);
 
-        quatRotatorParams.Result.Yaw *= -1.f;
-        
-        /*
         // Get control rotation
         USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
         auto getControlRotationParams = UE4::GetControlRotationParams();
@@ -236,34 +237,30 @@ namespace UnrealVR
         // TODO: Allow configurable axis rotations; default is great for FPS games
         USING_UOBJECT(composeRotatorsFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.ComposeRotators")
         auto composeRotatorsParams = UE4::ComposeRotatorsParams();
-        composeRotatorsParams.A = UE4::FRotator(
-            0.0f,
-            getControlRotationParams.Result.Yaw,
-            getControlRotationParams.Result.Roll
-        );
+        composeRotatorsParams.A = getControlRotationParams.Result;
         composeRotatorsParams.B = UE4::FRotator(
-            newRotation.Pitch,
-            newRotation.Yaw - lastRotation.Yaw,
-            newRotation.Roll - lastRotation.Roll
+            quatRotatorParams.Result.Pitch - lastParentVRRotation.Pitch,
+            quatRotatorParams.Result.Yaw - lastParentVRRotation.Yaw,
+            quatRotatorParams.Result.Roll - lastParentVRRotation.Roll
         );
         mathLibrary->ProcessEvent(composeRotatorsFunc, &composeRotatorsParams);
-        */
+        composeRotatorsParams.Result.Pitch = quatRotatorParams.Result.Pitch;
 
         // Set control rotation
         USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
         UE4::SetControlRotationParams setControlRotationParams;
         //setControlRotationParams.NewRotation = composeRotatorsParams.Result;
         setControlRotationParams.NewRotation = quatRotatorParams.Result;
-        playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);\
-        
-        lastRotation = quatRotatorParams.Result;
+        playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
+
+        lastParentVRRotation = quatRotatorParams.Result;
     }
 
     float UE4Manager::Normalize(const float a)
     {
         float b = a;
-        while (b < -180.0f) b += 360.0f;
-        while (b >= 180.0f) b -= 360.0f;
+        while (b <= -180.0f) b += 360.0f;
+        while (b > 180.0f) b -= 360.0f;
         return b;
     }
 }

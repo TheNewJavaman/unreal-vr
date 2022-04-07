@@ -16,9 +16,9 @@ using Windows.Globalization.NumberFormatting;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT;
-using static UnrealVRLauncher.Native;
+using static UnrealVR.Native;
 
-namespace UnrealVRLauncher
+namespace UnrealVR
 {
     public sealed partial class MainWindow : INotifyPropertyChanged
     {
@@ -39,6 +39,7 @@ namespace UnrealVRLauncher
                 NumberRounder = rounder
             };
             ScaleIncrement.NumberFormatter = formatter;
+            server = new PipeServer();
             Task.Factory.StartNew(() => GetProfiles());
         }
 
@@ -85,6 +86,8 @@ namespace UnrealVRLauncher
         private IntPtr proc = IntPtr.Zero;
         private bool ShowStart { get { return proc == IntPtr.Zero && ProfileSelected; } }
         private bool ShowStop { get { return proc != IntPtr.Zero && ProfileSelected; } }
+
+        private PipeServer server;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -216,6 +219,8 @@ namespace UnrealVRLauncher
             Profile.CmUnitsScale = (float)numberBox.Value;
             Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
             Task.Factory.StartNew(() => Profile.SaveToAppData());
+            if (server.IsConnected)
+                server.SendSettingChange(Setting.CmUnitsScale, (float)numberBox.Value);
         }
 
         private void Copy_Click(object sender, RoutedEventArgs e)
@@ -327,7 +332,8 @@ namespace UnrealVRLauncher
             proc = procInfo.hProcess;
             NotifyPropertyChanged(nameof(ShowStart));
             NotifyPropertyChanged(nameof(ShowStop));
-            //_ = Task.Factory.StartNew(CheckStopped);
+            server.Start();
+            _ = Task.Factory.StartNew(CheckStopped);
         }
 
         private async Task<bool> InjectDLL(string name, PROCESS_INFORMATION procInfo)
@@ -380,6 +386,7 @@ namespace UnrealVRLauncher
 
         private async void Stop_Click(object sender, RoutedEventArgs e)
         {
+            server.Stop();
             TerminateProcess(proc, SUCCESS);
             await ResetProcess();
         }

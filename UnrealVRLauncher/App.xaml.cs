@@ -16,7 +16,7 @@ using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 
-namespace UnrealVRLauncher
+namespace UnrealVR
 {
     public partial class App : Application
     {

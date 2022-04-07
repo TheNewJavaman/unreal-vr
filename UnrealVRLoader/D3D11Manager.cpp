@@ -105,37 +105,25 @@ namespace UnrealVR
         UINT Flags
     )
     {
-        UE4Manager::SetViewTarget();
-        if (!UE4Manager::Resized)
-        {
+        if (!UE4Manager::GameLoaded)
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
-        }
-        if (!VRManager::ContinueInitDone)
+        if (!VRManager::VRLoaded)
         {
             ID3D11Device* device;
             pSwapChain->GetDevice(IID_PPV_ARGS(&device));
-            VRManager::ContinueInit(device);
-            device->Release();
-        }
-        if (!VRManager::CreateSwapChainsDone)
-        {
             DXGI_SWAP_CHAIN_DESC desc;
             pSwapChain->GetDesc(&desc);
-            VRManager::CreateSwapChains(desc.SampleDesc.Count);
-        }
-        if (!VRManager::FinalizeInitDone)
-        {
-            VRManager::FinalizeInit();
+            VRManager::FinalizeInit(device, desc);
+            device->Release();
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
+        UE4Manager::SetViewTarget();
         ID3D11Texture2D* texture;
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
         VRManager::SubmitFrame(texture);
         texture->Release();
         if (VRManager::LastEyeShown == Eye::Right)
-        {
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
-        }
         return S_OK;
     }
 

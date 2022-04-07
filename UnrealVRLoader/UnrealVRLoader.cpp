@@ -16,7 +16,14 @@ namespace UnrealVR
 
     DWORD __stdcall Loader::InitThread(LPVOID)
     {
-        Sleep(10'000);
+        HMODULE umlDLL = GetModuleHandle(L"UnrealEngineModLoader.dll");
+        while (!umlDLL)
+        {
+            Sleep(100);
+            umlDLL = GetModuleHandle(L"UnrealEngineModLoader.dll");
+        }
+        while (!IsGameInfoLoaded())
+            Sleep(100);
         UE4::InitSDK();
         if (!VRManager::Init())
         {
