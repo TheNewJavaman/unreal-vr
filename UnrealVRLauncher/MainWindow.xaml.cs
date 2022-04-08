@@ -318,7 +318,7 @@ namespace UnrealVR
             var startupInfo = new STARTUPINFO();
             startupInfo.cb = Marshal.SizeOf(startupInfo);
             var shippingDir = Profile.ShippingExe[..Profile.ShippingExe.LastIndexOf("\\")];
-            if (!CreateProcess(Profile.ShippingExe, null, IntPtr.Zero, IntPtr.Zero, true, 0, IntPtr.Zero, shippingDir, ref startupInfo, out PROCESS_INFORMATION procInfo))
+            if (!CreateProcess(null, Profile.ShippingExe + " " + Profile.CommandLineArgs, IntPtr.Zero, IntPtr.Zero, true, 0, IntPtr.Zero, shippingDir, ref startupInfo, out PROCESS_INFORMATION procInfo))
             {
                 await ShowError("Failed to create game process!");
                 return;
