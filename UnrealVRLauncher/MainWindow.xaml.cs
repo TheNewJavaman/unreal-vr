@@ -325,6 +325,7 @@ namespace UnrealVR
             }
             if (!await InjectDLL("UnrealEngineModLoader.dll", procInfo)) return;
             if (!await InjectDLL("UnrealVRLoader.dll", procInfo)) return;
+            if (!await InjectDLL("openxr_loader.dll", procInfo)) return;
             if (!CloseHandle(procInfo.hThread))
             {
                 await ShowError("Failed to close process thread handle!");
@@ -338,14 +339,17 @@ namespace UnrealVR
 
         private async Task<bool> InjectDLL(string name, PROCESS_INFORMATION procInfo)
         {
-            var installDir = Package.Current.InstalledLocation.Path;
+            var installDir = Package.Current.InstalledLocation;
+            var localDir = ApplicationData.Current.LocalFolder;
+            var dllFile = await installDir.GetFileAsync(name);
+            var dllCopy = await dllFile.CopyAsync(localDir, name, NameCollisionOption.ReplaceExisting);
             var loc = VirtualAllocEx(procInfo.hProcess, IntPtr.Zero, MAX_PATH, (uint)AllocationType.Commit | (uint)AllocationType.Reserve, (uint)MemoryProtection.ReadWrite);
             if (loc == IntPtr.Zero)
             {
                 await ShowError("Failed to allocate memory in game process!");
                 return false;
             }
-            var dllPath = Encoding.ASCII.GetBytes(installDir + "\\" + name);
+            var dllPath = Encoding.ASCII.GetBytes(dllCopy.Path);
             if (!WriteProcessMemory(procInfo.hProcess, loc, dllPath, dllPath.Length + 1, out _))
             {
                 await ShowError("Failed to write DLL path to memory!");

@@ -60,8 +60,7 @@ namespace UnrealVR
         childViewTarget = nullptr;
         cameraComponent = nullptr;
         gameUserSettings = nullptr;
-        lastParentVRLocation = UE4::FVector();
-        lastParentVRRotation = UE4::FRotator();
+        lastRotationInput = UE4::FRotator();
     }
 
     void UE4Manager::SetViewTarget()
@@ -117,6 +116,7 @@ namespace UnrealVR
         if (currentViewTarget != childViewTarget)
         {
             parentViewTarget = currentViewTarget;
+            lastRotationInput = UE4::FRotator();
 
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
@@ -204,7 +204,7 @@ namespace UnrealVR
         childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
     }
 
-    void UE4Manager::SetParentRelativeRotation(const UE4::FQuat q)
+    void UE4Manager::SetChildRelativeRotation(const UE4::FQuat q)
     {
         if (childViewTarget == nullptr) return;
 
@@ -220,27 +220,22 @@ namespace UnrealVR
         auto getControlRotationParams = UE4::GetControlRotationParams();
         playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
 
-        // Compose rotation
-        // TODO: Allow configurable axis rotations; default is great for FPS games
-        USING_UOBJECT(composeRotatorsFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.ComposeRotators")
-        auto composeRotatorsParams = UE4::ComposeRotatorsParams();
-        composeRotatorsParams.A = getControlRotationParams.Result;
-        composeRotatorsParams.B = UE4::FRotator(
-            quatRotatorParams.Result.Pitch - lastParentVRRotation.Pitch,
-            quatRotatorParams.Result.Yaw - lastParentVRRotation.Yaw,
-            quatRotatorParams.Result.Roll - lastParentVRRotation.Roll
-        );
-        mathLibrary->ProcessEvent(composeRotatorsFunc, &composeRotatorsParams);
-        composeRotatorsParams.Result.Pitch = quatRotatorParams.Result.Pitch;
-
         // Set control rotation
         USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
         UE4::SetControlRotationParams setControlRotationParams;
-        //setControlRotationParams.NewRotation = composeRotatorsParams.Result;
-        setControlRotationParams.NewRotation = quatRotatorParams.Result;
+        setControlRotationParams.NewRotation = UE4::FRotator(
+            quatRotatorParams.Result.Pitch,
+            getControlRotationParams.Result.Yaw + quatRotatorParams.Result.Yaw - lastRotationInput.Yaw,
+            getControlRotationParams.Result.Roll + quatRotatorParams.Result.Roll - lastRotationInput.Roll
+        );
         playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
-
-        lastParentVRRotation = quatRotatorParams.Result;
+        lastRotationInput = quatRotatorParams.Result;
+        
+        // Set child rotation
+        USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
+        auto setActorRotationParams = UE4::SetActorRotationParams();
+        setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
+        childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
     }
 
     float UE4Manager::Normalize(const float a)

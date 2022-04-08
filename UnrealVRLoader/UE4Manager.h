@@ -27,7 +27,7 @@ namespace UnrealVR
         static void SetChildRelativeLocation(UE4::FVector relativeLocation);
 
         /** Sets the rotational orientation of the view target, according to the user's preferences */
-        static void SetParentRelativeRotation(UE4::FQuat q);
+        static void SetChildRelativeRotation(UE4::FQuat q);
 
     private:
         /** Map of cached, static UObjects */
@@ -47,12 +47,9 @@ namespace UnrealVR
         /** Resize */
         inline static UE4::UObject* gameUserSettings = nullptr;
 
-        /** SetParentRelativeLocation */
-        inline static UE4::FVector lastParentVRLocation = UE4::FVector();
-
-        /** SetParentRelativeRotation */
-        inline static UE4::FRotator lastParentVRRotation = UE4::FRotator();
-
+        /** SetChildRelativeRotation */
+        inline static UE4::FRotator lastRotationInput = UE4::FRotator();
+        
         /** Normalizes angles to (-180, 180] degrees */
         static float Normalize(float a);
     };
