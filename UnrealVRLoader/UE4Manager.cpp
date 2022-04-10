@@ -6,6 +6,7 @@
 #include "VRManager.h"
 #include "UE4Extensions.h"
 
+#define PI 3.141592653589793f
 #define USING_UOBJECT(ptr, T, name) \
     T* ptr; \
     if (!GetUObject<T>(&(ptr), name)) return;
@@ -60,7 +61,7 @@ namespace UnrealVR
         childViewTarget = nullptr;
         cameraComponent = nullptr;
         gameUserSettings = nullptr;
-        lastRotationInput = UE4::FRotator();
+        lastRot = UE4::FRotator();
     }
 
     void UE4Manager::SetViewTarget()
@@ -116,7 +117,7 @@ namespace UnrealVR
         if (currentViewTarget != childViewTarget)
         {
             parentViewTarget = currentViewTarget;
-            lastRotationInput = UE4::FRotator();
+            lastRot = UE4::FRotator();
 
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
@@ -135,6 +136,7 @@ namespace UnrealVR
         // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
         UE4::SetFieldOfViewParams setFieldOfViewParams;
+        //setFieldOfViewParams.InFieldOfView = VRManager::FOV;
         setFieldOfViewParams.InFieldOfView = VRManager::FOV * 16.f / 9.f;
         cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
@@ -189,60 +191,93 @@ namespace UnrealVR
         Log::Info("[UnrealVR] Resized render resolution to match VR headset");
     }
 
-    void UE4Manager::SetChildRelativeLocation(const UE4::FVector relativeLocation)
+    //void UE4Manager::UpdatePose(const UE4::FVector loc, const UE4::FQuat rot, const UE4::FVector loc2)
+    void UE4Manager::UpdatePose(const UE4::FQuat rot, const Eye eye)
     {
-        if (childViewTarget == nullptr) return;
+        if (parentViewTarget == nullptr || childViewTarget == nullptr) return;
 
-        // Set the view target's relative location
-        USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
-        auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
-        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(
-            relativeLocation.X * CmUnitsScale,
-            relativeLocation.Y * CmUnitsScale,
-            relativeLocation.Z * CmUnitsScale
-        );
-        childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
-    }
-
-    void UE4Manager::SetChildRelativeRotation(const UE4::FQuat q)
-    {
-        if (childViewTarget == nullptr) return;
-
-        // Convert the quat to a UE4 FRotator
+        /*
+        // Convert rot to an FRotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
         auto quatRotatorParams = UE4::QuatRotatorParams();
-        quatRotatorParams.Q = q;
+        quatRotatorParams.Q = rot;
         mathLibrary->ProcessEvent(quatRotatorFunc, &quatRotatorParams);
+        */
 
         // Get control rotation
         USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
         auto getControlRotationParams = UE4::GetControlRotationParams();
         playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
 
+        /*
         // Set control rotation
         USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
         UE4::SetControlRotationParams setControlRotationParams;
         setControlRotationParams.NewRotation = UE4::FRotator(
             quatRotatorParams.Result.Pitch,
-            getControlRotationParams.Result.Yaw + quatRotatorParams.Result.Yaw - lastRotationInput.Yaw,
-            getControlRotationParams.Result.Roll + quatRotatorParams.Result.Roll - lastRotationInput.Roll
+            getControlRotationParams.Result.Yaw + quatRotatorParams.Result.Yaw - lastRot.Yaw,
+            getControlRotationParams.Result.Roll + quatRotatorParams.Result.Roll - lastRot.Roll
         );
         playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
-        lastRotationInput = quatRotatorParams.Result;
-        
+        lastRot = quatRotatorParams.Result;
+        */
+
         // Set child rotation
         USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
         auto setActorRotationParams = UE4::SetActorRotationParams();
-        setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
+        //setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
+        setActorRotationParams.NewRotation = getControlRotationParams.Result;
         childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
-    }
 
-    float UE4Manager::Normalize(const float a)
-    {
-        float b = a;
-        while (b <= -180.0f) b += 360.0f;
-        while (b > 180.0f) b -= 360.0f;
-        return b;
+        /*
+        // Unrotate IPD
+        USING_UOBJECT(quatUnrotateVectorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_UnrotateVector")
+        UE4::QuatRotateVectorParams quatUnrotateVectorParams;
+        quatUnrotateVectorParams.Q = RotatorToQuaternion(
+            UE4::FRotator(
+                -quatRotatorParams.Result.Pitch,
+                -quatRotatorParams.Result.Yaw,
+                -quatRotatorParams.Result.Roll
+            )
+        );
+        quatUnrotateVectorParams.V = UE4::FVector(
+            (loc.X - loc2.X) * CmUnitsScale / 2.f,
+            (loc.Y - loc2.Y) * CmUnitsScale / 2.f,
+            (loc.Z - loc2.Z) * CmUnitsScale / 2.f
+        );
+        mathLibrary->ProcessEvent(quatUnrotateVectorFunc, &quatUnrotateVectorParams);
+        */
+
+        // Apply IPD by setting the child's relative location
+        USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
+        auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
+        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(0.f, eye == Eye::First ? 3.15f : -3.15f, 0.f);
+        childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
+
+        /*
+        // Convert the yaw control rotation to a quat
+        constexpr float C = PI / 180.f / 2.f;
+        const float YawNoWinding = std::remainderf(setControlRotationParams.NewRotation.Yaw, 360.0f);
+        const auto RotationQuat = UE4::FQuat(0.f, 0.f, sin(C * YawNoWinding), cos(C * YawNoWinding));
+
+        // Rotate loc according to the yaw rotation of the view target
+        USING_UOBJECT(quatRotateVectorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_RotateVector")
+        UE4::QuatRotateVectorParams quatRotateVectorParams;
+        quatRotateVectorParams.Q = RotationQuat;
+        quatRotateVectorParams.V = eyeCenterLoc;
+        //mathLibrary->ProcessEvent(quatRotateVectorFunc, &quatRotateVectorParams);
+
+        // Add eye center delta loc to parent
+        USING_UOBJECT(addActorWorldOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldOffset")
+        auto addActorWorldOffsetParams = UE4::AddActorWorldOffsetParams();
+        addActorWorldOffsetParams.DeltaLocation = UE4::FVector(
+            (quatRotateVectorParams.V.X - lastLoc.X) * CmUnitsScale,
+            (quatRotateVectorParams.V.Y - lastLoc.Y) * CmUnitsScale,
+            (quatRotateVectorParams.V.Z - lastLoc.Z) * CmUnitsScale
+        );
+        //parentViewTarget->ProcessEvent(addActorWorldOffsetFunc, &addActorWorldOffsetParams);
+        lastLoc = quatRotateVectorParams.V;
+        */
     }
 }

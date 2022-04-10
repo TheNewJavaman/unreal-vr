@@ -6,6 +6,7 @@
 
 namespace UnrealVR
 {
+    // TODO: Write a dependency injection system
 	class Loader
 	{
 	public:

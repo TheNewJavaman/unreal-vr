@@ -3,8 +3,12 @@
 #include <map>
 #include <Ue4.hpp>
 
+#include "VRManager.h"
+
 namespace UnrealVR
 {
+    enum class Eye;
+
     class UE4Manager
     {
     public:
@@ -20,14 +24,10 @@ namespace UnrealVR
         /** Set the render resolution to match the VR headset */
         static void Resize();
 
-        /** May be changed at runtime via the PipeClient */
+        /** Input VR pose (with corrected axes) and forward to Unreal Engine, with several adjustments */
+        //static void UpdatePose(UE4::FVector loc, UE4::FQuat rot, UE4::FVector loc2);
+        static void UpdatePose(UE4::FQuat rot, Eye eye);
         static inline float CmUnitsScale = 1.f;
-        
-        /** Sets the translational offset of the view target (camera) from its parent, the original view target */
-        static void SetChildRelativeLocation(UE4::FVector relativeLocation);
-
-        /** Sets the rotational orientation of the view target, according to the user's preferences */
-        static void SetChildRelativeRotation(UE4::FQuat q);
 
     private:
         /** Map of cached, static UObjects */
@@ -47,10 +47,8 @@ namespace UnrealVR
         /** Resize */
         inline static UE4::UObject* gameUserSettings = nullptr;
 
-        /** SetChildRelativeRotation */
-        inline static UE4::FRotator lastRotationInput = UE4::FRotator();
-        
-        /** Normalizes angles to (-180, 180] degrees */
-        static float Normalize(float a);
+        /** UpdatePose */
+        inline static UE4::FVector lastLoc = UE4::FVector();
+        inline static UE4::FRotator lastRot = UE4::FRotator();
     };
 }

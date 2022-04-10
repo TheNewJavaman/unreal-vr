@@ -183,6 +183,7 @@
     <ClInclude Include="PipeClient.h" />
     <ClInclude Include="UE4Extensions.h" />
     <ClCompile Include="PipeClient.cpp" />
+    <ClCompile Include="UE4Extensions.cpp" />
     <ClCompile Include="UE4Manager.cpp" />
     <ClCompile Include="UnrealVRLoader.cpp" />
     <ClCompile Include="D3D11Manager.cpp" />

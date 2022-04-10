@@ -168,4 +168,18 @@ namespace UE4
         FRotator B = FRotator();
         FRotator Result = FRotator();
     };
+
+    struct QuatRotateVectorParams
+    {
+        FQuat Q = FQuat();
+        FVector V = FVector();
+    };
+
+    struct QuatUnrotateVectorParams
+    {
+        FQuat Q = FQuat();
+        FVector V = FVector();
+    };
+
+    FQuat RotatorToQuaternion(FRotator R);
 }
