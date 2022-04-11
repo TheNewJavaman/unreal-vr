@@ -144,17 +144,6 @@ namespace UnrealVR
                       "Function Engine.CameraComponent.SetConstraintAspectRatio")
         auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
         cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
-
-        // Get control rotation
-        USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
-        auto getControlRotationParams = UE4::GetControlRotationParams();
-        playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
-
-        // Update rotation to match parent's
-        USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
-        auto setActorRotationParams = UE4::SetActorRotationParams();
-        setActorRotationParams.NewRotation = UE4::FRotator(getControlRotationParams.Result);
-        childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
     }
 
     void UE4Manager::Resize()
@@ -195,21 +184,18 @@ namespace UnrealVR
     {
         if (parentViewTarget == nullptr || childViewTarget == nullptr) return;
 
-        /*
         // Convert rot to an FRotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
         auto quatRotatorParams = UE4::QuatRotatorParams();
         quatRotatorParams.Q = rot;
         mathLibrary->ProcessEvent(quatRotatorFunc, &quatRotatorParams);
-        */
 
         // Get control rotation
         USING_UOBJECT(getControlRotationFunc, UE4::UFunction, "Function Engine.Controller.GetControlRotation")
         auto getControlRotationParams = UE4::GetControlRotationParams();
         playerController->ProcessEvent(getControlRotationFunc, &getControlRotationParams);
 
-        /*
         // Set control rotation
         USING_UOBJECT(setControlRotationFunc, UE4::UFunction, "Function Engine.Controller.SetControlRotation")
         UE4::SetControlRotationParams setControlRotationParams;
@@ -220,17 +206,11 @@ namespace UnrealVR
         );
         playerController->ProcessEvent(setControlRotationFunc, &setControlRotationParams);
         lastRot = quatRotatorParams.Result;
-        */
 
         // Set child rotation
         USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
         auto setActorRotationParams = UE4::SetActorRotationParams();
-        //setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
-        setActorRotationParams.NewRotation = UE4::FRotator(
-            getControlRotationParams.Result.Pitch,
-            getControlRotationParams.Result.Yaw, //+ asymmetricCorrection,
-            getControlRotationParams.Result.Roll
-        );
+        setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
         childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
 
         /*
