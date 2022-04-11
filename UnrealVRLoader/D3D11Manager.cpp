@@ -123,7 +123,7 @@ namespace UnrealVR
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
         VRManager::SubmitFrame(texture);
         texture->Release();
-        if (VRManager::LastEyeShown == Eye::Second)
+        if (VRManager::LastEyeShown == Eye::Left)
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         return S_OK;
     }

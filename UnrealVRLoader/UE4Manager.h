@@ -20,6 +20,7 @@ namespace UnrealVR
 
         /** Set the view target to a custom camera actor meant for VR */
         static void SetViewTarget();
+        static inline float FOVScale = 1.f;
 
         /** Set the render resolution to match the VR headset */
         static void Resize();

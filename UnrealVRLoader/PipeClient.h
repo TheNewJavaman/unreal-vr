@@ -19,11 +19,12 @@ namespace UnrealVR
         inline static HANDLE hPipe = nullptr;
 
         /** Handle change in settings */
-        static void HandleCommand(TCHAR buffer[]);
+        static void HandleCommand(CHAR buffer[]);
     };
 
     enum class Setting : int
     {
-        CmUnitsScale = 0x00
+        CmUnitsScale = 0x00,
+        FOVScale = 0x01
     };
 }

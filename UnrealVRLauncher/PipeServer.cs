@@ -12,12 +12,6 @@ namespace UnrealVR
 
         public void Start()
         {
-            var thread = new Thread(ServerThread);
-            thread.Start();
-        }
-
-        private void ServerThread()
-        {
             server = new NamedPipeServerStream("UnrealVR", PipeDirection.Out, 1);
             server.WaitForConnection();
             stream = new PipeStream(server);
@@ -27,8 +21,12 @@ namespace UnrealVR
 
         public void Stop()
         {
-            if (server.IsConnected)
-                server.Close();
+            if (server != null)
+            {
+                if (server.IsConnected)
+                    server.Disconnect();
+                server.Dispose();
+            }
         }
         
         public void SendSettingChange(Setting setting, float value)
@@ -60,6 +58,7 @@ namespace UnrealVR
 
     public enum Setting : int
     {
-        CmUnitsScale = 0x00
+        CmUnitsScale = 0x00,
+        FOVScale = 0x01
     }
 }

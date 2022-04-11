@@ -14,8 +14,8 @@ namespace UnrealVR
     /** UnrealVR currently uses alternate eye rendering (AER), so we must keep track of which eye was last rendered */
     enum class Eye
     {
-        First,
-        Second
+        Left,
+        Right
     };
 
     class VRManager
@@ -33,7 +33,7 @@ namespace UnrealVR
 
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);
-        inline static Eye LastEyeShown = Eye::Second;
+        inline static Eye LastEyeShown = Eye::Right;
         inline static float FOV = 0.0f;
 
         /** Releases OpenXR resources */

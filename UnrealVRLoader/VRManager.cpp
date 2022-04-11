@@ -255,7 +255,7 @@ namespace UnrealVR
         texture->GetDevice(&device);
         ID3D11DeviceContext* context;
         device->GetImmediateContext(&context);
-        if (LastEyeShown == Eye::Second)
+        if (LastEyeShown == Eye::Right)
         {
             constexpr auto thisEye = 0;
             constexpr auto nextEye = 1;
@@ -279,13 +279,14 @@ namespace UnrealVR
             xrProjectionViews.at(thisEye).pose = xrViews.at(thisEye).pose;
             xrProjectionViews.at(thisEye).fov = xrViews.at(thisEye).fov;
             FOV = (xrViews.at(thisEye).fov.angleRight - xrViews.at(thisEye).fov.angleLeft) * 180.f / PI;
+            auto [tl, tr, tu, td] = xrViews.at(nextEye).fov;
             auto [lx, ly, lz] = xrViews.at(nextEye).pose.position;
             auto [l2x, l2y, l2z] = xrViews.at(thisEye).pose.position;
             auto [rx, ry, rz, rw] = xrViews.at(nextEye).pose.orientation;
             UE4Manager::UpdatePose(
                 //UE4::FVector(-lz * 100.f, lx * 100.f, ly * 100.f),
                 UE4::FQuat(-rz, rx, ry, -rw),
-                Eye::Second
+                Eye::Right
                 //UE4::FVector(-l2z * 100.f, l2x * 100.f, l2y * 100.f)
             );
             xrProjectionViews.at(thisEye).subImage.swapchain = xrSwapChains.at(thisEye);
@@ -305,7 +306,7 @@ namespace UnrealVR
             }
             xr = xrReleaseSwapchainImage(xrSwapChains.at(thisEye), &releaseInfo);
             CHECK_XR(xr, "Could not release OpenXR swapchain image")
-            LastEyeShown = Eye::First;
+            LastEyeShown = Eye::Left;
         }
         else
         {
@@ -324,13 +325,14 @@ namespace UnrealVR
             xrProjectionViews.at(thisEye) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
             xrProjectionViews.at(thisEye).pose = xrViews.at(thisEye).pose;
             xrProjectionViews.at(thisEye).fov = xrViews.at(thisEye).fov;
+            auto [tl, tr, tu, td] = xrViews.at(nextEye).fov;
             auto [lx, ly, lz] = xrViews.at(nextEye).pose.position;
             auto [l2x, l2y, l2z] = xrViews.at(thisEye).pose.position;
             auto [rx, ry, rz, rw] = xrViews.at(nextEye).pose.orientation;
             UE4Manager::UpdatePose(
                 //UE4::FVector(-lz * 100.f, lx * 100.f, ly * 100.f),
                 UE4::FQuat(-rz, rx, ry, -rw),
-                Eye::First
+                Eye::Left
                 //UE4::FVector(-l2z * 100.f, l2x * 100.f, l2y * 100.f)
             );
             xrProjectionViews.at(thisEye).subImage.swapchain = xrSwapChains.at(thisEye);
@@ -352,7 +354,7 @@ namespace UnrealVR
             endInfo.layers = &xrLayer;
             xr = xrEndFrame(xrSession, &endInfo);
             CHECK_XR(xr, "Could not end OpenXR frame")
-            LastEyeShown = Eye::Second;
+            LastEyeShown = Eye::Right;
         }
         return true;
     }

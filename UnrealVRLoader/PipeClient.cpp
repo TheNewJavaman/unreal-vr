@@ -24,29 +24,31 @@ namespace UnrealVR
             return false;
         }
         CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
+        Log::Info("[UnrealVR] Opened named pipe to app UI for changing settings in realtime");
         return true;
     }
 
     DWORD PipeClient::InitThread(LPVOID)
     {
-        bool fs = false;
+        CHAR chBuf[BUFFER_SIZE];
         DWORD cbRead;
-        while (fs)
-        {
-            TCHAR chBuf[BUFFER_SIZE];
-            fs = ReadFile(hPipe, chBuf, BUFFER_SIZE * sizeof(TCHAR), &cbRead, nullptr);
-            if (!fs && GetLastError() != ERROR_MORE_DATA) break;
+        while (ReadFile(hPipe, chBuf, BUFFER_SIZE * sizeof(CHAR), &cbRead, nullptr))
             HandleCommand(chBuf);
-        }
+        Log::Error("[UnrealVR] Named pipe closed; error %d", GetLastError());
         return NULL;
     }
 
-    void PipeClient::HandleCommand(TCHAR buffer[])
+    void PipeClient::HandleCommand(CHAR buffer[])
     {
         switch(static_cast<Setting>(buffer[0]))
         {
         case Setting::CmUnitsScale:
-            UE4Manager::CmUnitsScale = *reinterpret_cast<float*>(&buffer[1]);
+            memcpy(&UE4Manager::CmUnitsScale, &buffer[1], 4 * sizeof(CHAR));
+            Log::Info("[UnrealVR] Set CmUnitsScale to %.3f", UE4Manager::CmUnitsScale);
+            break;
+        case Setting::FOVScale:
+            memcpy(&UE4Manager::FOVScale, &buffer[1], 4 * sizeof(CHAR));
+            Log::Info("[UnrealVR] Set FOVScale to %.3f", UE4Manager::FOVScale);
             break;
         }
     }

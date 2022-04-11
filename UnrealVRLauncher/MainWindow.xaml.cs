@@ -22,7 +22,7 @@ namespace UnrealVR
 {
     public sealed partial class MainWindow : INotifyPropertyChanged
     {
-        private static string DEFAULT_FORMATTED_EXE = "Ex. [Game]\\Binaries\\Win64\\[Game]-Win64-Shipping.exe";
+        private static readonly string DEFAULT_FORMATTED_EXE = "Ex. [Game]\\Binaries\\Win64\\[Game]-Win64-Shipping.exe";
 
         public MainWindow()
         {
@@ -39,7 +39,7 @@ namespace UnrealVR
                 NumberRounder = rounder
             };
             ScaleIncrement.NumberFormatter = formatter;
-            server = new PipeServer();
+            FOVScale.NumberFormatter = formatter;
             Task.Factory.StartNew(() => GetProfiles());
         }
 
@@ -88,6 +88,7 @@ namespace UnrealVR
         private bool ShowStop { get { return proc != IntPtr.Zero && ProfileSelected; } }
 
         private PipeServer server;
+        private float FOVMultiplier { get; set; } = 1.0f;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -146,8 +147,7 @@ namespace UnrealVR
         private async void Add_Click(object sender, RoutedEventArgs e)
         {
             var profile = new ProfileModel();
-            var newProfiles = new List<ProfileModel>(Profiles);
-            newProfiles.Add(profile);
+            var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
             ProfileSelector.SelectedItem = profile;
@@ -219,8 +219,17 @@ namespace UnrealVR
             Profile.CmUnitsScale = (float)numberBox.Value;
             Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
             Task.Factory.StartNew(() => Profile.SaveToAppData());
-            if (server.IsConnected)
+            if (server != null && server.IsConnected)
                 server.SendSettingChange(Setting.CmUnitsScale, (float)numberBox.Value);
+        }
+
+        private void FOVScale_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        {
+            var numberBox = sender as NumberBox;
+            FOVMultiplier = (float)numberBox.Value;
+            NotifyPropertyChanged(nameof(FOVMultiplier));
+            if (server != null && server.IsConnected)
+                server.SendSettingChange(Setting.FOVScale, (float)numberBox.Value);
         }
 
         private void Copy_Click(object sender, RoutedEventArgs e)
@@ -261,6 +270,7 @@ namespace UnrealVR
                     UsesFNamePoolSwitch.IsOn = false;
                     UsesDeferredSpawnSwitch.IsOn = false;
                     ScaleIncrement.Value = 1.0f;
+                    FOVScale.Value = 1.0f;
                     FormattedExe = DEFAULT_FORMATTED_EXE;
                     NotifyPropertyChanged(nameof(FormattedExe));
                 }
@@ -333,7 +343,10 @@ namespace UnrealVR
             proc = procInfo.hProcess;
             NotifyPropertyChanged(nameof(ShowStart));
             NotifyPropertyChanged(nameof(ShowStop));
+            server = new PipeServer();
             server.Start();
+            server.SendSettingChange(Setting.CmUnitsScale, Profile.CmUnitsScale);
+            server.SendSettingChange(Setting.FOVScale, FOVMultiplier);
             //_ = Task.Factory.StartNew(CheckStopped);
         }
 

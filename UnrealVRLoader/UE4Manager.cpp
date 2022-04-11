@@ -136,8 +136,7 @@ namespace UnrealVR
         // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
         UE4::SetFieldOfViewParams setFieldOfViewParams;
-        //setFieldOfViewParams.InFieldOfView = VRManager::FOV;
-        setFieldOfViewParams.InFieldOfView = VRManager::FOV * 16.f / 9.f;
+        setFieldOfViewParams.InFieldOfView = VRManager::FOV * FOVScale;
         cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
         // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
@@ -227,7 +226,11 @@ namespace UnrealVR
         USING_UOBJECT(setActorRotationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRotation")
         auto setActorRotationParams = UE4::SetActorRotationParams();
         //setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
-        setActorRotationParams.NewRotation = getControlRotationParams.Result;
+        setActorRotationParams.NewRotation = UE4::FRotator(
+            getControlRotationParams.Result.Pitch,
+            getControlRotationParams.Result.Yaw, //+ asymmetricCorrection,
+            getControlRotationParams.Result.Roll
+        );
         childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
 
         /*
@@ -252,7 +255,7 @@ namespace UnrealVR
         // Apply IPD by setting the child's relative location
         USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
-        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(0.f, eye == Eye::First ? 3.15f : -3.15f, 0.f);
+        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(0.f, eye == Eye::Left ? 3.15f : -3.15f, 0.f);
         childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
 
         /*

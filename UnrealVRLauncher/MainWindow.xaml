@@ -117,6 +117,18 @@
                         <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="ScaleIncrement" Value="{x:Bind Profile.CmUnitsScale, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="ScaleIncrement_ValueChanged"/>
                     </StackPanel>
                 </RelativePanel>
+                <RelativePanel Style="{StaticResource Panel}">
+                    <StackPanel Style="{StaticResource TwoLinePanel.Key}">
+                        <SymbolIcon Symbol="View"/>
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Field Of View Multiplier"/>
+                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Use monitor aspect ratio (ex. 16/9=1.777) if too zoomed in — updatable while in-game, not saved"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Panel.Value}">
+                        <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="FOVScale" Value="{x:Bind FOVMultiplier, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="FOVScale_ValueChanged"/>
+                    </StackPanel>
+                </RelativePanel>
                 <StackPanel Margin="0,42,0,0" Spacing="1">
                     <TextBlock Style="{StaticResource Footer}" Text="UnrealVR 0.1.0"/>
                     <TextBlock Style="{StaticResource Footer}" Text="Adds virtual reality support to flatscreen Unreal Engine games"/>
