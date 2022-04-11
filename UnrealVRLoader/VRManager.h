@@ -18,14 +18,29 @@ namespace UnrealVR
         Right
     };
 
+    /**
+     * We render the full field of view of the headset, then only use the portion that the eye can see. Otherwise, there
+     * is distortion on the edges of the image, and the lenses don't converge properly
+     */
+    struct RenderFOV
+    {
+        uint32_t eyeWidth = 0;
+        uint32_t eyeHeight = 0;
+        float renderFOV = 0.f;
+        uint32_t renderWidth = 0;
+        uint32_t renderHeight = 0;
+        std::map<Eye, XrOffset2Di> offsets;
+        bool fovSet = false;
+    };
+
     class VRManager
     {
     public:
         /** Begin initializing OpenXR: starts the runtime, loads extensions, etc. */
         static bool Init();
 
-        /** Get the recommended headset render resolution for Unreal Engine */
-        static bool GetRecommendedResolution(uint32_t* width, uint32_t* height);
+        /** Set the recommended headset render resolution for Unreal Engine */
+        static bool SetRenderResolution();
 
         /** Start the OpenXR session */
         static bool FinalizeInit(ID3D11Device* device, DXGI_SWAP_CHAIN_DESC desc);
@@ -34,7 +49,7 @@ namespace UnrealVR
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);
         inline static Eye LastEyeShown = Eye::Right;
-        inline static float FOV = 0.0f;
+        inline static RenderFOV FOV = {};
 
         /** Releases OpenXR resources */
         static void Stop();
@@ -83,13 +98,11 @@ namespace UnrealVR
         inline static XrViewConfigurationType xrViewType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
         inline static XrInstance xrInstance = {};
 
-        /** GetRecommendedResolution */
+        /** SetRenderResolution */
         inline static uint32_t xrViewCount = 0;
         inline static std::vector<XrViewConfigurationView> xrConfigViews;
-        inline static uint32_t xrWidth, xrHeight;
 
         /** SubmitFrame */
-        inline static XrCompositionLayerProjection xrLayerProj = {};
         inline static XrFrameState xrFrameState = {};
         inline static std::vector<XrCompositionLayerProjectionView> xrProjectionViews;
         inline static uint32_t xrProjectionViewCount = 0;

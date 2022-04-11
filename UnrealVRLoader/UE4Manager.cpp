@@ -136,7 +136,7 @@ namespace UnrealVR
         // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
         UE4::SetFieldOfViewParams setFieldOfViewParams;
-        setFieldOfViewParams.InFieldOfView = VRManager::FOV * FOVScale;
+        setFieldOfViewParams.InFieldOfView = VRManager::FOV.renderFOV * FOVScale;
         cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
         // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
@@ -156,12 +156,11 @@ namespace UnrealVR
         ASSERT_ASSIGN(getGameUserSettingsParams.Result, gameUserSettings)
 
         // Set the resolution
-        uint32_t width, height;
-        VRManager::GetRecommendedResolution(&width, &height);
+        VRManager::SetRenderResolution();
         USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
         UE4::SetScreenResolutionParams setScreenResolutionParams;
-        setScreenResolutionParams.Resolution.X = static_cast<int>(width);
-        setScreenResolutionParams.Resolution.Y = static_cast<int>(height);
+        setScreenResolutionParams.Resolution.X = static_cast<int>(VRManager::FOV.renderWidth);
+        setScreenResolutionParams.Resolution.Y = static_cast<int>(VRManager::FOV.renderHeight);
         gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setScreenResolutionParams);
 
         // Set to fullscreen mode for better performance
