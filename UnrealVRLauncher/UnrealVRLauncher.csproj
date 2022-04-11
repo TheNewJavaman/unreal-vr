@@ -15,7 +15,7 @@
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <PackageCertificateThumbprint>A57646E652BBC66A263E0E060884C7C16E84D21B</PackageCertificateThumbprint>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
-    <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
+    <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
     <AppxBundle>Never</AppxBundle>
@@ -34,8 +34,8 @@
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
 	<Content Include="$(SolutionDir)$(Platform)\$(Configuration)\UnrealVRLoader.dll" CopyToOutputDirectory="Always" />
-	<Content Include="$(SolutionDir)$(Platform)\$(Configuration)\UnrealEngineModLoader.dll" CopyToOutputDirectory="Always"/>
-	<Content Include="$(SolutionDir)$(Platform)\$(Configuration)\openxr_loader.dll" CopyToOutputDirectory="Always"/>
+	<Content Include="$(SolutionDir)$(Platform)\$(Configuration)\UnrealEngineModLoader.dll" CopyToOutputDirectory="Always" />
+	<Content Include="$(SolutionDir)$(Platform)\$(Configuration)\openxr_loader.dll" CopyToOutputDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>
