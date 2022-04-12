@@ -7,13 +7,11 @@
 #include "D3D11Manager.h"
 #include "UE4Manager.h"
 
-#define PI 3.141592653589793f
+#define RAD_DEG 57.29577951308232f
 #define CHECK_XR(xr, message) \
     if ((xr) != XR_SUCCESS) \
     { \
-        Log::Error( \
-            std::format("[UnrealVR] {}; error code ({})", message, static_cast<int>(xr)) \
-        ); \
+        Log::Error("[UnrealVR] %s; error code %d", message, xr); \
         return false; \
     }
 
@@ -43,10 +41,10 @@ namespace UnrealVR
         std::vector<XrExtensionProperties> allExtensions(extensionCount, {XR_TYPE_EXTENSION_PROPERTIES});
         xr = xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, allExtensions.data());
         CHECK_XR(xr, "Could not query OpenXR extensions")
-        Log::Info("[UnrealVR] Found (%d) OpenXR extensions:", extensionCount);
+        Log::Info("[UnrealVR] Found %u OpenXR extensions; sorted alphabetically:", extensionCount);
         for (auto& allExtension : allExtensions)
         {
-            Log::Info(std::format("[UnrealVR] - {}", allExtension.extensionName) + "");
+            Log::Info("[UnrealVR] - %s", allExtension.extensionName);
             for (auto& requiredExtension : requiredExtensions)
             {
                 if (strcmp(requiredExtension, allExtension.extensionName) == 0)
@@ -109,7 +107,7 @@ namespace UnrealVR
         debugInfo.userCallback = [](XrDebugUtilsMessageSeverityFlagsEXT severity, XrDebugUtilsMessageTypeFlagsEXT types,
                                     const XrDebugUtilsMessengerCallbackDataEXT* msg, void* user_data)
         {
-            Log::Info(std::format("[UnrealVR] OpenXR | {}: {}", msg->functionName, msg->message) + "");
+            Log::Info("[UnrealVR] OpenXR | %s: %s", msg->functionName, msg->message);
             return static_cast<XrBool32>(XR_FALSE);
         };
         xr = xrExtCreateDebugUtilsMessenger(xrInstance, &debugInfo, &xrDebug);
@@ -139,6 +137,7 @@ namespace UnrealVR
 
     bool VRManager::ContinueInit(ID3D11Device* device)
     {
+        // Set up session
         graphicsBinding.device = device;
         XrSessionCreateInfo sessionInfo = {XR_TYPE_SESSION_CREATE_INFO};
         sessionInfo.next = &graphicsBinding;
@@ -151,12 +150,9 @@ namespace UnrealVR
         xr = xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
         CHECK_XR(xr, "Could not create OpenXR reference space")
         Log::Info("[UnrealVR] Finished initializing OpenXR");
-        return true;
-    }
 
-    bool VRManager::SetRenderResolution()
-    {
-        XrResult xr = xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType, 0, &xrViewCount, nullptr);
+        // Enumerate views and set per-eye resolution
+        xr = xrEnumerateViewConfigurationViews(xrInstance, xrSystemId, xrViewType, 0, &xrViewCount, nullptr);
         CHECK_XR(xr, "Could not enumerate OpenXR view configuration view count")
         xrConfigViews.resize(xrViewCount, {XR_TYPE_VIEW_CONFIGURATION_VIEW});
         xrViews.resize(xrViewCount, {XR_TYPE_VIEW});
@@ -165,33 +161,7 @@ namespace UnrealVR
         CHECK_XR(xr, "Could not enumerate OpenXR view configuration views")
         FOV.eyeWidth = xrConfigViews.at(0).recommendedImageRectWidth;
         FOV.eyeHeight = xrConfigViews.at(0).recommendedImageRectHeight;
-        XrViewState viewState = {XR_TYPE_VIEW_STATE};
-        XrViewLocateInfo locateInfo = {XR_TYPE_VIEW_LOCATE_INFO};
-        locateInfo.viewConfigurationType = xrViewType;
-        locateInfo.displayTime = xrFrameState.predictedDisplayTime;
-        locateInfo.space = xrAppSpace;
-        xr = xrLocateViews(xrSession, &locateInfo, &viewState, xrViewCount, &xrProjectionViewCount, xrViews.data());
-        CHECK_XR(xr, "Could not locate OpenXR views")
-        if (!FOV.fovSet)
-        {
-            const auto [fll, flr, flu, fld] = xrViews.at(static_cast<int>(Eye::Left)).fov;
-            const auto [frl, frr, fru, frd] = xrViews.at(static_cast<int>(Eye::Right)).fov;
-            FOV.renderFOV = (frr - fll) * 2.f * 180.f / PI;
-            const auto pixelUnitRatio = static_cast<float>(FOV.eyeWidth) / (cos(frr) - cos(frl));
-            FOV.renderWidth = static_cast<uint32_t>(pixelUnitRatio * (cos(frr) - cos(fll)));
-            FOV.renderHeight = static_cast<uint32_t>(pixelUnitRatio * 2 * cos(max(abs(flu), abs(fld))));
-            uint32_t offsetY;
-            if (abs(flu) > abs(fld)) offsetY = 0;
-            else offsetY = FOV.renderHeight / 2 - static_cast<uint32_t>(pixelUnitRatio * cos(flu));
-            FOV.offsets.insert(
-                std::pair(Eye::Left, {0, offsetY})
-            );
-            FOV.offsets.insert(
-                std::pair(Eye::Right, {FOV.renderWidth / 2 + static_cast<uint32_t>(pixelUnitRatio * cos(frl)), offsetY})
-            );
-            FOV.fovSet = true;
-        }
-        Log::Info("[UnrealVR] Obtained recommended VR resolution: %dx%d", FOV.eyeWidth, FOV.eyeHeight);
+        
         return true;
     }
 
@@ -203,12 +173,10 @@ namespace UnrealVR
         std::vector<int64_t> formats(formatCount);
         xr = xrEnumerateSwapchainFormats(xrSession, formatCount, &formatCount, formats.data());
         CHECK_XR(xr, "Could not enumerate OpenXR swapchain formats")
-        Log::Info(std::format("[UnrealVR] Found ({}) OpenXR swapchain formats:", formatCount));
+        Log::Info("[UnrealVR] Found %d OpenXR swapchain formats; sorted by runtime preference:", formatCount);
         xrFormat = static_cast<DXGI_FORMAT>(formats.at(0));
         for (int64_t& format : formats)
-        {
-            Log::Info(std::format("[UnrealVR] - {}", format));
-        }
+            Log::Info("[UnrealVR] - %lld", format);
         for (uint32_t i = 0; i < xrViewCount; i++)
         {
             XrSwapchainCreateInfo swapchainInfo = {XR_TYPE_SWAPCHAIN_CREATE_INFO};
@@ -217,8 +185,8 @@ namespace UnrealVR
             swapchainInfo.mipCount = 1;
             swapchainInfo.faceCount = 1;
             swapchainInfo.format = xrFormat;
-            swapchainInfo.width = FOV.renderWidth;
-            swapchainInfo.height = FOV.renderHeight;
+            swapchainInfo.width = FOV.eyeWidth;
+            swapchainInfo.height = FOV.eyeHeight;
             swapchainInfo.sampleCount = sampleCount;
             swapchainInfo.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
             xr = xrCreateSwapchain(xrSession, &swapchainInfo, &swapchain);
@@ -256,15 +224,56 @@ namespace UnrealVR
         return true;
     }
 
-    bool VRManager::FinalizeInit(ID3D11Device* device, const DXGI_SWAP_CHAIN_DESC desc)
+    bool VRManager::SetFOV()
     {
-        if (!ContinueInit(device)) return false;
-        if (!CreateSwapChains(desc.SampleDesc.Count)) return false;
+        // Get views' FOV details
+        XrViewState viewState = {XR_TYPE_VIEW_STATE};
+        XrViewLocateInfo locateInfo = {XR_TYPE_VIEW_LOCATE_INFO};
+        locateInfo.viewConfigurationType = xrViewType;
+        locateInfo.displayTime = xrFrameState.predictedDisplayTime;
+        locateInfo.space = xrAppSpace;
+        XrResult xr = xrLocateViews(xrSession, &locateInfo, &viewState,
+                                          xrViewCount, &xrProjectionViewCount, xrViews.data());
+        CHECK_XR(xr, "Could not locate OpenXR views")
+
+        // Calculate render details
+        FOV.leftI = xrViews.at(0).fov.angleRight < xrViews.at(1).fov.angleRight ? 0 : 1;
+        const auto [fll, flr, flu, fld] = xrViews.at(FOV.leftI).fov;
+        const auto [frl, frr, fru, frd] = xrViews.at(!FOV.leftI).fov;
+        FOV.renderFOV = (frr - fll) * RAD_DEG;
+        FOV.renderWidth = static_cast<uint32_t>(
+            static_cast<float>(FOV.eyeWidth)
+            * (sin(frr) - sin(fll))
+            / (sin(frr) - sin(frl))
+        );
+        FOV.renderHeight = static_cast<uint32_t>(
+            static_cast<float>(FOV.eyeHeight)
+            * (2 * sin(max(abs(flu), abs(fld))))
+            / (sin(flu) - sin(fld))
+        );
+        const int32_t offsetY = abs(flu) > abs(fld) ? 0 : static_cast<int32_t>(FOV.renderHeight - FOV.eyeHeight);
+        FOV.leftOffset = {0, offsetY};
+        FOV.rightOffset = {static_cast<int32_t>(FOV.renderWidth - FOV.eyeWidth), offsetY};
+        const float eyeFOV = (frr - frl) * RAD_DEG;
+        const float excess = static_cast<float>(FOV.renderWidth * FOV.renderHeight)
+            / static_cast<float>(FOV.eyeWidth * FOV.eyeHeight) - 1.f;
+        Log::Info("[UnrealVR] Calculated field of view requirements:");
+        Log::Info("[UnrealVR] - Per-eye FOV: %.2f degrees", eyeFOV);
+        Log::Info("[UnrealVR] - Render FOV: %.2f degrees", FOV.renderFOV);
+        Log::Info("[UnrealVR] - Per-eye resolution: %ux%u", FOV.eyeWidth, FOV.eyeHeight);
+        Log::Info("[UnrealVR] - Render resolution: %ux%u", FOV.renderWidth, FOV.renderHeight);
+        Log::Info("[UnrealVR] - Left eye offset: (%d,%d)", FOV.leftOffset.x, FOV.leftOffset.y);
+        Log::Info("[UnrealVR] - Right eye offset: (%d,%d)", FOV.rightOffset.x, FOV.rightOffset.y);
+        Log::Info("[UnrealVR] That's an extra %.2f%% pixels rendered each frame!", excess);
+
+        // Begin OpenXR session
         XrSessionBeginInfo beginInfo = {XR_TYPE_SESSION_BEGIN_INFO};
         beginInfo.primaryViewConfigurationType = xrViewType;
         CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not begin OpenXR session")
         Log::Info("[UnrealVR] Started OpenXR session");
+        if (!SetFOV()) return false;
         VRLoaded = true;
+        
         return true;
     }
 
@@ -274,9 +283,11 @@ namespace UnrealVR
         texture->GetDevice(&device);
         ID3D11DeviceContext* context;
         device->GetImmediateContext(&context);
+
+        // If this frame is for the left eye, begin the OpenXR frame
         XrResult xr;
         Eye thisEye;
-        Eye nextEye = LastEyeShown;
+        const Eye nextEye = LastEyeShown;
         if (LastEyeShown == Eye::Right)
         {
             thisEye = Eye::Left;
@@ -295,15 +306,14 @@ namespace UnrealVR
             xrProjectionViews.resize(xrProjectionViewCount);
         }
         else thisEye = Eye::Right;
-        const int thisI = static_cast<int>(thisEye);
-        const int nextI = static_cast<int>(nextEye);
+
+        // Copy the converted frame and its info to the correct eye
+        const int thisI = thisEye == Eye::Left ? FOV.leftI : !FOV.leftI;
         xrProjectionViews.at(thisI) = {XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW};
         xrProjectionViews.at(thisI).pose = xrViews.at(thisI).pose;
         xrProjectionViews.at(thisI).fov = xrViews.at(thisI).fov;
-        const auto [rnx, rny, rnz, rnw] = xrViews.at(nextI).pose.orientation;
-        UE4Manager::UpdatePose(UE4::FQuat(-rnz, rnx, rny, -rnw), nextEye);
         xrProjectionViews.at(thisI).subImage.swapchain = xrSwapChains.at(thisI);
-        xrProjectionViews.at(thisI).subImage.imageRect.offset = FOV.offsets.at(thisEye);
+        xrProjectionViews.at(thisI).subImage.imageRect.offset = {0, 0};
         xrProjectionViews.at(thisI).subImage.imageRect.extent = {
             static_cast<int32_t>(FOV.eyeWidth),
             static_cast<int32_t>(FOV.eyeHeight)
@@ -316,7 +326,8 @@ namespace UnrealVR
         waitInfo.timeout = XR_INFINITE_DURATION;
         xr = xrWaitSwapchainImage(xrSwapChains.at(thisI), &waitInfo);
         CHECK_XR(xr, "Could not wait on OpenXR swapchain image")
-        if (!D3D11Manager::ConvertFrame(texture, xrRTVs.at(thisI).at(imageId)))
+        const auto offsets = thisEye == Eye::Left ? FOV.leftOffset : FOV.rightOffset;
+        if (!D3D11Manager::ConvertFrame(texture, xrRTVs.at(thisI).at(imageId), offsets.x, offsets.y))
         {
             Log::Error("[UnrealVR] Couldn't convert frame");
             return false;
@@ -324,6 +335,12 @@ namespace UnrealVR
         constexpr XrSwapchainImageReleaseInfo releaseInfo = {XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         xr = xrReleaseSwapchainImage(xrSwapChains.at(thisI), &releaseInfo);
         CHECK_XR(xr, "Could not release OpenXR swapchain image")
+
+        // Set up Unreal Engine for the next frame
+        const auto [rnx, rny, rnz, rnw] = xrViews.at(!thisI).pose.orientation;
+        UE4Manager::UpdatePose(UE4::FQuat(-rnz, rnx, rny, -rnw), nextEye);
+
+        // If this frame is for the right eye, end the OpenXR frame
         if (LastEyeShown == Eye::Left)
         {
             XrCompositionLayerProjection xrLayerProj = {XR_TYPE_COMPOSITION_LAYER_PROJECTION};
@@ -339,6 +356,7 @@ namespace UnrealVR
             xr = xrEndFrame(xrSession, &endInfo);
             CHECK_XR(xr, "Could not end OpenXR frame")
         }
+
         context->Release();
         device->Release();
         LastEyeShown = thisEye;

@@ -16,7 +16,7 @@ namespace UnrealVR
          * Note that this function makes a copy of the source texture; Unreal Engine usually does not create resources
          * that can bind freely to a shader resource view
          */
-        static bool ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv);
+        static bool ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv, int offsetX, int offsetY);
 
         /** Release D3D11 resources */
         static void Stop();
@@ -50,5 +50,6 @@ namespace UnrealVR
         inline static ID3D11VertexShader* vertexShader = nullptr;
         inline static ID3D11Texture2D* copy = nullptr;
         inline static ID3D11ShaderResourceView* srv = nullptr;
+        inline static ID3D11Buffer* psBuffer = nullptr;
     };
 }

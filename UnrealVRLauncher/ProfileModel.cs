@@ -22,7 +22,7 @@ namespace UnrealVR
         public ProfileModel(string filename, dynamic model)
         {
             Filename = filename;
-            if (model._Version == 1)
+            if (model._Version == 1 || model._Version == 2)
             {
                 Name = model.Name;
                 ShippingExe = model.ShippingExe;
@@ -32,6 +32,10 @@ namespace UnrealVR
                 Uses422NamePool = model.Uses422NamePool;
                 UsesFNamePool = model.UsesFNamePool;
                 UsesDeferredSpawn = model.UsesDeferredSpawn;
+            }
+            if (model._Version == 2)
+            {
+                FOVScale = model.FOVScale;
             }
         }
 
@@ -59,7 +63,7 @@ namespace UnrealVR
         {
             dynamic model = new
             {
-                _Version = 1,
+                _Version = 2,
                 Name,
                 ShippingExe,
                 CommandLineArgs,
@@ -67,7 +71,8 @@ namespace UnrealVR
                 UsesFChunkedFixedUObjectArray,
                 Uses422NamePool,
                 UsesFNamePool,
-                UsesDeferredSpawn
+                UsesDeferredSpawn,
+                FOVScale
             };
             string text = JsonConvert.SerializeObject(model);
             var buffer = CryptographicBuffer.ConvertStringToBinary(text, BinaryStringEncoding.Utf8);
@@ -95,6 +100,7 @@ namespace UnrealVR
         public bool Uses422NamePool { get; set; } = false;
         public bool UsesFNamePool { get; set; } = true;
         public bool UsesDeferredSpawn { get; set; } = false;
+        public float FOVScale { get; set; } = 1.0f;
 
         public event PropertyChangedEventHandler PropertyChanged;
 

@@ -44,10 +44,10 @@
     <ClCompile Include="UE4Manager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Vector3.cpp">
+    <ClCompile Include="PipeClient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Vector4.cpp">
+    <ClCompile Include="UE4Extensions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -70,13 +70,10 @@
     <ClInclude Include="UE4Manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vector3.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="UE4Extensions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Vector4.h">
+    <ClInclude Include="PipeClient.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

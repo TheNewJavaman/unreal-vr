@@ -6,7 +6,6 @@
 #include "VRManager.h"
 #include "UE4Extensions.h"
 
-#define PI 3.141592653589793f
 #define USING_UOBJECT(ptr, T, name) \
     T* ptr; \
     if (!GetUObject<T>(&(ptr), name)) return;
@@ -37,10 +36,7 @@ namespace UnrealVR
             uObjects.insert(std::pair(name, found));
             *ptr = found;
         }
-        else
-        {
-            *ptr = static_cast<T*>(cached->second);
-        }
+        else *ptr = static_cast<T*>(cached->second);
         return true;
     }
 
@@ -133,7 +129,6 @@ namespace UnrealVR
         }
 
         // Set field of view
-        // TODO: Unreal Engine doesn't resize FOV after resolution change, causes 56% FOV multiplier (9/16)
         USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
         UE4::SetFieldOfViewParams setFieldOfViewParams;
         setFieldOfViewParams.InFieldOfView = VRManager::FOV.renderFOV * FOVScale;
@@ -155,8 +150,8 @@ namespace UnrealVR
         defaultGameUserSettings->ProcessEvent(getGameUserSettingsFunc, &getGameUserSettingsParams);
         ASSERT_ASSIGN(getGameUserSettingsParams.Result, gameUserSettings)
 
-        // Set the resolution
-        VRManager::SetRenderResolution();
+        // Set the resolution, also finish initializing VR
+        VRManager::SetFOV();
         USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
         UE4::SetScreenResolutionParams setScreenResolutionParams;
         setScreenResolutionParams.Resolution.X = static_cast<int>(VRManager::FOV.renderWidth);
@@ -234,7 +229,7 @@ namespace UnrealVR
         // Apply IPD by setting the child's relative location
         USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
-        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(0.f, eye == Eye::Left ? 3.15f : -3.15f, 0.f);
+        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(0.f, eye == Eye::Left ? -3.15f : 3.15f, 0.f);
         childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
 
         /*

@@ -20,7 +20,7 @@ namespace UnrealVR
         );
         if (hPipe == INVALID_HANDLE_VALUE)
         {
-            Log::Error("[UnrealVR] Couldn't open named pipe; error %d", GetLastError());
+            Log::Error("[UnrealVR] Couldn't open named pipe; error %lu", GetLastError());
             return false;
         }
         CreateThread(nullptr, 0, InitThread, nullptr, 0, nullptr);
@@ -34,7 +34,7 @@ namespace UnrealVR
         DWORD cbRead;
         while (ReadFile(hPipe, chBuf, BUFFER_SIZE * sizeof(CHAR), &cbRead, nullptr))
             HandleCommand(chBuf);
-        Log::Error("[UnrealVR] Named pipe closed; error %d", GetLastError());
+        Log::Error("[UnrealVR] Named pipe closed; error %lu", GetLastError());
         return NULL;
     }
 

@@ -110,7 +110,7 @@
                         <SymbolIcon Symbol="FullScreen"/>
                         <StackPanel Spacing="4">
                             <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
-                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Updatable while in-game"/>
+                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Updateable while in-game"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}">
@@ -122,11 +122,11 @@
                         <SymbolIcon Symbol="View"/>
                         <StackPanel Spacing="4">
                             <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Field Of View Multiplier"/>
-                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Use monitor aspect ratio (ex. 16/9=1.777) if too zoomed in — updatable while in-game, not saved"/>
+                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Increase if camera is zoomed in — updateable while in-game"/>
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}">
-                        <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="FOVScale" Value="{x:Bind FOVMultiplier, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="FOVScale_ValueChanged"/>
+                        <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="FOVIncrement" Value="{x:Bind Profile.FOVScale, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="FOVIncrement_ValueChanged"/>
                     </StackPanel>
                 </RelativePanel>
                 <StackPanel Margin="0,42,0,0" Spacing="1">

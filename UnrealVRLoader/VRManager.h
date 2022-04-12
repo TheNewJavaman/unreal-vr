@@ -24,13 +24,14 @@ namespace UnrealVR
      */
     struct RenderFOV
     {
+        int leftI = 0;
         uint32_t eyeWidth = 0;
         uint32_t eyeHeight = 0;
         float renderFOV = 0.f;
         uint32_t renderWidth = 0;
         uint32_t renderHeight = 0;
-        std::map<Eye, XrOffset2Di> offsets;
-        bool fovSet = false;
+        XrOffset2Di leftOffset = {};
+        XrOffset2Di rightOffset = {};
     };
 
     class VRManager
@@ -39,11 +40,14 @@ namespace UnrealVR
         /** Begin initializing OpenXR: starts the runtime, loads extensions, etc. */
         static bool Init();
 
-        /** Set the recommended headset render resolution for Unreal Engine */
-        static bool SetRenderResolution();
+        /** Finish initializing OpenXR: set up app space, D3D11 device, etc. */
+        static bool ContinueInit(ID3D11Device* device);
 
-        /** Start the OpenXR session */
-        static bool FinalizeInit(ID3D11Device* device, DXGI_SWAP_CHAIN_DESC desc);
+        /** Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain */
+        static bool CreateSwapChains(uint32_t sampleCount);
+        
+        /** Calculate full field of view requirements; this is the end of VR initialization */
+        static bool SetFOV();
         static inline bool VRLoaded = false;
 
         /** Copy a frame and present it to the headset */
@@ -78,14 +82,12 @@ namespace UnrealVR
         inline static XrSystemId xrSystemId = XR_NULL_SYSTEM_ID;
         inline static XrEnvironmentBlendMode xrBlend = {};
 
-        /** Finish initializing OpenXR: set up app space, D3D11 device, etc. */
-        static bool ContinueInit(ID3D11Device* device);
+        /** ContinueInit */
         inline static XrGraphicsBindingD3D11KHR graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_D3D11_KHR};
         inline static XrSession xrSession = {};
         inline static XrSpace xrAppSpace = {};
 
-        /** Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain */
-        static bool CreateSwapChains(uint32_t sampleCount);
+        /** CreateSwapChains */
         inline static DXGI_FORMAT xrFormat = DXGI_FORMAT_UNKNOWN;
         inline static constexpr XrPosef xrPoseIdentity = {{0, 0, 0, 1}, {0, 0, 0}};
         inline static std::vector<XrView> xrViews;
@@ -101,7 +103,7 @@ namespace UnrealVR
         /** SetRenderResolution */
         inline static uint32_t xrViewCount = 0;
         inline static std::vector<XrViewConfigurationView> xrConfigViews;
-
+        
         /** SubmitFrame */
         inline static XrFrameState xrFrameState = {};
         inline static std::vector<XrCompositionLayerProjectionView> xrProjectionViews;

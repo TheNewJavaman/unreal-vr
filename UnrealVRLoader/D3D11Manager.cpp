@@ -42,7 +42,7 @@ namespace UnrealVR
             nullptr
         };
         RegisterClassExA(&wc);
-        const HWND hWnd = CreateWindowA("DX", NULL, WS_OVERLAPPEDWINDOW,
+        const auto hWnd = CreateWindowA("DX", NULL, WS_OVERLAPPEDWINDOW,
                                         100, 100, 300, 300,
                                         NULL, NULL, wc.hInstance, NULL);
         constexpr D3D_FEATURE_LEVEL requestedLevels[] = {D3D_FEATURE_LEVEL_11_0};
@@ -112,10 +112,13 @@ namespace UnrealVR
         {
             ID3D11Device* device;
             pSwapChain->GetDevice(IID_PPV_ARGS(&device));
+            if (!VRManager::ContinueInit(device))
+                return PresentOriginal(pSwapChain, SyncInterval, Flags);
+            device->Release();
             DXGI_SWAP_CHAIN_DESC desc;
             pSwapChain->GetDesc(&desc);
-            VRManager::FinalizeInit(device, desc);
-            device->Release();
+            if (!VRManager::CreateSwapChains(desc.SampleDesc.Count))
+                return PresentOriginal(pSwapChain, SyncInterval, Flags);
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
         UE4Manager::SetViewTarget();
@@ -128,9 +131,9 @@ namespace UnrealVR
         return S_OK;
     }
 
-    bool D3D11Manager::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv)
+    bool D3D11Manager::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv, int offsetX, int offsetY)
     {
-        // Get general resources
+        HRESULT hr;
         ID3D11Device* device;
         rtv->GetDevice(&device);
         ID3D11DeviceContext* context;
@@ -139,7 +142,7 @@ namespace UnrealVR
         // Create shaders
         if (!shadersCreated)
         {
-            HRESULT hr = device->CreateVertexShader(
+            hr = device->CreateVertexShader(
                 VertexShader,
                 ARRAYSIZE(VertexShader),
                 nullptr,
@@ -153,10 +156,20 @@ namespace UnrealVR
                 &pixelShader
             );
             CHECK_HR(hr, "Couldn't create pixel shader")
+            D3D11_BUFFER_DESC psBufferDesc = {
+                16, // Actually only uses 8 bytes, but GPU requires multiples of 16
+                D3D11_USAGE_DYNAMIC,
+                D3D11_BIND_CONSTANT_BUFFER,
+                D3D11_CPU_ACCESS_WRITE,
+                0,
+                0
+            };
+            hr = device->CreateBuffer(&psBufferDesc, nullptr, &psBuffer);
+            CHECK_HR(hr, "Couldn't create pixel shader constant buffer")
             shadersCreated = true;
         }
 
-        // Create shader resource view and its writeable texture
+        // If the swapchain settings changed, invalidate previous shader resource view
         bool shouldCreateSRV = false;
         if (srv == nullptr) shouldCreateSRV = true;
         else
@@ -174,12 +187,14 @@ namespace UnrealVR
                 copy->Release();
             }
         }
+
+        // Create a new shader resource view if necessary
         if (shouldCreateSRV)
         {
             D3D11_TEXTURE2D_DESC sourceDesc;
             source->GetDesc(&sourceDesc);
             sourceDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-            HRESULT hr = device->CreateTexture2D(&sourceDesc, nullptr, &copy);
+            hr = device->CreateTexture2D(&sourceDesc, nullptr, &copy);
             CHECK_HR(hr, "Couldn't create copy texture")
             D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
             srvDesc.Format = sourceDesc.Format;
@@ -190,8 +205,20 @@ namespace UnrealVR
             CHECK_HR(hr, "Couldn't create shader resource view")
         }
 
-        // Draw the frame
+        // Update the image resource and cropping offsets
         context->CopyResource(copy, source);
+        D3D11_MAPPED_SUBRESOURCE mappedSubresource;
+        hr = context->Map(psBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
+        CHECK_HR(hr, "Couldn't map pixel shader constant buffer")
+        std::vector<char> buffer(16, 0);
+        auto fOffsetX = static_cast<float>(offsetX);
+        auto fOffsetY = static_cast<float>(offsetY);
+        buffer.at(0) = *reinterpret_cast<char*>(&fOffsetX);
+        buffer.at(sizeof(float)) = *reinterpret_cast<char*>(&fOffsetY);
+        memcpy(mappedSubresource.pData, buffer.data(), 16);
+        context->Unmap(psBuffer, 0);
+        
+        // Draw the frame
         context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
         context->IASetIndexBuffer(nullptr, static_cast<DXGI_FORMAT>(0), 0);
         context->IASetInputLayout(nullptr);
@@ -200,6 +227,7 @@ namespace UnrealVR
         context->PSSetShader(pixelShader, nullptr, 0);
         context->OMSetRenderTargets(1, &rtv, nullptr);
         context->PSSetShaderResources(0, 1, &srv);
+        context->PSSetConstantBuffers(0, 1, &psBuffer);
         context->Draw(3, 0);
         context->Release();
         device->Release();
@@ -209,6 +237,7 @@ namespace UnrealVR
 
     void D3D11Manager::Stop()
     {
+        if (psBuffer != nullptr) psBuffer->Release();
         if (pixelShader != nullptr) pixelShader->Release();
         if (vertexShader != nullptr) vertexShader->Release();
         if (srv != nullptr) srv->Release();

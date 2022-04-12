@@ -39,7 +39,7 @@ namespace UnrealVR
                 NumberRounder = rounder
             };
             ScaleIncrement.NumberFormatter = formatter;
-            FOVScale.NumberFormatter = formatter;
+            FOVIncrement.NumberFormatter = formatter;
             Task.Factory.StartNew(() => GetProfiles());
         }
 
@@ -88,7 +88,6 @@ namespace UnrealVR
         private bool ShowStop { get { return proc != IntPtr.Zero && ProfileSelected; } }
 
         private PipeServer server;
-        private float FOVMultiplier { get; set; } = 1.0f;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -223,11 +222,12 @@ namespace UnrealVR
                 server.SendSettingChange(Setting.CmUnitsScale, (float)numberBox.Value);
         }
 
-        private void FOVScale_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        private void FOVIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
         {
             var numberBox = sender as NumberBox;
-            FOVMultiplier = (float)numberBox.Value;
-            NotifyPropertyChanged(nameof(FOVMultiplier));
+            Profile.FOVScale = (float)numberBox.Value;
+            Profile.NotifyPropertyChanged(nameof(Profile.FOVScale));
+            Task.Factory.StartNew(() => Profile.SaveToAppData());
             if (server != null && server.IsConnected)
                 server.SendSettingChange(Setting.FOVScale, (float)numberBox.Value);
         }
@@ -270,7 +270,7 @@ namespace UnrealVR
                     UsesFNamePoolSwitch.IsOn = false;
                     UsesDeferredSpawnSwitch.IsOn = false;
                     ScaleIncrement.Value = 1.0f;
-                    FOVScale.Value = 1.0f;
+                    FOVIncrement.Value = 1.0f;
                     FormattedExe = DEFAULT_FORMATTED_EXE;
                     NotifyPropertyChanged(nameof(FormattedExe));
                 }
@@ -346,7 +346,7 @@ namespace UnrealVR
             server = new PipeServer();
             server.Start();
             server.SendSettingChange(Setting.CmUnitsScale, Profile.CmUnitsScale);
-            server.SendSettingChange(Setting.FOVScale, FOVMultiplier);
+            server.SendSettingChange(Setting.FOVScale, Profile.FOVScale);
             //_ = Task.Factory.StartNew(CheckStopped);
         }
 
