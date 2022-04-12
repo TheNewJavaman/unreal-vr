@@ -24,7 +24,7 @@ namespace UnrealVR
             Log::Error("[UnrealVR] Could not get an OpenXR instance");
             return false;
         }
-        Log::Info("[UnrealVR] OpenXR initialized");
+        Log::Info("[UnrealVR] OpenXR partially initialized");
         return true;
     }
 
@@ -221,11 +221,19 @@ namespace UnrealVR
             xrRTVs.insert(std::pair(i, rtvs));
         }
         Log::Info("[UnrealVR] Created OpenXR swapchains");
+        SwapChainsCreated = true;
         return true;
     }
 
     bool VRManager::SetFOV()
     {
+        // Begin OpenXR session
+        XrSessionBeginInfo beginInfo = {XR_TYPE_SESSION_BEGIN_INFO};
+        beginInfo.primaryViewConfigurationType = xrViewType;
+        CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not begin OpenXR session")
+        Log::Info("[UnrealVR] Started OpenXR session");
+        VRLoaded = true;
+        
         // Get views' FOV details
         XrViewState viewState = {XR_TYPE_VIEW_STATE};
         XrViewLocateInfo locateInfo = {XR_TYPE_VIEW_LOCATE_INFO};
@@ -255,8 +263,8 @@ namespace UnrealVR
         FOV.leftOffset = {0, offsetY};
         FOV.rightOffset = {static_cast<int32_t>(FOV.renderWidth - FOV.eyeWidth), offsetY};
         const float eyeFOV = (frr - frl) * RAD_DEG;
-        const float excess = static_cast<float>(FOV.renderWidth * FOV.renderHeight)
-            / static_cast<float>(FOV.eyeWidth * FOV.eyeHeight) - 1.f;
+        const float excess = 100.f * static_cast<float>(FOV.renderWidth * FOV.renderHeight)
+            / static_cast<float>(FOV.eyeWidth * FOV.eyeHeight) - 100.f;
         Log::Info("[UnrealVR] Calculated field of view requirements:");
         Log::Info("[UnrealVR] - Per-eye FOV: %.2f degrees", eyeFOV);
         Log::Info("[UnrealVR] - Render FOV: %.2f degrees", FOV.renderFOV);
@@ -265,14 +273,6 @@ namespace UnrealVR
         Log::Info("[UnrealVR] - Left eye offset: (%d,%d)", FOV.leftOffset.x, FOV.leftOffset.y);
         Log::Info("[UnrealVR] - Right eye offset: (%d,%d)", FOV.rightOffset.x, FOV.rightOffset.y);
         Log::Info("[UnrealVR] That's an extra %.2f%% pixels rendered each frame!", excess);
-
-        // Begin OpenXR session
-        XrSessionBeginInfo beginInfo = {XR_TYPE_SESSION_BEGIN_INFO};
-        beginInfo.primaryViewConfigurationType = xrViewType;
-        CHECK_XR(xrBeginSession(xrSession, &beginInfo), "Could not begin OpenXR session")
-        Log::Info("[UnrealVR] Started OpenXR session");
-        if (!SetFOV()) return false;
-        VRLoaded = true;
         
         return true;
     }

@@ -45,6 +45,7 @@ namespace UnrealVR
 
         /** Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain */
         static bool CreateSwapChains(uint32_t sampleCount);
+        static inline bool SwapChainsCreated = false;
         
         /** Calculate full field of view requirements; this is the end of VR initialization */
         static bool SetFOV();

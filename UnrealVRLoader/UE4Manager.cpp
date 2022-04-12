@@ -151,6 +151,7 @@ namespace UnrealVR
         ASSERT_ASSIGN(getGameUserSettingsParams.Result, gameUserSettings)
 
         // Set the resolution, also finish initializing VR
+        while (!VRManager::SwapChainsCreated) Sleep(100);
         VRManager::SetFOV();
         USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
         UE4::SetScreenResolutionParams setScreenResolutionParams;

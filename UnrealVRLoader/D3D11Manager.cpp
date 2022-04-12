@@ -106,9 +106,7 @@ namespace UnrealVR
         UINT Flags
     )
     {
-        if (!UE4Manager::GameLoaded)
-            return PresentOriginal(pSwapChain, SyncInterval, Flags);
-        if (!VRManager::VRLoaded)
+        if (!VRManager::SwapChainsCreated)
         {
             ID3D11Device* device;
             pSwapChain->GetDevice(IID_PPV_ARGS(&device));
@@ -121,6 +119,8 @@ namespace UnrealVR
                 return PresentOriginal(pSwapChain, SyncInterval, Flags);
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
+        if (!UE4Manager::GameLoaded || !VRManager::VRLoaded)
+            return PresentOriginal(pSwapChain, SyncInterval, Flags);
         UE4Manager::SetViewTarget();
         ID3D11Texture2D* texture;
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
