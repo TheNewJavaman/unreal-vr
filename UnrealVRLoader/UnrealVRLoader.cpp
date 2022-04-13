@@ -2,11 +2,11 @@
 
 #include <Utilities/Logger.h>
 
-#include "D3D11Manager.h"
-#include "HookManager.h"
-#include "PipeClient.h"
-#include "UE4Manager.h"
-#include "VRManager.h"
+#include "D3D11Service.h"
+#include "HookHelper.h"
+#include "PipeClientService.h"
+#include "UE4Service.h"
+#include "OpenXRService.h"
 
 namespace UnrealVR
 {
@@ -26,31 +26,31 @@ namespace UnrealVR
         while (!IsGameInfoLoaded())
             Sleep(100);
         UE4::InitSDK();
-        if (!VRManager::Init())
+        if (!OpenXRService::BeginInit())
         {
             Log::Error("[UnrealVR] Failed to init VR");
             return NULL;
         }
-        if (!PipeClient::Init())
+        if (!PipeClientService::Init())
         {
             Log::Error("[UnrealVR] Failed to init pipe client");
             return NULL;
         }
-        if (!HookManager::Init())
+        if (!HookHelper::Init())
         {
             Log::Error("[UnrealVR] Failed to init hooks");
             return NULL;
         }
-        UE4Manager::AddEvents();
-        D3D11Manager::AddHooks();
+        UE4Service::AddEvents();
+        D3D11Service::AddHooks();
         return NULL;
     }
     
     void Loader::Stop()
     {
-        D3D11Manager::Stop();
-        HookManager::Stop();
-        PipeClient::Stop();
-        VRManager::Stop();
+        D3D11Service::Stop();
+        HookHelper::Stop();
+        PipeClientService::Stop();
+        OpenXRService::Stop();
     }
 }

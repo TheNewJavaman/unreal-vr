@@ -4,7 +4,7 @@
 
 namespace UnrealVR
 {
-    class D3D11Manager
+    class D3D11Service
     {
     public:
         /** Find VTables and set up D3D11/DXGI hooks */
@@ -41,15 +41,15 @@ namespace UnrealVR
             UINT Flags
         );
         static PresentFunc PresentDetour;
-        inline static PresentFunc* PresentTarget = nullptr;
-        inline static PresentFunc* PresentOriginal = nullptr;
+        static inline PresentFunc* PresentTarget = nullptr;
+        static inline PresentFunc* PresentOriginal = nullptr;
 
         /** ConvertFrame */
-        inline static bool shadersCreated = false;
-        inline static ID3D11PixelShader* pixelShader = nullptr;
-        inline static ID3D11VertexShader* vertexShader = nullptr;
-        inline static ID3D11Texture2D* copy = nullptr;
-        inline static ID3D11ShaderResourceView* srv = nullptr;
-        inline static ID3D11Buffer* psBuffer = nullptr;
+        static inline bool shadersCreated = false;
+        static inline ID3D11PixelShader* pixelShader = nullptr;
+        static inline ID3D11VertexShader* vertexShader = nullptr;
+        static inline ID3D11Texture2D* copy = nullptr;
+        static inline ID3D11ShaderResourceView* srv = nullptr;
+        static inline ID3D11Buffer* psBuffer = nullptr;
     };
 }

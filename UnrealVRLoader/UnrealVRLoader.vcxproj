@@ -167,7 +167,7 @@
     <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Basic.cpp" />
     <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\CoreUObject_functions.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="HookManager.cpp" />
+    <ClCompile Include="HookHelper.cpp" />
     <FxCompile Include="PixelShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">PS</EntryPointName>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
@@ -184,13 +184,13 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ObjectFileOutput>
     </FxCompile>
-    <ClInclude Include="PipeClient.h" />
+    <ClInclude Include="PipeClientService.h" />
     <ClInclude Include="UE4Extensions.h" />
-    <ClCompile Include="PipeClient.cpp" />
+    <ClCompile Include="PipeClientService.cpp" />
     <ClCompile Include="UE4Extensions.cpp" />
-    <ClCompile Include="UE4Manager.cpp" />
+    <ClCompile Include="UE4Service.cpp" />
     <ClCompile Include="UnrealVRLoader.cpp" />
-    <ClCompile Include="D3D11Manager.cpp" />
+    <ClCompile Include="D3D11Service.cpp" />
     <FxCompile Include="VertexShader.hlsl">
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">VS</EntryPointName>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.0</ShaderModel>
@@ -207,7 +207,7 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ObjectFileOutput>
     </FxCompile>
-    <ClCompile Include="VRManager.cpp" />
+    <ClCompile Include="OpenXRService.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\minhook\build\VC16\libMinHook.vcxproj">
@@ -219,11 +219,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Ue4.hpp" />
-    <ClInclude Include="HookManager.h" />
-    <ClInclude Include="UE4Manager.h" />
+    <ClInclude Include="HookHelper.h" />
+    <ClInclude Include="UE4Service.h" />
     <ClInclude Include="UnrealVRLoader.h" />
-    <ClInclude Include="D3D11Manager.h" />
-    <ClInclude Include="VRManager.h" />
+    <ClInclude Include="D3D11Service.h" />
+    <ClInclude Include="OpenXRService.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

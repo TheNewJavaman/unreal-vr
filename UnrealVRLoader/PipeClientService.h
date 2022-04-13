@@ -4,7 +4,7 @@
 
 namespace UnrealVR
 {
-    class PipeClient
+    class PipeClientService
     {
     public:
         /** Connects to the app UI to listen for settings changes in realtime */
@@ -16,7 +16,7 @@ namespace UnrealVR
     private:
         /** Run the client in a separate thread */
         static DWORD __stdcall InitThread(LPVOID);
-        inline static HANDLE hPipe = nullptr;
+        static inline HANDLE hPipe = nullptr;
 
         /** Handle change in settings */
         static void HandleCommand(CHAR buffer[]);

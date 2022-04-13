@@ -1,6 +1,6 @@
 cbuffer C_BUFFER
 {
-    float2 Offsets;
+    int2 Offsets;
 };
 
 SamplerState s0;
@@ -14,5 +14,5 @@ struct PS_INPUT
 
 float4 PS(PS_INPUT input) : SV_Target0
 {
-    return tex0.Sample(s0, input.TexCoords + Offsets);
+    return tex0.Sample(s0, input.TexCoords, Offsets);
 }

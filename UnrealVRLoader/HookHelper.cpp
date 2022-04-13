@@ -1,8 +1,8 @@
-#include "HookManager.h"
+#include "HookHelper.h"
 
 namespace UnrealVR
 {
-    bool HookManager::Init()
+    bool HookHelper::Init()
     {
         if (MH_Initialize() != MH_OK)
         {
@@ -13,7 +13,7 @@ namespace UnrealVR
         return true;
     }
 
-    void HookManager::Stop()
+    void HookHelper::Stop()
     {
         if (MH_DisableHook(nullptr) != MH_OK)
         {

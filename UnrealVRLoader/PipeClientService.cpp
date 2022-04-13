@@ -1,13 +1,13 @@
-﻿#include "PipeClient.h"
+﻿#include "PipeClientService.h"
 
-#include "UE4Manager.h"
+#include "UE4Service.h"
 #include "Utilities/Logger.h"
 
 #define BUFFER_SIZE 512
 
 namespace UnrealVR
 {
-    bool PipeClient::Init()
+    bool PipeClientService::Init()
     {
         hPipe = CreateFile(
             TEXT("\\\\.\\pipe\\UnrealVR"),
@@ -28,7 +28,7 @@ namespace UnrealVR
         return true;
     }
 
-    DWORD PipeClient::InitThread(LPVOID)
+    DWORD PipeClientService::InitThread(LPVOID)
     {
         CHAR chBuf[BUFFER_SIZE];
         DWORD cbRead;
@@ -38,22 +38,22 @@ namespace UnrealVR
         return NULL;
     }
 
-    void PipeClient::HandleCommand(CHAR buffer[])
+    void PipeClientService::HandleCommand(CHAR buffer[])
     {
         switch(static_cast<Setting>(buffer[0]))
         {
         case Setting::CmUnitsScale:
-            memcpy(&UE4Manager::CmUnitsScale, &buffer[1], 4 * sizeof(CHAR));
-            Log::Info("[UnrealVR] Set CmUnitsScale to %.3f", UE4Manager::CmUnitsScale);
+            memcpy(&UE4Service::CmUnitsScale, &buffer[1], 4 * sizeof(CHAR));
+            Log::Info("[UnrealVR] Set CmUnitsScale to %.3f", UE4Service::CmUnitsScale);
             break;
         case Setting::FOVScale:
-            memcpy(&UE4Manager::FOVScale, &buffer[1], 4 * sizeof(CHAR));
-            Log::Info("[UnrealVR] Set FOVScale to %.3f", UE4Manager::FOVScale);
+            memcpy(&UE4Service::FOVScale, &buffer[1], 4 * sizeof(CHAR));
+            Log::Info("[UnrealVR] Set FOVScale to %.3f", UE4Service::FOVScale);
             break;
         }
     }
 
-    void PipeClient::Stop()
+    void PipeClientService::Stop()
     {
         CloseHandle(hPipe);
     }

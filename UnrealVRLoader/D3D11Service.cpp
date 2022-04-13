@@ -1,12 +1,12 @@
-#include "D3D11Manager.h"
+#include "D3D11Service.h"
 
 #include <Utilities/Logger.h>
 
-#include "HookManager.h"
+#include "HookHelper.h"
 #include "PixelShader.h"
-#include "UE4Manager.h"
+#include "UE4Service.h"
 #include "VertexShader.h"
-#include "VRManager.h"
+#include "OpenXRService.h"
 
 #define VTABLE(instance) reinterpret_cast<DWORD_PTR*>(reinterpret_cast<DWORD_PTR*>(instance)[0]);
 #define CHECK_HR(hr, message) \
@@ -18,14 +18,14 @@
 
 namespace UnrealVR
 {
-    class VRManager;
+    class OpenXRService;
 
-    void D3D11Manager::AddHooks()
+    void D3D11Service::AddHooks()
     {
         CreateThread(nullptr, 0, AddHooksThread, nullptr, 0, nullptr);
     }
 
-    DWORD __stdcall D3D11Manager::AddHooksThread(LPVOID)
+    DWORD __stdcall D3D11Service::AddHooksThread(LPVOID)
     {
         const WNDCLASSEXA wc = {
             sizeof(WNDCLASSEX),
@@ -84,12 +84,7 @@ namespace UnrealVR
         const auto swapChainVTable = VTABLE(swapChain)
 
         PresentTarget = reinterpret_cast<PresentFunc*>(swapChainVTable[8]);
-        HookManager::Add<PresentFunc>(
-            PresentTarget,
-            &PresentDetour,
-            &PresentOriginal,
-            "Present"
-        );
+        HookHelper::Add<PresentFunc>(PresentTarget, &PresentDetour, &PresentOriginal, "Present");
         DWORD presentOld;
         VirtualProtect(PresentTarget, 2, PAGE_EXECUTE_READWRITE, &presentOld);
 
@@ -100,38 +95,42 @@ namespace UnrealVR
         return NULL;
     }
 
-    HRESULT __stdcall D3D11Manager::PresentDetour(
+    HRESULT __stdcall D3D11Service::PresentDetour(
         IDXGISwapChain* pSwapChain,
         UINT SyncInterval,
         UINT Flags
     )
     {
-        if (!VRManager::SwapChainsCreated)
+        if (!OpenXRService::VRLoaded)
         {
             ID3D11Device* device;
             pSwapChain->GetDevice(IID_PPV_ARGS(&device));
-            if (!VRManager::ContinueInit(device))
-                return PresentOriginal(pSwapChain, SyncInterval, Flags);
-            device->Release();
             DXGI_SWAP_CHAIN_DESC desc;
             pSwapChain->GetDesc(&desc);
-            if (!VRManager::CreateSwapChains(desc.SampleDesc.Count))
+            if (!OpenXRService::FinishInit(device, desc.SampleDesc.Count))
                 return PresentOriginal(pSwapChain, SyncInterval, Flags);
+            device->Release();
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
-        if (!UE4Manager::GameLoaded || !VRManager::VRLoaded)
+        if (!UE4Service::GameLoaded)
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
-        UE4Manager::SetViewTarget();
+        if (!UE4Service::Resized)
+        {
+            UE4Service::Resize(static_cast<int>(OpenXRService::FOV.renderWidth),
+                               static_cast<int>(OpenXRService::FOV.renderHeight));
+            return PresentOriginal(pSwapChain, SyncInterval, Flags);
+        }
+        UE4Service::SetViewTarget();
         ID3D11Texture2D* texture;
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
-        VRManager::SubmitFrame(texture);
+        OpenXRService::SubmitFrame(texture);
         texture->Release();
-        if (VRManager::LastEyeShown == Eye::Left)
+        if (OpenXRService::LastEyeShown == Eye::Left)
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         return S_OK;
     }
 
-    bool D3D11Manager::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv, int offsetX, int offsetY)
+    bool D3D11Service::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv, int offsetX, int offsetY)
     {
         HRESULT hr;
         ID3D11Device* device;
@@ -211,13 +210,11 @@ namespace UnrealVR
         hr = context->Map(psBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedSubresource);
         CHECK_HR(hr, "Couldn't map pixel shader constant buffer")
         std::vector<char> buffer(16, 0);
-        auto fOffsetX = static_cast<float>(offsetX);
-        auto fOffsetY = static_cast<float>(offsetY);
-        buffer.at(0) = *reinterpret_cast<char*>(&fOffsetX);
-        buffer.at(sizeof(float)) = *reinterpret_cast<char*>(&fOffsetY);
+        buffer.at(0) = *reinterpret_cast<char*>(&offsetX);
+        buffer.at(sizeof(int)) = *reinterpret_cast<char*>(&offsetY);
         memcpy(mappedSubresource.pData, buffer.data(), 16);
         context->Unmap(psBuffer, 0);
-        
+
         // Draw the frame
         context->IASetVertexBuffers(0, 0, nullptr, nullptr, nullptr);
         context->IASetIndexBuffer(nullptr, static_cast<DXGI_FORMAT>(0), 0);
@@ -235,7 +232,7 @@ namespace UnrealVR
         return true;
     }
 
-    void D3D11Manager::Stop()
+    void D3D11Service::Stop()
     {
         if (psBuffer != nullptr) psBuffer->Release();
         if (pixelShader != nullptr) pixelShader->Release();

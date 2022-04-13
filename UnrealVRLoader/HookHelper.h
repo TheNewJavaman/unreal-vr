@@ -7,7 +7,7 @@
 
 namespace UnrealVR
 {
-    class HookManager
+    class HookHelper
     {
     public:
         /** Links to libMinHook */

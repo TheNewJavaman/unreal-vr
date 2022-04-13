@@ -1,9 +1,9 @@
-﻿#include "UE4Manager.h"
+﻿#include "UE4Service.h"
 
 #include <format>
 #include <Utilities/Globals.h>
 
-#include "VRManager.h"
+#include "OpenXRService.h"
 #include "UE4Extensions.h"
 
 #define USING_UOBJECT(ptr, T, name) \
@@ -22,7 +22,7 @@
 namespace UnrealVR
 {
     template <class T>
-    bool UE4Manager::GetUObject(T** ptr, std::string name)
+    bool UE4Service::GetUObject(T** ptr, std::string name)
     {
         const auto cached = uObjects.find(name);
         if (cached == uObjects.end())
@@ -40,18 +40,14 @@ namespace UnrealVR
         return true;
     }
 
-    void UE4Manager::AddEvents()
+    void UE4Service::AddEvents()
     {
         Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
     }
 
-    void UE4Manager::InitGameStateCallback()
+    void UE4Service::InitGameStateCallback()
     {
-        if (!GameLoaded)
-        {
-            Resize();
-            GameLoaded = true;
-        }
+        if (!GameLoaded) GameLoaded = true;
         playerController = nullptr;
         parentViewTarget = nullptr;
         childViewTarget = nullptr;
@@ -60,7 +56,7 @@ namespace UnrealVR
         lastRot = UE4::FRotator();
     }
 
-    void UE4Manager::SetViewTarget()
+    void UE4Service::SetViewTarget()
     {
         // Get player controller
         USING_UOBJECT(gameplayStatics, UE4::UObject, "GameplayStatics Engine.Default__GameplayStatics")
@@ -127,21 +123,9 @@ namespace UnrealVR
             setViewTargetParams.NewViewTarget = childViewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
-
-        // Set field of view
-        USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
-        UE4::SetFieldOfViewParams setFieldOfViewParams;
-        setFieldOfViewParams.InFieldOfView = VRManager::FOV.renderFOV * FOVScale;
-        cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
-
-        // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
-        USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
-                      "Function Engine.CameraComponent.SetConstraintAspectRatio")
-        auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
-        cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
     }
 
-    void UE4Manager::Resize()
+    void UE4Service::Resize(const int width, const int height)
     {
         // Get local settings
         USING_UOBJECT(defaultGameUserSettings, UE4::UObject, "GameUserSettings Engine.Default__GameUserSettings")
@@ -151,12 +135,10 @@ namespace UnrealVR
         ASSERT_ASSIGN(getGameUserSettingsParams.Result, gameUserSettings)
 
         // Set the resolution, also finish initializing VR
-        while (!VRManager::SwapChainsCreated) Sleep(100);
-        VRManager::SetFOV();
         USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
         UE4::SetScreenResolutionParams setScreenResolutionParams;
-        setScreenResolutionParams.Resolution.X = static_cast<int>(VRManager::FOV.renderWidth);
-        setScreenResolutionParams.Resolution.Y = static_cast<int>(VRManager::FOV.renderHeight);
+        setScreenResolutionParams.Resolution.X = width;
+        setScreenResolutionParams.Resolution.Y = height;
         gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setScreenResolutionParams);
 
         // Set to fullscreen mode for better performance
@@ -170,15 +152,28 @@ namespace UnrealVR
                       "Function Engine.GameUserSettings.ApplyResolutionSettings")
         auto applyResolutionSettingsParams = UE4::ApplyResolutionSettingsParams();
         gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyResolutionSettingsParams);
-
-        Log::Info("[UnrealVR] Resized render resolution to match VR headset");
+        
+        Resized = true;
+        Log::Info("[UnrealVR] Resized render resolution to %dx%d", width, height);
     }
 
     //void UE4Manager::UpdatePose(const UE4::FVector loc, const UE4::FQuat rot, const UE4::FVector loc2)
-    void UE4Manager::UpdatePose(const UE4::FQuat rot, const Eye eye)
+    void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye, const float fov)
     {
-        if (parentViewTarget == nullptr || childViewTarget == nullptr) return;
+        if (playerController == nullptr || childViewTarget == nullptr) return;
 
+        // Set field of view
+        USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
+        UE4::SetFieldOfViewParams setFieldOfViewParams;
+        setFieldOfViewParams.InFieldOfView = fov * FOVScale;
+        cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
+
+        // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
+        USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
+                      "Function Engine.CameraComponent.SetConstraintAspectRatio")
+        auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
+        cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+        
         // Convert rot to an FRotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")
