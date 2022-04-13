@@ -247,24 +247,23 @@ namespace UnrealVR
         XrResult xr = xrLocateViews(xrSession, &locateInfo, &viewState,
                                     xrViewCount, &xrProjectionViewCount, xrViews.data());
         CHECK_XR(xr, "Could not locate OpenXR views")
-        FOV.leftI = xrViews.at(0).fov.angleRight < xrViews.at(1).fov.angleRight ? 0 : 1;
-        const auto [fll, flr, flu, fld] = xrViews.at(FOV.leftI).fov;
-        const auto [frl, frr, fru, frd] = xrViews.at(!FOV.leftI).fov;
-        FOV.renderFOV = (frr - fll) * RAD_DEG;
+        const auto [f0l, f0r, f0u, f0d] = xrViews.at(0).fov;
+        const auto [f1l, f1r, f1u, f1d] = xrViews.at(1).fov;
+        FOV.renderFOV = 2 * max(f0r, f1r) * RAD_DEG;
         FOV.renderWidth = static_cast<uint32_t>(
-            static_cast<float>(FOV.eyeWidth)
-            * (sin(frr) - sin(fll))
-            / (sin(frr) - sin(frl))
+            2 * sin(max(f0r, f1r))
+            / (sin(f0r) - sin(f0l))
+            * static_cast<float>(FOV.eyeWidth)
         );
         FOV.renderHeight = static_cast<uint32_t>(
-            static_cast<float>(FOV.eyeHeight)
-            * (2 * sin(max(abs(flu), abs(fld))))
-            / (sin(flu) - sin(fld))
+            2 * sin(max(f0u, -f0d))
+            / (sin(f0u) - sin(f0d))
+            * static_cast<float>(FOV.eyeHeight)
         );
-        const int32_t offsetY = abs(flu) > abs(fld) ? 0 : static_cast<int32_t>(FOV.renderHeight - FOV.eyeHeight);
-        FOV.leftOffset = {0, offsetY};
-        FOV.rightOffset = {static_cast<int32_t>(FOV.renderWidth - FOV.eyeWidth), offsetY};
-        const float eyeFOV = (frr - frl) * RAD_DEG;
+        const int32_t offsetY = f0u > -f0d ? 0 : static_cast<int32_t>(FOV.renderHeight - FOV.eyeHeight);
+        FOV.offsets[0] = {0, offsetY};
+        FOV.offsets[1] = {static_cast<int32_t>(FOV.renderWidth - FOV.eyeWidth), offsetY};
+        const float eyeFOV = (f0r - f0l) * RAD_DEG;
         const float excess = 100.f * static_cast<float>(FOV.renderWidth * FOV.renderHeight)
             / static_cast<float>(FOV.eyeWidth * FOV.eyeHeight) - 100.f;
         Log::Info("[UnrealVR] Calculated field of view requirements:");
@@ -272,8 +271,8 @@ namespace UnrealVR
         Log::Info("[UnrealVR] - Render FOV: %.2f degrees", FOV.renderFOV);
         Log::Info("[UnrealVR] - Per-eye resolution: %ux%u", FOV.eyeWidth, FOV.eyeHeight);
         Log::Info("[UnrealVR] - Render resolution: %ux%u", FOV.renderWidth, FOV.renderHeight);
-        Log::Info("[UnrealVR] - Left eye offset: (%d,%d)", FOV.leftOffset.x, FOV.leftOffset.y);
-        Log::Info("[UnrealVR] - Right eye offset: (%d,%d)", FOV.rightOffset.x, FOV.rightOffset.y);
+        Log::Info("[UnrealVR] - Left eye offset: (%d,%d)", FOV.offsets[0].x, FOV.offsets[0].y);
+        Log::Info("[UnrealVR] - Right eye offset: (%d,%d)", FOV.offsets[1].x, FOV.offsets[1].y);
         Log::Info("[UnrealVR] That's an extra %.2f%% pixels rendered each frame!", excess);
         return true;
     }
@@ -283,8 +282,8 @@ namespace UnrealVR
         XrResult xr;
         const Eye thisEye = LastEyeShown == Eye::Left ? Eye::Right : Eye::Left;
         const Eye nextEye = LastEyeShown;
-        const int thisI = thisEye == Eye::Left ? FOV.leftI : !FOV.leftI;
-        const int nextI = !thisI;
+        const int thisI = static_cast<int>(thisEye);
+        const int nextI = static_cast<int>(nextEye);
 
         // If this frame is for the left eye, begin the OpenXR frame
         if (thisEye == Eye::Left)
@@ -322,8 +321,8 @@ namespace UnrealVR
         waitInfo.timeout = XR_INFINITE_DURATION;
         xr = xrWaitSwapchainImage(xrSwapChains.at(thisI), &waitInfo);
         CHECK_XR(xr, "Could not wait on OpenXR swapchain image")
-        const auto offsets = thisEye == Eye::Left ? FOV.leftOffset : FOV.rightOffset;
-        if (!D3D11Service::ConvertFrame(texture, xrRTVs.at(thisI).at(imageId), offsets.x, offsets.y))
+        if (!D3D11Service::ConvertFrame(texture, xrRTVs.at(thisI).at(imageId),
+                                        FOV.offsets[thisI].x, FOV.offsets[thisI].y))
         {
             Log::Error("[UnrealVR] Couldn't convert frame");
             return false;

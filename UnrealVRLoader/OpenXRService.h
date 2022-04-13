@@ -24,14 +24,12 @@ namespace UnrealVR
      */
     struct RenderFOV
     {
-        int leftI = 0;
         uint32_t eyeWidth = 0;
         uint32_t eyeHeight = 0;
         float renderFOV = 0.f;
         uint32_t renderWidth = 0;
         uint32_t renderHeight = 0;
-        XrOffset2Di leftOffset = {};
-        XrOffset2Di rightOffset = {};
+        XrOffset2Di offsets[2];
     };
 
     class OpenXRService
