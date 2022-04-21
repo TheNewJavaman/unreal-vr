@@ -4,6 +4,3 @@
 [submodule "UnrealModLoader"]
 	path = UnrealModLoader
 	url = https://github.com/TheNewJavaman/UnrealModLoader
-[submodule "PatternStreams"]
-	path = PatternStreams
-	url = https://github.com/TheNewJavaman/PatternStreams
