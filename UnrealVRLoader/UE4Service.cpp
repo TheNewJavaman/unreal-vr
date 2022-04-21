@@ -1,9 +1,9 @@
 ﻿#include "UE4Service.h"
 
-#include <format>
 #include <Utilities/Globals.h>
 
 #include "OpenXRService.h"
+#include "PatternStream.h"
 #include "UE4Extensions.h"
 
 #define USING_UOBJECT(ptr, T, name) \
@@ -40,9 +40,47 @@ namespace UnrealVR
         return true;
     }
 
-    void UE4Service::AddEvents()
+    void UE4Service::AddHooks()
     {
         Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
+
+
+        
+        const auto match = PatternStream("F6 41 30 01") // test byte [rcx + 0x30], 1
+                           .HasPatternInRange("C3 CC 48 8B C4", -80, 0, false) // ret; int3; mov rax, rsp
+                           .HasPatternInRange("0F 84 ? ? 00 00", 0, 80, true) // je 0x0000....
+                           .Log("inlined CalculateProjectionMatrix")
+                           .FirstOrNullptr();
+        const ByteBuffer buffer = {0x85}; // 0F84 (JE) -> 0F85 (JNE)
+        if (!PatternHelper::Write(match + 1, buffer))
+        {
+            Log::Error("Couldn't write CalculateProjectionMatrixGivenView JNE instruction");   
+        }
+
+
+
+        
+        Log::Info("CalculateProjectionMatrixDetour: %p", &CalculateProjectionMatrixDetour);
+    }
+
+    __declspec(noinline) UE4::FMatrix UE4Service::CalculateProjectionMatrixDetour(void* pFMinimalViewInfo)
+    {
+        Log::Info("ComputeViewProjectionMatrixDetour called");
+        constexpr float zNear = 10.f;
+        const float tanU = std::tan(OpenXRService::EyeFOV.angleUp);
+        const float tanD = std::tan(OpenXRService::EyeFOV.angleDown);
+        const float tanL = std::tan(OpenXRService::EyeFOV.angleLeft);
+        const float tanR = std::tan(OpenXRService::EyeFOV.angleRight);
+        const float sumRL = tanR + tanL;
+        const float sumUD = tanU + tanD;
+        const float invRL = 1.f / (tanR - tanL);
+        const float invUD = 1.f / (tanU - tanD);
+        return {
+            {{2.f * invRL, 0.f, 0.f}, 0.f},
+            {{0.f, 2.f * invUD, 0.f}, 0.f},
+            {{sumRL * -invRL, sumUD * -invUD, 0.f}, 1.f},
+            {{0.f, 0.f, zNear}, 0.f}
+        };
     }
 
     void UE4Service::InitGameStateCallback()
@@ -152,28 +190,22 @@ namespace UnrealVR
                       "Function Engine.GameUserSettings.ApplyResolutionSettings")
         auto applyResolutionSettingsParams = UE4::ApplyResolutionSettingsParams();
         gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyResolutionSettingsParams);
-        
+
         Resized = true;
         Log::Info("[UnrealVR] Resized render resolution to %dx%d", width, height);
     }
 
     //void UE4Manager::UpdatePose(const UE4::FVector loc, const UE4::FQuat rot, const UE4::FVector loc2)
-    void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye, const float fov)
+    void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye)
     {
         if (playerController == nullptr || childViewTarget == nullptr) return;
-
-        // Set field of view
-        USING_UOBJECT(setFieldOfViewFunc, UE4::UFunction, "Function Engine.CameraComponent.SetFieldOfView")
-        UE4::SetFieldOfViewParams setFieldOfViewParams;
-        setFieldOfViewParams.InFieldOfView = fov * FOVScale;
-        cameraComponent->ProcessEvent(setFieldOfViewFunc, &setFieldOfViewParams);
 
         // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
         USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
                       "Function Engine.CameraComponent.SetConstraintAspectRatio")
         auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
         cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
-        
+
         // Convert rot to an FRotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
         USING_UOBJECT(quatRotatorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_Rotator")

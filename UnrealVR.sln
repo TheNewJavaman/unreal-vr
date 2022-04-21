@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7C1C8400-8B57-4E8F-B04C-7F56FC146C56}"
 	ProjectSection(SolutionItems) = preProject
 		README.md = README.md
+		rizin_to_uml.py = rizin_to_uml.py
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnrealVRLauncher", "UnrealVRLauncher\UnrealVRLauncher.csproj", "{F8C4A549-E621-4AA5-A8ED-8C2C12250C79}"

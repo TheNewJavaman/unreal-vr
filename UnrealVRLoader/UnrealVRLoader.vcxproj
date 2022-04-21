@@ -184,8 +184,10 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ObjectFileOutput>
     </FxCompile>
+    <ClInclude Include="PatternStream.h" />
     <ClInclude Include="PipeClientService.h" />
     <ClInclude Include="UE4Extensions.h" />
+    <ClCompile Include="PatternStream.cpp" />
     <ClCompile Include="PipeClientService.cpp" />
     <ClCompile Include="UE4Extensions.cpp" />
     <ClCompile Include="UE4Service.cpp" />
@@ -227,6 +229,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="RizinWorkspace.asm" />
+    <Content Include="RizinWorkspace.hex" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

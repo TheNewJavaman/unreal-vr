@@ -182,4 +182,6 @@ namespace UE4
     };
 
     FQuat RotatorToQuaternion(FRotator R);
+
+    void VectorMatrixMultiply(void* Result, const void* Matrix1, const void* Matrix2);
 }

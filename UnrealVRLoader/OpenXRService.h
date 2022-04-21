@@ -18,20 +18,6 @@ namespace UnrealVR
         Right
     };
 
-    /**
-     * We render the full field of view of the headset, then only use the portion that the eye can see. Otherwise, there
-     * is distortion on the edges of the image, and the lenses don't converge properly
-     */
-    struct RenderFOV
-    {
-        uint32_t eyeWidth = 0;
-        uint32_t eyeHeight = 0;
-        float renderFOV = 0.f;
-        uint32_t renderWidth = 0;
-        uint32_t renderHeight = 0;
-        XrOffset2Di offsets[2];
-    };
-
     class OpenXRService
     {
     public:
@@ -41,11 +27,13 @@ namespace UnrealVR
         /** Finish initializing OpenXR: sets up app space, sets D3D11 device, starts session */
         static bool FinishInit(ID3D11Device* device, uint32_t sampleCount);
         static inline bool VRLoaded = false;
+        static inline uint32_t EyeWidth = 0;
+        static inline uint32_t EyeHeight = 0;
+        static inline XrFovf EyeFOV = {};
 
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);
         static inline Eye LastEyeShown = Eye::Right;
-        static inline RenderFOV FOV = {};
 
         /** Releases OpenXR resources */
         static void Stop();
@@ -78,6 +66,8 @@ namespace UnrealVR
         static inline XrGraphicsBindingD3D11KHR graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_D3D11_KHR};
         static inline XrSession xrSession = {};
         static inline XrSpace xrAppSpace = {};
+        static inline uint32_t xrViewCount = 0;
+        static inline std::vector<XrViewConfigurationView> xrConfigViews;
                 
         /** Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain */
         static bool CreateSwapChains(uint32_t sampleCount);
@@ -93,16 +83,9 @@ namespace UnrealVR
         static inline XrViewConfigurationType xrViewType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
         static inline XrInstance xrInstance = {};
 
-        /** SetRenderResolution */
-        static inline uint32_t xrViewCount = 0;
-        static inline std::vector<XrViewConfigurationView> xrConfigViews;
-        
         /** SubmitFrame */
         static inline XrFrameState xrFrameState = {};
         static inline std::vector<XrCompositionLayerProjectionView> xrProjectionViews;
         static inline uint32_t xrProjectionViewCount = 0;
-
-        /** Calculate full field of view requirements; this is the end of VR initialization */
-        static bool CalculateFOV();
     };
 }

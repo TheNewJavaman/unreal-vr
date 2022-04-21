@@ -4,6 +4,7 @@
 #include <Ue4.hpp>
 
 #include "OpenXRService.h"
+#include "UE4Extensions.h"
 
 namespace UnrealVR
 {
@@ -16,7 +17,7 @@ namespace UnrealVR
         static inline bool GameLoaded = false;
 
         /** Register events with UnrealModLoader */
-        static void AddEvents();
+        static void AddHooks();
 
         /** Set the view target to a custom camera actor meant for VR */
         static void SetViewTarget();
@@ -28,7 +29,7 @@ namespace UnrealVR
 
         /** Input VR pose (with corrected axes) and forward to Unreal Engine, with several adjustments */
         //static void UpdatePose(UE4::FVector loc, UE4::FQuat rot, UE4::FVector loc2);
-        static void UpdatePose(UE4::FQuat rot, Eye eye, float fov);
+        static void UpdatePose(UE4::FQuat rot, Eye eye);
         static inline float CmUnitsScale = 1.f;
 
     private:
@@ -36,6 +37,16 @@ namespace UnrealVR
         template <class T>
         static bool GetUObject(T** ptr, std::string name);
         static inline std::map<std::string, UE4::UObject*> uObjects;
+
+        /**
+         * CalculateProjectionMatrix functions
+         *
+         * Called when evaluating the projection matrix that is sent to the GPU; this is where we use OpenXR's FOV
+         */
+        typedef UE4::FMatrix (CalculateProjectionMatrixFunc)(void* pFMinimalViewInfo);
+        static CalculateProjectionMatrixFunc CalculateProjectionMatrixDetour;
+        static inline CalculateProjectionMatrixFunc* CalculateProjectionMatrixTarget = nullptr;
+        static inline CalculateProjectionMatrixFunc* CalculateProjectionMatrixOriginal = nullptr;
 
         /** Called once per scene start */
         static void InitGameStateCallback();

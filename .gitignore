@@ -369,3 +369,7 @@ FodyWeavers.xsd
 .idea/
 .vs/
 .vscode/
+
+# rizin
+*.rzdb
+*.sdb

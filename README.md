@@ -56,12 +56,32 @@ There are so many features I want to add, and so many refactorings that could im
 If you have any ideas for features or want to implement a feature yourself, please email me or send a DM on Discord to
 TheNewJavaman#3966.
 
-Development tools:
+### Development Tools
 
 - **Rider 2022.1 EAP**: For writing C++ code; it has a much better code formatter than Visual Studio, is much faster,
-  and has superior refactoring capabilities. Get it for free via the early access program in the Jetbrains Toolbox app
+  and has superior refactoring capabilities. Also supports Python for the rizin script. Get it for free via the early
+  access program in the Jetbrains Toolbox app
 - **Visual Studio 2022 Preview**: For writing C# code or HLSL shaders; Rider doesn't support WinUI nor Hot Reload; also,
   VS supports profiling both the CPU and GPU for C++, compiling HLSL, and packaging the final app. Get it for free via
   the Visual Studio installer
 - **Sourcetree**: My favorite Git GUI; the main thing is its support for multiple stashes; get it for free from
   Atlassian
+- **Rizin**: Used to reverse engineer UE/game binaries. Get it for free from GitHub
+
+### Rizin Cheatsheet
+
+My most-used commands for reverse-engineering game binaries
+
+- `[command]?`: Show the help menu
+- `o [filename]`: Open a binary (exe, dll, lib)
+- `ipd [filename]`: Open a debug symbols file (pdb)
+- `Po [filename]`: Open a project (rzdb)
+- `Ps [filename]`: Save project to file (rzdb)
+- `aa`: Run quick analysis on the binary (better for no PDB)
+- `aaa`: Run longer analysis on the binary (better for PDB, includes function autonaming)
+- `aflq~[function]`: Search for a function
+- `s [address|function]`: Go to an address or function
+- `zaf [function] [signature]`: Create a signature for the current function
+- `z`: List signatures
+- `zos [filename]`: Save signatures to file (sdb)
+- `zj | python rizin_to_uml.py [numbytes]`: Print signatures in UML format; see `rizin_to_uml.py`
