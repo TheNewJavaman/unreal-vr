@@ -1,9 +1,9 @@
 ﻿#include "UE4Service.h"
 
-#include <Utilities/Globals.h>
+#include <PatternStreams.h>
+#include <Utilities/Globals.h> // TODO: Get Russell to use PatternStreams
 
 #include "OpenXRService.h"
-#include "PatternStream.h"
 #include "UE4Extensions.h"
 
 #define USING_UOBJECT(ptr, T, name) \
@@ -19,53 +19,73 @@
     ASSERT(src, #dst) \
     (dst) = src;
 
-namespace UnrealVR
-{
-    template <class T>
-    bool UE4Service::GetUObject(T** ptr, std::string name)
-    {
+namespace UnrealVR {
+    template<class T>
+    bool UE4Service::GetUObject(T** ptr, std::string name) {
         const auto cached = uObjects.find(name);
-        if (cached == uObjects.end())
-        {
+        if (cached == uObjects.end()) {
             auto found = UE4::UObject::FindObject<T>(name);
-            if (found == nullptr)
-            {
+            if (found == nullptr) {
                 Log::Warn("[UnrealVR] Couldn't find %s", name);
                 return false;
             }
             uObjects.insert(std::pair(name, found));
             *ptr = found;
+        } else {
+            *ptr = static_cast<T*>(cached->second);
         }
-        else *ptr = static_cast<T*>(cached->second);
         return true;
     }
 
-    void UE4Service::AddHooks()
-    {
-        Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
-
-
-        
-        const auto match = PatternStream("F6 41 30 01") // test byte [rcx + 0x30], 1
-                           .HasPatternInRange("C3 CC 48 8B C4", -80, 0, false) // ret; int3; mov rax, rsp
-                           .HasPatternInRange("0F 84 ? ? 00 00", 0, 80, true) // je 0x0000....
-                           .Log("inlined CalculateProjectionMatrix")
-                           .FirstOrNullptr();
-        const ByteBuffer buffer = {0x85}; // 0F84 (JE) -> 0F85 (JNE)
-        if (!PatternHelper::Write(match + 1, buffer))
-        {
-            Log::Error("Couldn't write CalculateProjectionMatrixGivenView JNE instruction");   
-        }
-
-
-
-        
-        Log::Info("CalculateProjectionMatrixDetour: %p", &CalculateProjectionMatrixDetour);
+    void UE4Service::AddHooks() {
+        RegisterInitGameStateEvent();
+        HookCalculateProjectionMatrix();
     }
 
-    __declspec(noinline) UE4::FMatrix UE4Service::CalculateProjectionMatrixDetour(void* pFMinimalViewInfo)
-    {
-        Log::Info("ComputeViewProjectionMatrixDetour called");
+    void UE4Service::RegisterInitGameStateEvent() {
+        Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
+    }
+
+    void UE4Service::InitGameStateCallback() {
+        if (!GameLoaded)
+            GameLoaded = true;
+        playerController = nullptr;
+        parentViewTarget = nullptr;
+        childViewTarget = nullptr;
+        cameraComponent = nullptr;
+        gameUserSettings = nullptr;
+        lastRot = UE4::FRotator();
+    }
+
+    PS::ByteBuffer UE4Service::Int32ToByteBuffer(int32_t i) {
+        constexpr auto bytes = sizeof int32_t;
+        const auto arr = static_cast<PS::BytePtr>(static_cast<void*>(&i));
+        PS::ByteBuffer buffer(bytes);
+        for (size_t j = 0; j < bytes; j++) {
+            buffer.at(j) = arr[bytes - j];
+        }
+        return buffer;
+    }
+
+    /** See CalculateProjectionMatrix.asm */
+    void UE4Service::HookCalculateProjectionMatrix() {
+        PS::PatternStream { 0xF6, 0x41, 0x30, 0x01 }
+            | PS::PatternInRange({ 0x0F, 0x84, PS::Any, PS::Any, 0x00, 0x00 }, { 0, 80 }, false)
+            | PS::PatternInRange({ 0xC3, 0xCC, 0x48, 0x8B, 0xC4 }, { -80, 80 }, true)
+            | PS::AddOffset(2)
+            | PS::WriteBufferAndOffset { 0x53, 0x54, 0x55, 0x4C, 0x89, 0xC9, 0x48, 0x83, 0xC1, 0x5C, 0x49, 0xBB }
+            | PS::ForEach([](PS::BytePtr& i) {
+                const auto pDetour = reinterpret_cast<intptr_t>(CalculateProjectionMatrixDetour);
+                const auto pByte = reinterpret_cast<PS::BytePtr>(reinterpret_cast<intptr_t>(&pDetour));
+                PS::PatternPatcher::WriteBufferAndOffset(i, PS::ByteBuffer(pByte, pByte + 8));
+            })
+            | PS::WriteBuffer { 0x41, 0xFF, 0xD3, 0x5D, 0x5C, 0x5B, 0xC3 }
+            | PS::ForEach([](PS::BytePtr& i) {
+                Log::Info("[UnrealVR] Wrote CalculateProjectionMatrix patch to 0x%p", i - 20);
+            });
+    }
+
+    void UE4Service::CalculateProjectionMatrixDetour(UE4::FMatrix* m) {
         constexpr float zNear = 10.f;
         const float tanU = std::tan(OpenXRService::EyeFOV.angleUp);
         const float tanD = std::tan(OpenXRService::EyeFOV.angleDown);
@@ -75,27 +95,15 @@ namespace UnrealVR
         const float sumUD = tanU + tanD;
         const float invRL = 1.f / (tanR - tanL);
         const float invUD = 1.f / (tanU - tanD);
-        return {
-            {{2.f * invRL, 0.f, 0.f}, 0.f},
-            {{0.f, 2.f * invUD, 0.f}, 0.f},
-            {{sumRL * -invRL, sumUD * -invUD, 0.f}, 1.f},
-            {{0.f, 0.f, zNear}, 0.f}
+        *m = {
+            { 2.f * invRL, 0.f, 0.f, 0.f },
+            { 0.f, 2.f * invUD, 0.f, 0.f },
+            { sumRL * -invRL, sumUD * -invUD, 0.f, 1.f },
+            { 0.f, 0.f, zNear, 0.f }
         };
     }
 
-    void UE4Service::InitGameStateCallback()
-    {
-        if (!GameLoaded) GameLoaded = true;
-        playerController = nullptr;
-        parentViewTarget = nullptr;
-        childViewTarget = nullptr;
-        cameraComponent = nullptr;
-        gameUserSettings = nullptr;
-        lastRot = UE4::FRotator();
-    }
-
-    void UE4Service::SetViewTarget()
-    {
+    void UE4Service::SetViewTarget() {
         // Get player controller
         USING_UOBJECT(gameplayStatics, UE4::UObject, "GameplayStatics Engine.Default__GameplayStatics")
         USING_UOBJECT(getPlayerControllerFunc, UE4::UFunction, "Function Engine.GameplayStatics.GetPlayerController")
@@ -111,21 +119,17 @@ namespace UnrealVR
         UE4::AActor* currentViewTarget;
         ASSERT_ASSIGN(getViewTargetParams.ViewTarget, currentViewTarget)
 
-        if (childViewTarget == nullptr)
-        {
+        if (childViewTarget == nullptr) {
             // Spawn new view target
             USING_UOBJECT(cameraActorClass, UE4::UClass, "Class Engine.CameraActor")
-            if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn)
-            {
+            if (GameProfile::SelectedGameProfile.IsUsingDeferedSpawn) {
                 childViewTarget = UE4::UGameplayStatics::BeginDeferredActorSpawnFromClass(
                     cameraActorClass,
                     UE4::FTransform(),
                     UE4::ESpawnActorCollisionHandlingMethod::AlwaysSpawn,
                     nullptr
                 );
-            }
-            else
-            {
+            } else {
                 const auto transform = UE4::FTransform();
                 const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
                 childViewTarget = UE4::UWorld::GetWorld()->SpawnActor(
@@ -144,8 +148,7 @@ namespace UnrealVR
             ASSERT_ASSIGN(getComponentByClassParams.Result, cameraComponent)
         }
 
-        if (currentViewTarget != childViewTarget)
-        {
+        if (currentViewTarget != childViewTarget) {
             parentViewTarget = currentViewTarget;
             lastRot = UE4::FRotator();
 
@@ -163,8 +166,7 @@ namespace UnrealVR
         }
     }
 
-    void UE4Service::Resize(const int width, const int height)
-    {
+    void UE4Service::Resize(const int width, const int height) {
         // Get local settings
         USING_UOBJECT(defaultGameUserSettings, UE4::UObject, "GameUserSettings Engine.Default__GameUserSettings")
         USING_UOBJECT(getGameUserSettingsFunc, UE4::UFunction, "Function Engine.GameUserSettings.GetGameUserSettings")
@@ -196,9 +198,9 @@ namespace UnrealVR
     }
 
     //void UE4Manager::UpdatePose(const UE4::FVector loc, const UE4::FQuat rot, const UE4::FVector loc2)
-    void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye)
-    {
-        if (playerController == nullptr || childViewTarget == nullptr) return;
+    void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye) {
+        if (playerController == nullptr || childViewTarget == nullptr)
+            return;
 
         // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
         USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,

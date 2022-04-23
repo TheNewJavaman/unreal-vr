@@ -5,13 +5,12 @@
 
 #include "OpenXRService.h"
 #include "UE4Extensions.h"
+#include "../PatternStreams/PatternStreams/Private/PatternStreamsPrivate.h"
 
-namespace UnrealVR
-{
+namespace UnrealVR {
     enum class Eye;
 
-    class UE4Service
-    {
+    class UE4Service {
     public:
         /** Implies that all the necessary game objects have been loaded */
         static inline bool GameLoaded = false;
@@ -34,23 +33,23 @@ namespace UnrealVR
 
     private:
         /** Map of cached, static UObjects */
-        template <class T>
+        template<class T>
         static bool GetUObject(T** ptr, std::string name);
         static inline std::map<std::string, UE4::UObject*> uObjects;
+
+        /** Called once per scene start */
+        static void RegisterInitGameStateEvent();
+        static void InitGameStateCallback();
 
         /**
          * CalculateProjectionMatrix functions
          *
          * Called when evaluating the projection matrix that is sent to the GPU; this is where we use OpenXR's FOV
          */
-        typedef UE4::FMatrix (CalculateProjectionMatrixFunc)(void* pFMinimalViewInfo);
-        static CalculateProjectionMatrixFunc CalculateProjectionMatrixDetour;
-        static inline CalculateProjectionMatrixFunc* CalculateProjectionMatrixTarget = nullptr;
-        static inline CalculateProjectionMatrixFunc* CalculateProjectionMatrixOriginal = nullptr;
-
-        /** Called once per scene start */
-        static void InitGameStateCallback();
-
+        static PS::ByteBuffer Int32ToByteBuffer(int32_t i);
+        static void HookCalculateProjectionMatrix();
+        static void CalculateProjectionMatrixDetour(UE4::FMatrix* m);
+        
         /** SetViewTarget */
         static inline UE4::APlayerController* playerController = nullptr;
         static inline UE4::AActor* parentViewTarget = nullptr;

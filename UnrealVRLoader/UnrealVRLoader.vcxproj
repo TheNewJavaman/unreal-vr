@@ -92,7 +92,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;%(AdditionalIncludeDirectories);$(SolutionDir)PatternStreams\PatternStreams\Public</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -111,7 +111,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;%(AdditionalIncludeDirectories);$(SolutionDir)PatternStreams\PatternStreams\Public</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -129,7 +129,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;%(AdditionalIncludeDirectories);$(SolutionDir)PatternStreams\PatternStreams\Public</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
@@ -150,7 +150,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)minhook\include;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader;$(SolutionDir)UnrealModLoader\UnrealEngineModLoader\UE4;%(AdditionalIncludeDirectories);$(SolutionDir)PatternStreams\PatternStreams\Public</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
@@ -184,10 +184,8 @@
       <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </ObjectFileOutput>
     </FxCompile>
-    <ClInclude Include="PatternStream.h" />
     <ClInclude Include="PipeClientService.h" />
     <ClInclude Include="UE4Extensions.h" />
-    <ClCompile Include="PatternStream.cpp" />
     <ClCompile Include="PipeClientService.cpp" />
     <ClCompile Include="UE4Extensions.cpp" />
     <ClCompile Include="UE4Service.cpp" />
@@ -215,6 +213,9 @@
     <ProjectReference Include="..\minhook\build\VC16\libMinHook.vcxproj">
       <Project>{f142a341-5ee0-442d-a15f-98ae9b48dbae}</Project>
     </ProjectReference>
+    <ProjectReference Include="..\PatternStreams\PatternStreams\PatternStreams.vcxproj">
+      <Project>{37cd8a5d-65e8-4d18-90a3-595eea6c6f19}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\UnrealModLoader\UnrealEngineModLoader\UnrealEngineModLoader.vcxproj">
       <Project>{de3bc2ad-2683-4d76-ad72-95d98164e9c7}</Project>
     </ProjectReference>
@@ -231,8 +232,8 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="RizinWorkspace.asm" />
-    <Content Include="RizinWorkspace.hex" />
+    <Content Include="CalculateProjectionMatrix.asm" />
+    <Content Include="hex_to_cpp.py" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

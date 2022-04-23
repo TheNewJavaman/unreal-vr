@@ -21,6 +21,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnrealVRLauncher", "UnrealV
 		{DE3BC2AD-2683-4D76-AD72-95D98164E9C7} = {DE3BC2AD-2683-4D76-AD72-95D98164E9C7}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PatternStreams", "PatternStreams\PatternStreams\PatternStreams.vcxproj", "{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|arm64 = Debug|arm64
@@ -85,6 +87,18 @@ Global
 		{F8C4A549-E621-4AA5-A8ED-8C2C12250C79}.Release|x86.ActiveCfg = Release|x86
 		{F8C4A549-E621-4AA5-A8ED-8C2C12250C79}.Release|x86.Build.0 = Release|x86
 		{F8C4A549-E621-4AA5-A8ED-8C2C12250C79}.Release|x86.Deploy.0 = Release|x86
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Debug|arm64.ActiveCfg = Debug|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Debug|arm64.Build.0 = Debug|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Debug|x64.ActiveCfg = Debug|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Debug|x64.Build.0 = Debug|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Debug|x86.ActiveCfg = Debug|Win32
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Debug|x86.Build.0 = Debug|Win32
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Release|arm64.ActiveCfg = Release|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Release|arm64.Build.0 = Release|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Release|x64.ActiveCfg = Release|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Release|x64.Build.0 = Release|x64
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Release|x86.ActiveCfg = Release|Win32
+		{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

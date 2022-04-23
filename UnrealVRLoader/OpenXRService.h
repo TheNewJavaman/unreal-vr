@@ -27,9 +27,9 @@ namespace UnrealVR
         /** Finish initializing OpenXR: sets up app space, sets D3D11 device, starts session */
         static bool FinishInit(ID3D11Device* device, uint32_t sampleCount);
         static inline bool VRLoaded = false;
-        static inline uint32_t EyeWidth = 0;
-        static inline uint32_t EyeHeight = 0;
-        static inline XrFovf EyeFOV = {};
+        static inline uint32_t EyeWidth = 1;
+        static inline uint32_t EyeHeight = 1;
+        static inline XrFovf EyeFOV = {1.f, 1.f, 1.f, 1.f};
 
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);

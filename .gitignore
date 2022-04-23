@@ -373,3 +373,5 @@ FodyWeavers.xsd
 # rizin
 *.rzdb
 *.sdb
+
+RizinWorkspace*
