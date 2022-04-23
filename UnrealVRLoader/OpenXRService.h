@@ -29,7 +29,7 @@ namespace UnrealVR
         static inline bool VRLoaded = false;
         static inline uint32_t EyeWidth = 1;
         static inline uint32_t EyeHeight = 1;
-        static inline XrFovf EyeFOV = {1.f, 1.f, 1.f, 1.f};
+        static inline XrFovf EyeFOV = {-1.f, 1.f, 1.f, -1.f};
 
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);

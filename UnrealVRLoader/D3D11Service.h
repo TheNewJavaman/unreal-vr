@@ -2,10 +2,8 @@
 
 #include <d3d11.h>
 
-namespace UnrealVR
-{
-    class D3D11Service
-    {
+namespace UnrealVR {
+    class D3D11Service {
     public:
         /** Find VTables and set up D3D11/DXGI hooks */
         static void AddHooks();

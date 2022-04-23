@@ -3,6 +3,7 @@
 #include <PatternStreams.h>
 #include <Utilities/Globals.h> // TODO: Get Russell to use PatternStreams
 
+#include "HookHelper.h"
 #include "OpenXRService.h"
 #include "UE4Extensions.h"
 
@@ -57,35 +58,32 @@ namespace UnrealVR {
         lastRot = UE4::FRotator();
     }
 
-    PS::ByteBuffer UE4Service::Int32ToByteBuffer(int32_t i) {
-        constexpr auto bytes = sizeof int32_t;
-        const auto arr = static_cast<PS::BytePtr>(static_cast<void*>(&i));
-        PS::ByteBuffer buffer(bytes);
-        for (size_t j = 0; j < bytes; j++) {
-            buffer.at(j) = arr[bytes - j];
-        }
-        return buffer;
-    }
-
     /** See CalculateProjectionMatrix.asm */
     void UE4Service::HookCalculateProjectionMatrix() {
-        PS::PatternStream { 0xF6, 0x41, 0x30, 0x01 }
+        const auto match = PS::PatternStream { 0xF6, 0x41, 0x30, 0x01 }
             | PS::PatternInRange({ 0x0F, 0x84, PS::Any, PS::Any, 0x00, 0x00 }, { 0, 80 }, false)
             | PS::PatternInRange({ 0xC3, 0xCC, 0x48, 0x8B, 0xC4 }, { -80, 80 }, true)
             | PS::AddOffset(2)
-            | PS::WriteBufferAndOffset { 0x53, 0x54, 0x55, 0x4C, 0x89, 0xC9, 0x48, 0x83, 0xC1, 0x5C, 0x49, 0xBB }
             | PS::ForEach([](PS::BytePtr& i) {
-                const auto pDetour = reinterpret_cast<intptr_t>(CalculateProjectionMatrixDetour);
-                const auto pByte = reinterpret_cast<PS::BytePtr>(reinterpret_cast<intptr_t>(&pDetour));
-                PS::PatternPatcher::WriteBufferAndOffset(i, PS::ByteBuffer(pByte, pByte + 8));
+                Log::Info("[UnrealVR] Found CalculateProjectionMatrixGivenView at %p", i);
             })
-            | PS::WriteBuffer { 0x41, 0xFF, 0xD3, 0x5D, 0x5C, 0x5B, 0xC3 }
-            | PS::ForEach([](PS::BytePtr& i) {
-                Log::Info("[UnrealVR] Wrote CalculateProjectionMatrix patch to 0x%p", i - 20);
-            });
+            | PS::FirstOrNullptr();
+        CalculateProjectionMatrixGivenViewTarget = reinterpret_cast<CalculateProjectionMatrixGivenViewFunc*>(match);
+        HookHelper::Add<CalculateProjectionMatrixGivenViewFunc>(
+            CalculateProjectionMatrixGivenViewTarget,
+            &CalculateProjectionMatrixGivenViewDetour,
+            &CalculateProjectionMatrixGivenViewOriginal,
+            "CalculateProjectionMatrixGivenView"
+        );
+        Log::Info("[UnrealVR] Hooked CalculateProjectionMatrixGivenView at %p", match);
     }
 
-    void UE4Service::CalculateProjectionMatrixDetour(UE4::FMatrix* m) {
+    void __cdecl UE4Service::CalculateProjectionMatrixGivenViewDetour(
+        void* ViewInfo,
+        UE4::TEnumAsByte<UE4::EAspectRatioAxisConstraint> AspectRatioAxisConstraint,
+        void* Viewport,
+        void* InOutProjectionData
+    ) {
         constexpr float zNear = 10.f;
         const float tanU = std::tan(OpenXRService::EyeFOV.angleUp);
         const float tanD = std::tan(OpenXRService::EyeFOV.angleDown);
@@ -95,6 +93,7 @@ namespace UnrealVR {
         const float sumUD = tanU + tanD;
         const float invRL = 1.f / (tanR - tanL);
         const float invUD = 1.f / (tanU - tanD);
+        const auto m = reinterpret_cast<UE4::FMatrix*>(reinterpret_cast<intptr_t>(InOutProjectionData) + 0x50);
         *m = {
             { 2.f * invRL, 0.f, 0.f, 0.f },
             { 0.f, 2.f * invUD, 0.f, 0.f },
@@ -164,6 +163,19 @@ namespace UnrealVR {
             setViewTargetParams.NewViewTarget = childViewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
         }
+
+        if (cameraComponent != nullptr) {
+            // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
+            USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
+                          "Function Engine.CameraComponent.SetConstraintAspectRatio")
+            auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
+            cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+
+            // Set projection mode to perspective so that VR FOV works properly
+            USING_UOBJECT(setProjectionModeFunc, UE4::UFunction, "Function Engine.CameraComponent.SetProjectionMode");
+            auto setProjectionModeParams = UE4::SetProjectionModeParams();
+            cameraComponent->ProcessEvent(setProjectionModeFunc, &setProjectionModeParams);
+        }
     }
 
     void UE4Service::Resize(const int width, const int height) {
@@ -199,14 +211,9 @@ namespace UnrealVR {
 
     //void UE4Manager::UpdatePose(const UE4::FVector loc, const UE4::FQuat rot, const UE4::FVector loc2)
     void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye) {
-        if (playerController == nullptr || childViewTarget == nullptr)
+        if (playerController == nullptr || childViewTarget == nullptr) {
             return;
-
-        // Disable aspect ratio constraint (enables letterboxing, minimizes stretching)
-        USING_UOBJECT(setConstraintAspectRatioFunc, UE4::UFunction,
-                      "Function Engine.CameraComponent.SetConstraintAspectRatio")
-        auto setConstraintAspectRatioParams = UE4::SetConstraintAspectRatioParams();
-        cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
+        }
 
         // Convert rot to an FRotator
         USING_UOBJECT(mathLibrary, UE4::UObject, "KismetMathLibrary Engine.Default__KismetMathLibrary")
