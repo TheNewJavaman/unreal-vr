@@ -2,10 +2,8 @@
 
 #include <Windows.h>
 
-namespace UnrealVR
-{
-    class PipeClientService
-    {
+namespace UnrealVR {
+    class PipeClientService {
     public:
         /** Connects to the app UI to listen for settings changes in realtime */
         static bool Init();
@@ -22,9 +20,7 @@ namespace UnrealVR
         static void HandleCommand(CHAR buffer[]);
     };
 
-    enum class Setting : int
-    {
-        CmUnitsScale = 0x00,
-        FOVScale = 0x01
+    enum class Setting : int {
+        CmUnitsScale = 0x00
     };
 }

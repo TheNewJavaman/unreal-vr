@@ -5,10 +5,8 @@
 
 #define BUFFER_SIZE 512
 
-namespace UnrealVR
-{
-    bool PipeClientService::Init()
-    {
+namespace UnrealVR {
+    bool PipeClientService::Init() {
         hPipe = CreateFile(
             TEXT("\\\\.\\pipe\\UnrealVR"),
             GENERIC_READ,
@@ -18,8 +16,7 @@ namespace UnrealVR
             0,
             nullptr
         );
-        if (hPipe == INVALID_HANDLE_VALUE)
-        {
+        if (hPipe == INVALID_HANDLE_VALUE) {
             Log::Error("[UnrealVR] Couldn't open named pipe; error %lu", GetLastError());
             return false;
         }
@@ -28,8 +25,7 @@ namespace UnrealVR
         return true;
     }
 
-    DWORD PipeClientService::InitThread(LPVOID)
-    {
+    DWORD PipeClientService::InitThread(LPVOID) {
         CHAR chBuf[BUFFER_SIZE];
         DWORD cbRead;
         while (ReadFile(hPipe, chBuf, BUFFER_SIZE * sizeof(CHAR), &cbRead, nullptr))
@@ -38,23 +34,16 @@ namespace UnrealVR
         return NULL;
     }
 
-    void PipeClientService::HandleCommand(CHAR buffer[])
-    {
-        switch(static_cast<Setting>(buffer[0]))
-        {
+    void PipeClientService::HandleCommand(CHAR buffer[]) {
+        switch (static_cast<Setting>(buffer[0])) {
         case Setting::CmUnitsScale:
             memcpy(&UE4Service::CmUnitsScale, &buffer[1], 4 * sizeof(CHAR));
             Log::Info("[UnrealVR] Set CmUnitsScale to %.3f", UE4Service::CmUnitsScale);
             break;
-        case Setting::FOVScale:
-            memcpy(&UE4Service::FOVScale, &buffer[1], 4 * sizeof(CHAR));
-            Log::Info("[UnrealVR] Set FOVScale to %.3f", UE4Service::FOVScale);
-            break;
         }
     }
 
-    void PipeClientService::Stop()
-    {
+    void PipeClientService::Stop() {
         CloseHandle(hPipe);
     }
 }

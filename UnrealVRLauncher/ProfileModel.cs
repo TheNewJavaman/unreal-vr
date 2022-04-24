@@ -1,6 +1,8 @@
-﻿using Newtonsoft.Json;
+﻿using Microsoft.UI.Xaml;
+using Newtonsoft.Json;
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -33,37 +35,21 @@ namespace UnrealVR
                 UsesFNamePool = model.UsesFNamePool;
                 UsesDeferredSpawn = model.UsesDeferredSpawn;
             }
-            if (model._Version == 2)
-            {
-                FOVScale = model.FOVScale;
-            }
         }
 
         public async void SaveToAppData()
         {
             var localFolder = ApplicationData.Current.LocalFolder;
             var profileFolder = await localFolder.CreateFolderAsync("UnrealVRProfiles", CreationCollisionOption.OpenIfExists);
-            while (true)
-            {
-                try
-                {
-                    StorageFile profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.OpenIfExists);
-                    Save(profileFile);
-                    break;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Caught file exception: " + e);
-                    Thread.Sleep(50);
-                }
-            }
+            StorageFile profileFile = await profileFolder.CreateFileAsync(Filename, CreationCollisionOption.OpenIfExists);
+            SaveToFile(profileFile);
         }
 
-        public async void Save(StorageFile profileFile)
+        public void SaveToFile(StorageFile profileFile)
         {
             dynamic model = new
             {
-                _Version = 2,
+                _Version = 1,
                 Name,
                 ShippingExe,
                 CommandLineArgs,
@@ -71,24 +57,11 @@ namespace UnrealVR
                 UsesFChunkedFixedUObjectArray,
                 Uses422NamePool,
                 UsesFNamePool,
-                UsesDeferredSpawn,
-                FOVScale
+                UsesDeferredSpawn
             };
             string text = JsonConvert.SerializeObject(model);
             var buffer = CryptographicBuffer.ConvertStringToBinary(text, BinaryStringEncoding.Utf8);
-            while (true)
-            {
-                try
-                {
-                    await FileIO.WriteBufferAsync(profileFile, buffer);
-                    break;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine("Caught file exception: " + e);
-                    Thread.Sleep(50);
-                }
-            }
+            _ = FileIO.WriteBufferAsync(profileFile, buffer);
         }
 
         public string Filename { get; set; }
@@ -100,7 +73,6 @@ namespace UnrealVR
         public bool Uses422NamePool { get; set; } = false;
         public bool UsesFNamePool { get; set; } = true;
         public bool UsesDeferredSpawn { get; set; } = false;
-        public float FOVScale { get; set; } = 1.0f;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -135,7 +107,7 @@ namespace UnrealVR
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Caught file exception: " + e);
+                    Debug.WriteLine("Caught file exception: " + e);
                     Thread.Sleep(50);
                 }
             }

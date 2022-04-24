@@ -58,7 +58,6 @@ namespace UnrealVR
 
     public enum Setting : int
     {
-        CmUnitsScale = 0x00,
-        FOVScale = 0x01
+        CmUnitsScale = 0x00
     }
 }
