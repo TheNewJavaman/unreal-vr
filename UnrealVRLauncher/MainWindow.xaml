@@ -14,6 +14,7 @@
                     </StackPanel>
                 </CommandBar.Content>
                 <AppBarButton Icon="Play" Label="Start" IsEnabled="{x:Bind ShowStart, Mode=OneWay}" Click="Start_Click"/>
+                <AppBarButton Icon="NewWindow" Label="Attach" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Click="Attach_Click"/>
                 <AppBarButton Icon="Stop" Label="Stop" IsEnabled="{x:Bind ShowStop, Mode=OneWay}" Click="Stop_Click"/>
                 <AppBarSeparator/>
                 <AppBarButton Icon="Add" Label="New" Click="Add_Click"/>
@@ -53,6 +54,19 @@
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}">
                         <TextBox x:Name="ArgsBox" Text="{x:Bind Profile.CommandLineArgs, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" TextChanged="Args_TextChanged"/>
+                    </StackPanel>
+                </RelativePanel>
+                <TextBlock Style="{StaticResource Header}" Text="Gameplay"/>
+                <RelativePanel Style="{StaticResource Panel}">
+                    <StackPanel Style="{StaticResource TwoLinePanel.Key}">
+                        <SymbolIcon Symbol="FullScreen"/>
+                        <StackPanel Spacing="4">
+                            <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
+                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Updateable while in-game"/>
+                        </StackPanel>
+                    </StackPanel>
+                    <StackPanel Style="{StaticResource Panel.Value}">
+                        <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="ScaleIncrement" Value="{x:Bind Profile.CmUnitsScale, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="ScaleIncrement_ValueChanged"/>
                     </StackPanel>
                 </RelativePanel>
                 <TextBlock Style="{StaticResource Header}" Text="Game Engine"/>
@@ -102,31 +116,6 @@
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}" Margin="0,4,-78,0">
                         <ToggleSwitch x:Name="UsesDeferredSpawnSwitch" IsOn="{x:Bind Profile.UsesDeferredSpawn, Mode=TwoWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Toggled="UsesDeferredSpawn_Toggled"/>
-                    </StackPanel>
-                </RelativePanel>
-                <TextBlock Style="{StaticResource Header}" Text="Gameplay"/>
-                <RelativePanel Style="{StaticResource Panel}">
-                    <StackPanel Style="{StaticResource TwoLinePanel.Key}">
-                        <SymbolIcon Symbol="FullScreen"/>
-                        <StackPanel Spacing="4">
-                            <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Centimeters : Game Units Scale"/>
-                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Updateable while in-game"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Panel.Value}">
-                        <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="ScaleIncrement" Value="{x:Bind Profile.CmUnitsScale, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="ScaleIncrement_ValueChanged"/>
-                    </StackPanel>
-                </RelativePanel>
-                <RelativePanel Style="{StaticResource Panel}">
-                    <StackPanel Style="{StaticResource TwoLinePanel.Key}">
-                        <SymbolIcon Symbol="View"/>
-                        <StackPanel Spacing="4">
-                            <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Field Of View Multiplier"/>
-                            <TextBlock Style="{StaticResource Panel.Key.Sub}" Text="Increase if camera is zoomed in — updateable while in-game"/>
-                        </StackPanel>
-                    </StackPanel>
-                    <StackPanel Style="{StaticResource Panel.Value}">
-                        <NumberBox Style="{StaticResource Panel.Value.NumberBox}" x:Name="FOVIncrement" Value="{x:Bind Profile.FOVScale, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" ValueChanged="FOVIncrement_ValueChanged"/>
                     </StackPanel>
                 </RelativePanel>
                 <StackPanel Margin="0,42,0,0" Spacing="1">

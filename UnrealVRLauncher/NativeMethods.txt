@@ -1,0 +1,14 @@
+﻿OpenProcess
+VirtualAllocEx
+WriteProcessMemory
+GetProcAddress
+GetModuleHandle
+CreateRemoteThread
+GetExitCodeProcess
+TerminateProcess
+MAX_PATH
+CreateToolhelp32Snapshot
+Process32First
+Process32Next
+Module32First
+CreateProcess

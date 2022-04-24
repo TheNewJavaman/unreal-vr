@@ -1,4 +1,4 @@
-#include "HookHelper.h"
+﻿#include "HookHelper.h"
 
 namespace UnrealVR
 {
