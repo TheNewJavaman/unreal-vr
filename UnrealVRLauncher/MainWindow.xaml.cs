@@ -22,7 +22,8 @@ using Microsoft.Win32.SafeHandles;
 using System.Windows.Input;
 using Windows.System;
 using Windows.Win32.Foundation;
-using System.Threading;
+using Microsoft.UI.Xaml.Documents;
+using System.IO;
 
 namespace UnrealVR
 {
@@ -61,7 +62,7 @@ namespace UnrealVR
                 try
                 {
                     model = JObject.Parse(text);
-                } 
+                }
                 catch (JsonReaderException)
                 {
                     ShowError("Failed to parse game profile " + profileFile.DisplayName + "!");
@@ -150,7 +151,7 @@ namespace UnrealVR
                 for (int i = 0; i < 260; i++)
                 {
                     var character = (char)process.szExeFile[i].Value;
-                    if (character == '\x00') break;
+                    if (character == '\x0000') break;
                     else filename += character;
                 }
                 if (filename == exe)
@@ -175,17 +176,22 @@ namespace UnrealVR
         {
             NotifyPropertyChanged(nameof(ShowStart));
             NotifyPropertyChanged(nameof(ShowStop));
-            SyncSettings();
+            WaitAndSyncSettings();
             if (!await InjectDLL("UnrealEngineModLoader.dll")) return;
             if (!await InjectDLL("openxr_loader.dll")) return;
             if (!await InjectDLL("UnrealVRLoader.dll")) return;
-            _ = Task.Run(CheckStopped);
+            CheckStopped();
+        }
+
+        private async void WaitAndSyncSettings()
+        {
+            await Server.WaitForConnection();
+            SyncSettings();
         }
 
         private async void SyncSettings()
         {
-            await Server.WaitForConnection();
-            await Server.SendSettingChangeAsync(Setting.CmUnitsScale, Profile.CmUnitsScale);
+            await Server.SendSettingChange(Setting.CmUnitsScale, Profile.CmUnitsScale);
         }
 
         private async Task<bool> InjectDLL(string name)
@@ -232,7 +238,7 @@ namespace UnrealVR
             return true;
         }
 
-        private void CheckStopped()
+        private async void CheckStopped()
         {
             while (!proc.IsInvalid)
             {
@@ -241,7 +247,7 @@ namespace UnrealVR
                     ShowError("Failed to get exit code for game process!");
                 }
                 if (lpExitCode != 259) break; // STILL_ACTIVE = 259
-                Thread.Sleep(500);
+                await Task.Delay(500);
             }
             ResetProcess();
         }
@@ -249,14 +255,14 @@ namespace UnrealVR
         private void Stop_Click(object sender, RoutedEventArgs e)
         {
             if (!proc.IsInvalid)
-                PInvoke.TerminateProcess(proc, 0);
+                PInvoke.TerminateProcess(proc, 0); // SUCCESS = 0
             ResetProcess();
         }
 
         private void ResetProcess()
         {
             Server.Disconnect();
-            if (!proc.IsInvalid) 
+            if (!proc.IsInvalid)
                 proc.Close();
             proc = new();
             DispatcherQueue.TryEnqueue(() =>
@@ -282,7 +288,7 @@ namespace UnrealVR
             NotifyPropertyChanged(nameof(FormattedExe));
         }
 
-        /** Credit: https://github.com/microsoft/microsoft-ui-xaml/issues/4100#issuecomment-774346918 */
+        // https://github.com/microsoft/microsoft-ui-xaml/issues/4100#issuecomment-774346918
         private async void ExeSelect_Clicked(object sender, RoutedEventArgs e)
         {
             var filePicker = new FileOpenPicker();
@@ -380,7 +386,7 @@ namespace UnrealVR
                 return;
             }
             var profile = new ProfileModel(Guid.NewGuid().ToString() + ".json", model);
-            await profile.SaveToAppData();
+            profile.SaveToAppData();
             var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
@@ -397,10 +403,10 @@ namespace UnrealVR
             filePicker.FileTypeChoices.Add("JSON", new List<string>() { ".json" });
             var result = await filePicker.PickSaveFileAsync();
             if (result == null) return;
-            SaveProfile(Profile);
+            await Profile.SaveToFile(result);
         }
 
-        private void Name_LostFocus(object sender, RoutedEventArgs e)
+        private void Name_TextChanged(object sender, TextChangedEventArgs e)
         {
             var profile = Profile;
             if (profile == null) return;
@@ -414,7 +420,7 @@ namespace UnrealVR
             ProfileSelector.SelectedItem = profile;
         }
 
-        private void Args_LostFocus(object sender, RoutedEventArgs e)
+        private void Args_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (Profile == null) return;
             var textBox = sender as TextBox;
@@ -423,7 +429,7 @@ namespace UnrealVR
             SaveProfile(Profile);
         }
 
-        private void UsesFChunkedFixedUObjectArray_LostFocus(object sender, RoutedEventArgs e)
+        private void UsesFChunkedFixedUObjectArray_Toggled(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
@@ -432,7 +438,7 @@ namespace UnrealVR
             SaveProfile(Profile);
         }
 
-        private void Uses422NamePool_LostFocus(object sender, RoutedEventArgs e)
+        private void Uses422NamePool_Toggled(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
@@ -441,7 +447,7 @@ namespace UnrealVR
             SaveProfile(Profile);
         }
 
-        private void UsesFNamePool_LostFocus(object sender, RoutedEventArgs e)
+        private void UsesFNamePool_Toggled(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
@@ -450,7 +456,7 @@ namespace UnrealVR
             SaveProfile(Profile);
         }
 
-        private void UsesDeferredSpawn_LostFocus(object sender, RoutedEventArgs e)
+        private void UsesDeferredSpawn_Toggled(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
@@ -459,24 +465,119 @@ namespace UnrealVR
             SaveProfile(Profile);
         }
 
-        private async void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs e)
+        private void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs e)
         {
             if (Profile == null) return;
             var numberBox = sender as NumberBox;
             Profile.CmUnitsScale = (float)numberBox.Value;
             Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
             SaveProfile(Profile);
-            if (Server.IsConnected)
-                await Server.SendSettingChangeAsync(Setting.CmUnitsScale, (float)numberBox.Value);
+            if (Server.IsConnected) SyncSettings();
         }
 
-        private async void SaveProfile(ProfileModel profile)
+        private async void Autodetect_Click(Hyperlink sender, HyperlinkClickEventArgs args)
         {
-            var now = DateTime.Now;
-            if (now - ProfileLastChanged > TimeSpan.FromSeconds(1))
+            if (!ProfileSelected)
             {
-                ProfileLastChanged = now;
-                await profile.SaveToAppData();
+                ShowError("No profile selected!");
+                return;
+            }
+            FileStream file;
+            try
+            {
+                file = File.OpenRead(Profile.ShippingExe);
+            }
+            catch (Exception)
+            {
+                ShowError("Couldn't open " + Profile.ShippingExe + "!");
+                return;
+            }
+            byte[] pattern = { 0x2B, 0x00, 0x55, 0x00, 0x45, 0x00, 0x34, 0x00 };
+            while (true)
+            {
+                int data = file.ReadByte();
+                if (data == -1)
+                {
+                    ShowError("Couldn't find Unreal Engine version. Did you select the launcher executable instead of the shipping executable?");
+                    return;
+                }
+                else if (data == pattern[0])
+                {
+                    long originalI = file.Position;
+                    bool fullMatch = true;
+                    for (long i = 1; i < pattern.Length; i++)
+                    {
+                        if (file.ReadByte() != pattern[i])
+                        {
+                            fullMatch = false;
+                            break;
+                        }
+                    }
+                    if (fullMatch) break;
+                    file.Seek(originalI, SeekOrigin.Begin);
+                }
+            }
+            bool fillerFinished = false;
+            bool majorVersionFinished = false;
+            string majorVersionStr = "";
+            string minorVersionStr = "";
+            while (true)
+            {
+                char a = BitConverter.ToChar(new byte[] { (byte)file.ReadByte(), (byte)file.ReadByte() }, 0);
+                if (a == '-' || a == '\x0000' || a == '.')
+                {
+                    if (!fillerFinished) fillerFinished = true;
+                    else if (!majorVersionFinished) majorVersionFinished = true;
+                    else break;
+                }
+                else
+                {
+                    if (!fillerFinished) continue;
+                    else if (!majorVersionFinished) majorVersionStr += a;
+                    else minorVersionStr += a;
+                }
+            }
+            var dialog = new ContentDialog
+            {
+                Title = "Autodetection Complete",
+                Content = "Detected Unreal Engine " + majorVersionStr + "." + minorVersionStr + "!\n\nConfigure Game Engine settings appropriately? (This doesn't always work)",
+                PrimaryButtonText = "Configure",
+                PrimaryButtonCommand = new CallbackCommand(() =>
+                {
+                    int majorVersion = int.Parse(majorVersionStr);
+                    int minorVersion = int.Parse(minorVersionStr);
+                    if ((majorVersion == 4 && minorVersion >= 18) || majorVersion > 4)
+                    {
+                        Profile.UsesFChunkedFixedUObjectArray = true;
+                        Profile.NotifyPropertyChanged(nameof(Profile.UsesFChunkedFixedUObjectArray));
+                    }
+                    if (majorVersion == 4 && minorVersion == 22)
+                    {
+                        Profile.Uses422NamePool = true;
+                        Profile.NotifyPropertyChanged(nameof(Profile.Uses422NamePool));
+                    }
+                    if ((majorVersion == 4 && minorVersion >= 23) || majorVersion > 4)
+                    {
+                        Profile.UsesFNamePool = true;
+                        Profile.NotifyPropertyChanged(nameof(Profile.UsesFNamePool));
+                    }
+                    Profile.UsesDeferredSpawn = false;
+                    Profile.NotifyPropertyChanged(nameof(Profile.UsesDeferredSpawn));
+                    Profile.SaveToAppData();
+                }),
+                CloseButtonText = "Cancel",
+                DefaultButton = ContentDialogButton.Primary,
+                XamlRoot = Content.XamlRoot
+            };
+            DispatcherQueue.TryEnqueue(() => _ = dialog.ShowAsync());
+            await file.DisposeAsync();
+        }
+
+        private void SaveProfile(ProfileModel profile)
+        {
+            if (DateTime.Now - ProfileLastChanged > TimeSpan.FromSeconds(1))
+            {
+                profile.SaveToAppData();
             }
         }
 
@@ -522,5 +623,20 @@ namespace UnrealVR
         {
             await Launcher.LaunchUriAsync(new Uri("https://github.com/TheNewJavaman/unreal-vr/issues/new"));
         }
+    }
+
+    public class CallbackCommand : ICommand
+    {
+        public CallbackCommand(Action callback)
+        {
+            Callback = callback;
+        }
+
+        public Action Callback;
+        public event EventHandler CanExecuteChanged;
+
+        public bool CanExecute(object parameter) => true;
+
+        public void Execute(object parameter) => Callback();
     }
 }

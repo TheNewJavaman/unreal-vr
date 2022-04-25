@@ -8,11 +8,19 @@
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
-            <Style x:Key="Header" TargetType="TextBlock">
+            <Style x:Key="Header" TargetType="RelativePanel">
+                <Setter Property="Margin" Value="0,24,0,0"/>
+                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            </Style>
+            <Style x:Key="Header.Text" TargetType="TextBlock">
                 <Setter Property="FontSize" Value="18"/>
                 <Setter Property="FontWeight" Value="SemiBold"/>
                 <Setter Property="Foreground" Value="#dddddd"/>
-                <Setter Property="Margin" Value="0,24,0,0"/>
+            </Style>
+            <Style x:Key="Header.Helper" TargetType="TextBlock">
+                <Setter Property="FontSize" Value="14"/>
+                <Setter Property="RelativePanel.AlignRightWithPanel" Value="True"/>
+                <Setter Property="RelativePanel.AlignBottomWithPanel" Value="True"/>
             </Style>
             <Style x:Key="Panel" TargetType="RelativePanel">
                 <Setter Property="Background" Value="#2b2b2b"/>
