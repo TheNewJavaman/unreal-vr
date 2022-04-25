@@ -14,7 +14,7 @@
                     </StackPanel>
                 </CommandBar.Content>
                 <AppBarButton Icon="Play" Label="Start" IsEnabled="{x:Bind ShowStart, Mode=OneWay}" Click="Start_Click"/>
-                <AppBarButton Icon="NewWindow" Label="Attach" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Click="Attach_Click"/>
+                <AppBarButton Icon="NewWindow" Label="Attach" IsEnabled="{x:Bind ShowStart, Mode=OneWay}" Click="Attach_Click"/>
                 <AppBarButton Icon="Stop" Label="Stop" IsEnabled="{x:Bind ShowStop, Mode=OneWay}" Click="Stop_Click"/>
                 <AppBarSeparator/>
                 <AppBarButton Icon="Add" Label="New" Click="Add_Click"/>
@@ -32,7 +32,7 @@
                         <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Name"/>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}">
-                        <TextBox x:Name="NameBox" Text="{x:Bind Profile.Name, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" TextChanged="Name_TextChanged"/>
+                        <TextBox x:Name="NameBox" Text="{x:Bind Profile.Name, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" LostFocus="Name_LostFocus"/>
                     </StackPanel>
                 </RelativePanel>
                 <RelativePanel Style="{StaticResource Panel}">
@@ -53,7 +53,7 @@
                         <TextBlock Style="{StaticResource Panel.Key.Header}" Text="Command Line Arguments"/>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}">
-                        <TextBox x:Name="ArgsBox" Text="{x:Bind Profile.CommandLineArgs, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" TextChanged="Args_TextChanged"/>
+                        <TextBox x:Name="ArgsBox" Text="{x:Bind Profile.CommandLineArgs, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" LostFocus="Args_LostFocus"/>
                     </StackPanel>
                 </RelativePanel>
                 <TextBlock Style="{StaticResource Header}" Text="Gameplay"/>
@@ -79,7 +79,7 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}" Margin="0,4,-78,0">
-                        <ToggleSwitch x:Name="UsesFChunkedFixedUObjectArraySwitch" IsOn="{x:Bind Profile.UsesFChunkedFixedUObjectArray, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Toggled="UsesFChunkedFixedUObjectArray_Toggled"/>
+                        <ToggleSwitch x:Name="UsesFChunkedFixedUObjectArraySwitch" IsOn="{x:Bind Profile.UsesFChunkedFixedUObjectArray, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" LostFocus="UsesFChunkedFixedUObjectArray_LostFocus"/>
                     </StackPanel>
                 </RelativePanel>
                 <RelativePanel Style="{StaticResource Panel}">
@@ -91,7 +91,7 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}" Margin="0,4,-78,0">
-                        <ToggleSwitch x:Name="Uses422NamePoolSwitch" IsOn="{x:Bind Profile.Uses422NamePool, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Toggled="Uses422NamePool_Toggled"/>
+                        <ToggleSwitch x:Name="Uses422NamePoolSwitch" IsOn="{x:Bind Profile.Uses422NamePool, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" LostFocus="Uses422NamePool_LostFocus"/>
                     </StackPanel>
                 </RelativePanel>
                 <RelativePanel Style="{StaticResource Panel}">
@@ -103,7 +103,7 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}" Margin="0,4,-78,0">
-                        <ToggleSwitch x:Name="UsesFNamePoolSwitch" IsOn="{x:Bind Profile.UsesFNamePool, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Toggled="UsesFNamePool_Toggled"/>
+                        <ToggleSwitch x:Name="UsesFNamePoolSwitch" IsOn="{x:Bind Profile.UsesFNamePool, Mode=OneWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" LostFocus="UsesFNamePool_LostFocus"/>
                     </StackPanel>
                 </RelativePanel>
                 <RelativePanel Style="{StaticResource Panel}">
@@ -115,7 +115,7 @@
                         </StackPanel>
                     </StackPanel>
                     <StackPanel Style="{StaticResource Panel.Value}" Margin="0,4,-78,0">
-                        <ToggleSwitch x:Name="UsesDeferredSpawnSwitch" IsOn="{x:Bind Profile.UsesDeferredSpawn, Mode=TwoWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" Toggled="UsesDeferredSpawn_Toggled"/>
+                        <ToggleSwitch x:Name="UsesDeferredSpawnSwitch" IsOn="{x:Bind Profile.UsesDeferredSpawn, Mode=TwoWay}" IsEnabled="{x:Bind ProfileSelected, Mode=OneWay}" LostFocus="UsesDeferredSpawn_LostFocus"/>
                     </StackPanel>
                 </RelativePanel>
                 <StackPanel Margin="0,42,0,0" Spacing="1">

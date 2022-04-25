@@ -65,7 +65,7 @@ namespace UnrealVR {
             | PS::PatternInRange({ 0xC3, 0xCC, 0x48, 0x8B, 0xC4 }, { -80, 80 }, true)
             | PS::AddOffset(2)
             | PS::ForEach([](PS::BytePtr& i) {
-                Log::Info("[UnrealVR] Found CalculateProjectionMatrixGivenView at %p", i);
+                Log::Info("[UnrealVR] Found CalculateProjectionMatrixGivenView at 0x%p", i);
             })
             | PS::FirstOrNullptr();
         CalculateProjectionMatrixGivenViewTarget = reinterpret_cast<CalculateProjectionMatrixGivenViewFunc*>(match);
@@ -75,7 +75,7 @@ namespace UnrealVR {
             &CalculateProjectionMatrixGivenViewOriginal,
             "CalculateProjectionMatrixGivenView"
         );
-        Log::Info("[UnrealVR] Hooked CalculateProjectionMatrixGivenView at %p", match);
+        Log::Info("[UnrealVR] Hooked CalculateProjectionMatrixGivenView at 0x%p", match);
     }
 
     void __cdecl UE4Service::CalculateProjectionMatrixGivenViewDetour(

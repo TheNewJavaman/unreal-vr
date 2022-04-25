@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.IO.Pipes;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace UnrealVR
 {
@@ -10,33 +10,33 @@ namespace UnrealVR
         private NamedPipeServerStream server;
         private PipeStream stream;
 
-        public void Start()
+        public PipeServer()
         {
             server = new NamedPipeServerStream("UnrealVR", PipeDirection.Out, 1);
-            server.WaitForConnection();
             stream = new PipeStream(server);
         }
 
-        public bool IsConnected { get { return server != null && server.IsConnected; } }
-
-        public void Stop()
+        public async Task WaitForConnection()
         {
-            if (server != null)
-            {
-                if (server.IsConnected)
-                    server.Disconnect();
-                server.Dispose();
-            }
+            if (IsConnected) return;
+            await server.WaitForConnectionAsync();
         }
-        
-        public void SendSettingChange(Setting setting, float value)
+
+        public bool IsConnected { get { return server.IsConnected; } }
+
+        public void Disconnect()
+        {
+            if (IsConnected) server.Disconnect();
+        }
+
+        public async Task SendSettingChangeAsync(Setting setting, float value)
         {
             var valueBuffer = BitConverter.GetBytes(value);
             var bufferLength = 1 + valueBuffer.Length;
             var buffer = new byte[bufferLength];
             buffer[0] = (byte) setting;
             valueBuffer.CopyTo(buffer, 1);
-            stream.SendCommand(buffer);
+            await stream.SendCommandAsync(buffer);
         }
     }
 
@@ -49,10 +49,10 @@ namespace UnrealVR
             this.stream = stream;
         }
 
-        public void SendCommand(byte[] buffer)
+        public async Task SendCommandAsync(byte[] buffer)
         {
-            stream.Write(buffer);
-            stream.Flush();
+            await stream.WriteAsync(buffer);
+            await stream.FlushAsync();
         }
     }
 
