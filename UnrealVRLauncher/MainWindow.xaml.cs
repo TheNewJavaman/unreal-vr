@@ -8,7 +8,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.Globalization.NumberFormatting;
@@ -54,6 +53,7 @@ namespace UnrealVR
             var localFolder = ApplicationData.Current.LocalFolder;
             var profileFolder = await localFolder.CreateFolderAsync("UnrealVRProfiles", CreationCollisionOption.OpenIfExists);
             var profileFiles = await profileFolder.GetFilesAsync();
+            ProfileLastChanged = DateTime.Now;
             foreach (var profileFile in profileFiles)
             {
                 var text = await FileIO.ReadTextAsync(profileFile);
@@ -93,6 +93,7 @@ namespace UnrealVR
         private bool ShowStart { get { return proc.IsInvalid && ProfileSelected; } }
         private bool ShowStop { get { return !proc.IsInvalid && ProfileSelected; } }
         private readonly PipeServer Server = new();
+        private DateTime ProfileLastChanged = DateTime.Now;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -156,6 +157,7 @@ namespace UnrealVR
                 {
                     var access = PROCESS_ACCESS_RIGHTS.PROCESS_CREATE_THREAD
                         | PROCESS_ACCESS_RIGHTS.PROCESS_TERMINATE
+                        | PROCESS_ACCESS_RIGHTS.PROCESS_VM_OPERATION
                         | PROCESS_ACCESS_RIGHTS.PROCESS_VM_WRITE;
                     proc = new SafeProcessHandle(PInvoke.OpenProcess_SafeHandle(access, false, process.th32ProcessID).DangerousGetHandle(), true);
                     break;
@@ -173,12 +175,17 @@ namespace UnrealVR
         {
             NotifyPropertyChanged(nameof(ShowStart));
             NotifyPropertyChanged(nameof(ShowStop));
+            SyncSettings();
             if (!await InjectDLL("UnrealEngineModLoader.dll")) return;
             if (!await InjectDLL("openxr_loader.dll")) return;
             if (!await InjectDLL("UnrealVRLoader.dll")) return;
-            Server.Start();
-            Server.SendSettingChange(Setting.CmUnitsScale, Profile.CmUnitsScale);
-            _ = Task.Factory.StartNew(CheckStopped);
+            _ = Task.Run(CheckStopped);
+        }
+
+        private async void SyncSettings()
+        {
+            await Server.WaitForConnection();
+            await Server.SendSettingChangeAsync(Setting.CmUnitsScale, Profile.CmUnitsScale);
         }
 
         private async Task<bool> InjectDLL(string name)
@@ -187,64 +194,81 @@ namespace UnrealVR
             var localDir = ApplicationData.Current.LocalFolder;
             var dllFile = await installDir.GetFileAsync(name);
             var dllCopy = await dllFile.CopyAsync(localDir, name, NameCollisionOption.ReplaceExisting);
-            if (!WriteDLLSortOfSafely(dllCopy))
-            {
-                ShowError("Couldn't inject " + name + "!");
-                return false;
-            }
+            if (!WriteDLLSortOfSafely(dllCopy)) return false;
             return true;
         }
 
         unsafe private bool WriteDLLSortOfSafely(StorageFile dll)
         {
             var loc = PInvoke.VirtualAllocEx(proc, null, PInvoke.MAX_PATH, VIRTUAL_ALLOCATION_TYPE.MEM_COMMIT | VIRTUAL_ALLOCATION_TYPE.MEM_RESERVE, PAGE_PROTECTION_FLAGS.PAGE_READWRITE);
-            if (loc == null) return false;
-            var dllPath = Encoding.ASCII.GetBytes(dll.Path);
-            var handle = GCHandle.Alloc(dllPath, GCHandleType.Pinned);
-            if (!PInvoke.WriteProcessMemory(proc, loc, GCHandle.ToIntPtr(handle).ToPointer(), (uint)dllPath.Length + 1, null)) return false;
+            if (loc == null)
+            {
+                ShowError("Couldn't allocate memory in the game process!");
+                return false;
+            }
+            var dllPath = dll.Path.Select(c => (byte)c).ToList();
+            dllPath.Add(0x00);
+            var dllPathArr = dllPath.ToArray();
+            var handle = GCHandle.Alloc(dllPathArr, GCHandleType.Pinned);
+            if (!PInvoke.WriteProcessMemory(proc, loc, handle.AddrOfPinnedObject().ToPointer(), (uint)dllPathArr.Length, null))
+            {
+                ShowError("Couldn't write memory in the game process!");
+                return false;
+            };
             handle.Free();
             var loadLibrary = PInvoke.GetProcAddress(PInvoke.GetModuleHandle("kernel32.dll"), "LoadLibraryA");
+            if (loadLibrary.IsNull)
+            {
+                ShowError("Couldn't get the address of LoadLibraryA!");
+                return false;
+            };
             var hThread = PInvoke.CreateRemoteThread(proc, null, 0, loadLibrary.CreateDelegate<LPTHREAD_START_ROUTINE>(), loc, 0, null);
-            if (hThread.IsInvalid) return false;
+            if (hThread.IsInvalid)
+            {
+                ShowError("Couldn't create a remote thread in the game process!");
+                return false;
+            };
             hThread.Close();
             return true;
         }
 
         private void CheckStopped()
         {
-            while (true)
+            while (!proc.IsInvalid)
             {
-                if (proc.IsInvalid) return;
                 if (!PInvoke.GetExitCodeProcess(proc, out uint lpExitCode))
                 {
                     ShowError("Failed to get exit code for game process!");
                 }
-                if (lpExitCode != 259) // STILL_ACTIVE = 259
-                {
-                    ResetProcess();
-                    return;
-                }
-                Thread.Sleep(1000);
+                if (lpExitCode != 259) break; // STILL_ACTIVE = 259
+                Thread.Sleep(500);
             }
+            ResetProcess();
         }
 
         private void Stop_Click(object sender, RoutedEventArgs e)
         {
-            PInvoke.TerminateProcess(proc, 0);
+            if (!proc.IsInvalid)
+                PInvoke.TerminateProcess(proc, 0);
             ResetProcess();
         }
 
         private void ResetProcess()
         {
-            Server.Stop();
-            proc.Close();
+            Server.Disconnect();
+            if (!proc.IsInvalid) 
+                proc.Close();
             proc = new();
-            NotifyPropertyChanged(nameof(ShowStart));
-            NotifyPropertyChanged(nameof(ShowStop));
+            DispatcherQueue.TryEnqueue(() =>
+            {
+                NotifyPropertyChanged(nameof(ShowStart));
+                NotifyPropertyChanged(nameof(ShowStop));
+            });
         }
 
         private void Profile_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            ProfileLastChanged = DateTime.Now;
             var comboBox = sender as ComboBox;
             Profile = comboBox.SelectedItem as ProfileModel;
             NotifyPropertyChanged(nameof(Profile));
@@ -271,11 +295,12 @@ namespace UnrealVR
             Profile.ShippingExe = result.Path;
             FormattedExe = result.Path;
             NotifyPropertyChanged(nameof(FormattedExe));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
         }
 
         private void Add_Click(object sender, RoutedEventArgs e)
         {
+            ProfileLastChanged = DateTime.Now;
             var profile = new ProfileModel();
             var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
@@ -285,17 +310,19 @@ namespace UnrealVR
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
+            ProfileLastChanged = DateTime.Now;
             var profile = Profile.Clone();
-            profile.SaveToAppData();
+            SaveProfile(profile);
             var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
             ProfileSelector.SelectedItem = profile;
         }
 
-        private void Remove_Click(object sender, RoutedEventArgs e)
+        private async void Remove_Click(object sender, RoutedEventArgs e)
         {
-            Task.Factory.StartNew(() => Profile.Delete());
+            ProfileLastChanged = DateTime.Now;
+            await Profile.Delete();
             var i = ProfileSelector.SelectedIndex;
             var newList = new List<ProfileModel>(Profiles);
             newList.RemoveAt(i);
@@ -333,6 +360,7 @@ namespace UnrealVR
 
         private async void Import_Click(object sender, RoutedEventArgs e)
         {
+            ProfileLastChanged = DateTime.Now;
             var filePicker = new FileOpenPicker();
             var hwnd = this.As<IWindowNative>().WindowHandle;
             var initializeWithWindow = filePicker.As<IInitializeWithWindow>();
@@ -352,7 +380,7 @@ namespace UnrealVR
                 return;
             }
             var profile = new ProfileModel(Guid.NewGuid().ToString() + ".json", model);
-            profile.SaveToAppData();
+            await profile.SaveToAppData();
             var newProfiles = new List<ProfileModel>(Profiles) { profile };
             Profiles = new BindingList<ProfileModel>(newProfiles.OrderBy(profile => profile.Name).ToList());
             NotifyPropertyChanged(nameof(Profiles));
@@ -369,77 +397,87 @@ namespace UnrealVR
             filePicker.FileTypeChoices.Add("JSON", new List<string>() { ".json" });
             var result = await filePicker.PickSaveFileAsync();
             if (result == null) return;
-            Profile.SaveToFile(result);
+            SaveProfile(Profile);
         }
 
-        private void Name_TextChanged(object sender, TextChangedEventArgs e)
+        private void Name_LostFocus(object sender, RoutedEventArgs e)
         {
             var profile = Profile;
             if (profile == null) return;
             var textBox = sender as TextBox;
             profile.Name = textBox.Text;
             profile.NotifyPropertyChanged(nameof(profile.Name));
-            profile.SaveToAppData();
+            SaveProfile(profile);
             var newList = (new List<ProfileModel>(Profiles)).OrderBy(it => it.Name).ToList();
             Profiles = new BindingList<ProfileModel>(newList);
             NotifyPropertyChanged(nameof(Profiles));
             ProfileSelector.SelectedItem = profile;
         }
 
-        private void Args_TextChanged(object sender, TextChangedEventArgs e)
+        private void Args_LostFocus(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var textBox = sender as TextBox;
             Profile.CommandLineArgs = textBox.Text;
             Profile.NotifyPropertyChanged(nameof(Profile.CommandLineArgs));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
         }
 
-        private void UsesFChunkedFixedUObjectArray_Toggled(object sender, RoutedEventArgs e)
+        private void UsesFChunkedFixedUObjectArray_LostFocus(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesFChunkedFixedUObjectArray = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesFChunkedFixedUObjectArray));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
         }
 
-        private void Uses422NamePool_Toggled(object sender, RoutedEventArgs e)
+        private void Uses422NamePool_LostFocus(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.Uses422NamePool = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.Uses422NamePool));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
         }
 
-        private void UsesFNamePool_Toggled(object sender, RoutedEventArgs e)
+        private void UsesFNamePool_LostFocus(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesFNamePool = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesFNamePool));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
         }
 
-        private void UsesDeferredSpawn_Toggled(object sender, RoutedEventArgs e)
+        private void UsesDeferredSpawn_LostFocus(object sender, RoutedEventArgs e)
         {
             if (Profile == null) return;
             var toggleSwitch = sender as ToggleSwitch;
             Profile.UsesDeferredSpawn = toggleSwitch.IsOn;
             Profile.NotifyPropertyChanged(nameof(Profile.UsesDeferredSpawn));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
         }
 
-        private void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+        private async void ScaleIncrement_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs e)
         {
             if (Profile == null) return;
             var numberBox = sender as NumberBox;
             Profile.CmUnitsScale = (float)numberBox.Value;
             Profile.NotifyPropertyChanged(nameof(Profile.CmUnitsScale));
-            Profile.SaveToAppData();
+            SaveProfile(Profile);
             if (Server.IsConnected)
-                Server.SendSettingChange(Setting.CmUnitsScale, (float)numberBox.Value);
+                await Server.SendSettingChangeAsync(Setting.CmUnitsScale, (float)numberBox.Value);
+        }
+
+        private async void SaveProfile(ProfileModel profile)
+        {
+            var now = DateTime.Now;
+            if (now - ProfileLastChanged > TimeSpan.FromSeconds(1))
+            {
+                ProfileLastChanged = now;
+                await profile.SaveToAppData();
+            }
         }
 
         private void ShowError(string message)
@@ -454,7 +492,7 @@ namespace UnrealVR
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = Content.XamlRoot
             };
-            _ = dialog.ShowAsync();
+            DispatcherQueue.TryEnqueue(() => _ = dialog.ShowAsync());
         }
     }
 
@@ -480,9 +518,9 @@ namespace UnrealVR
 
         public bool CanExecute(object parameter) => true;
 
-        public void Execute(object parameter)
+        public async void Execute(object parameter)
         {
-            _ = Launcher.LaunchUriAsync(new Uri("https://github.com/TheNewJavaman/unreal-vr/issues/new"));
+            await Launcher.LaunchUriAsync(new Uri("https://github.com/TheNewJavaman/unreal-vr/issues/new"));
         }
     }
 }
