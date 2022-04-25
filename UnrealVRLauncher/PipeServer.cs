@@ -29,12 +29,12 @@ namespace UnrealVR
             if (IsConnected) server.Disconnect();
         }
 
-        public async Task SendSettingChangeAsync(Setting setting, float value)
+        public async Task SendSettingChange(Setting setting, float value)
         {
             var valueBuffer = BitConverter.GetBytes(value);
             var bufferLength = 1 + valueBuffer.Length;
             var buffer = new byte[bufferLength];
-            buffer[0] = (byte) setting;
+            buffer[0] = (byte)setting;
             valueBuffer.CopyTo(buffer, 1);
             await stream.SendCommandAsync(buffer);
         }
