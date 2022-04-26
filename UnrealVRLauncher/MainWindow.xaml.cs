@@ -180,13 +180,17 @@ namespace UnrealVR
             if (!await InjectDLL("UnrealEngineModLoader.dll")) return;
             if (!await InjectDLL("openxr_loader.dll")) return;
             if (!await InjectDLL("UnrealVRLoader.dll")) return;
+            WaitAndSyncSettings();
             CheckStopped();
         }
 
         private async void WaitAndSyncSettings()
         {
-            await Server.WaitForConnection();
-            SyncSettings();
+            await Task.Run(() =>
+            {
+                Server.WaitForConnection();
+                SyncSettings();
+            });
         }
 
         private async void SyncSettings()
@@ -593,7 +597,7 @@ namespace UnrealVR
                 DefaultButton = ContentDialogButton.Close,
                 XamlRoot = Content.XamlRoot
             };
-            DispatcherQueue.TryEnqueue(() => _ = dialog.ShowAsync());
+            DispatcherQueue.TryEnqueue(async () => await dialog.ShowAsync());
         }
     }
 
