@@ -16,10 +16,16 @@ namespace UnrealVR
             stream = new PipeStream(server);
         }
 
-        public async Task WaitForConnection()
+        public void WaitForConnection()
         {
             if (IsConnected) return;
-            await server.WaitForConnectionAsync();
+            try
+            {
+                server.WaitForConnection();
+            }
+            catch (InvalidOperationException) // Already connected
+            {
+            }
         }
 
         public bool IsConnected { get { return server.IsConnected; } }
