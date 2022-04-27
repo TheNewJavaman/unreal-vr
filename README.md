@@ -43,9 +43,10 @@ There are so many features I want to add, and so many refactorings that could im
   Details pane in File Explorer to determine the Unreal Engine version.
 - **Console Output**: Enable/disable the log window; also, don't use a basic terminal for output, show it in the
   nice-looking app UI.
-- **Unreal Mod Loader**: Help out with UML 3.0; it powers this mod, so we gotta give back by contributing where
-  necessary
 - **Unreal Engine 5**: It's not too different from UE4, so add support to UML if Russell.J doesn't have time
+- **Build System**: Use meson so it's faster and cross-platform. Would also reduce dependence on Rider/Visual Studio
+- **Stop Using UML**: Build a home-grown solution that's better for this specific use-case
+- **Dependency Injection**: Inject service class instances at runtime so there aren't as many static members
 
 ## Preview
 

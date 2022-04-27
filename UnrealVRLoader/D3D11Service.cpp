@@ -108,15 +108,10 @@ namespace UnrealVR {
             device->Release();
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
-        if (!UE4Service::GameLoaded)
-            return PresentOriginal(pSwapChain, SyncInterval, Flags);
-        if (!UE4Service::Resized)
-        {
-            UE4Service::Resize(static_cast<int>(OpenXRService::EyeWidth),
-                               static_cast<int>(OpenXRService::EyeHeight));
+        UE4Service::SetViewTarget();
+        if (!UE4Service::Resized) {
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
-        UE4Service::SetViewTarget();
         ID3D11Texture2D* texture;
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
         OpenXRService::SubmitFrame(texture);

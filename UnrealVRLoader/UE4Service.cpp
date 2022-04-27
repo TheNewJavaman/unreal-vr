@@ -10,15 +10,17 @@
 #define USING_UOBJECT(ptr, T, name) \
     T* ptr; \
     if (!GetUObject<T>(&(ptr), name)) return;
-#define ASSERT(var, name) \
+#define ASSERT(var) \
     if ((var) == nullptr) \
     { \
-        Log::Warn("[UnrealVR] Couldn't find %s", name); \
         return; \
     }
-#define ASSERT_ASSIGN(src, dst) \
-    ASSERT(src, #dst) \
-    (dst) = src;
+#define ASSERT_LOG(var, name) \
+    if ((var) == nullptr) \
+    { \
+        Log::Warn("[UnrealVR] %s was a nullptr", name); \
+        return; \
+    }
 
 namespace UnrealVR {
     template<class T>
@@ -39,23 +41,17 @@ namespace UnrealVR {
     }
 
     void UE4Service::AddHooks() {
-        RegisterInitGameStateEvent();
+        Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
         HookCalculateProjectionMatrix();
     }
 
-    void UE4Service::RegisterInitGameStateEvent() {
-        Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
-    }
-
     void UE4Service::InitGameStateCallback() {
-        if (!GameLoaded)
-            GameLoaded = true;
         playerController = nullptr;
         parentViewTarget = nullptr;
         childViewTarget = nullptr;
         cameraComponent = nullptr;
-        gameUserSettings = nullptr;
         lastRot = UE4::FRotator();
+        positionalOffset = UE4::FVector();
     }
 
     /** See CalculateProjectionMatrix.asm */
@@ -93,7 +89,7 @@ namespace UnrealVR {
         const float sumUD = tanU + tanD;
         const float invRL = 1.f / (tanR - tanL);
         const float invUD = 1.f / (tanU - tanD);
-        const auto m = reinterpret_cast<UE4::FMatrix*>(reinterpret_cast<intptr_t>(InOutProjectionData) + 0x50);
+        const auto m = reinterpret_cast<UE4::FMatrix*>(static_cast<uint8_t*>(InOutProjectionData) + 0x50);
         *m = {
             { 2.f * invRL, 0.f, 0.f, 0.f },
             { 0.f, 2.f * invUD, 0.f, 0.f },
@@ -109,14 +105,15 @@ namespace UnrealVR {
         auto getPlayerControllerParams = UE4::GetPlayerControllerParams();
         getPlayerControllerParams.WorldContextObject = UE4::UWorld::GetWorld();
         gameplayStatics->ProcessEvent(getPlayerControllerFunc, &getPlayerControllerParams);
-        ASSERT_ASSIGN(getPlayerControllerParams.Result, playerController)
+        ASSERT(getPlayerControllerParams.Result)
+        playerController = getPlayerControllerParams.Result;
 
         // Get old view target
         USING_UOBJECT(getViewTargetFunc, UE4::UFunction, "Function Engine.Controller.GetViewTarget")
         auto getViewTargetParams = UE4::GetViewTargetParams();
         playerController->ProcessEvent(getViewTargetFunc, &getViewTargetParams);
-        UE4::AActor* currentViewTarget;
-        ASSERT_ASSIGN(getViewTargetParams.ViewTarget, currentViewTarget)
+        ASSERT_LOG(getViewTargetParams.ViewTarget, "Current view target")
+        const auto currentViewTarget = getViewTargetParams.ViewTarget;
 
         if (childViewTarget == nullptr) {
             // Spawn new view target
@@ -130,13 +127,14 @@ namespace UnrealVR {
                 );
             } else {
                 const auto transform = UE4::FTransform();
-                const auto params = UE4::FActorSpawnParameters::FActorSpawnParameters();
+                const auto params = UE4::FActorSpawnParameters();
                 childViewTarget = UE4::UWorld::GetWorld()->SpawnActor(
                     cameraActorClass,
                     &transform,
                     &params
                 );
             }
+            ASSERT_LOG(childViewTarget, "Child view target")
 
             // Get camera component
             USING_UOBJECT(getComponentByClassFunc, UE4::UFunction, "Function Engine.Actor.GetComponentByClass")
@@ -144,12 +142,18 @@ namespace UnrealVR {
             USING_UOBJECT(cameraComponentClass, UE4::UClass, "Class Engine.CameraComponent")
             getComponentByClassParams.ComponentClass = cameraComponentClass;
             childViewTarget->ProcessEvent(getComponentByClassFunc, &getComponentByClassParams);
-            ASSERT_ASSIGN(getComponentByClassParams.Result, cameraComponent)
+            ASSERT_LOG(getComponentByClassParams.Result, "Camera component")
+            cameraComponent = getComponentByClassParams.Result;
         }
 
-        if (currentViewTarget != childViewTarget) {
+        if (currentViewTarget != childViewTarget && difftime(time(nullptr), viewTargetLastChanged) > 1.) {
             parentViewTarget = currentViewTarget;
             lastRot = UE4::FRotator();
+
+            // Get current view target's location
+            USING_UOBJECT(getActorEyesViewPointFunc, UE4::UFunction, "Function Engine.Actor.GetActorEyesViewPoint")
+            auto getActorEyesViewPointParams = UE4::GetActorEyesViewPointParams();
+            currentViewTarget->ProcessEvent(getActorEyesViewPointFunc, &getActorEyesViewPointParams);
 
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
@@ -157,11 +161,24 @@ namespace UnrealVR {
             attachParams.ParentActor = currentViewTarget;
             childViewTarget->ProcessEvent(attachToActorFunc, &attachParams);
 
+            // Get positional offset; this is often present due to center-of-camera vs. center-of-character
+            USING_UOBJECT(getActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_GetActorLocation")
+            auto getActorLocationParams = UE4::GetActorLocationParams();
+            childViewTarget->ProcessEvent(getActorLocationFunc, &getActorLocationParams);
+            positionalOffset = UE4::FVector(
+                getActorEyesViewPointParams.Location.X - getActorLocationParams.Result.X,
+                getActorEyesViewPointParams.Location.Y - getActorLocationParams.Result.Y,
+                getActorEyesViewPointParams.Location.Z - getActorLocationParams.Result.Z
+            );
+
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
             setViewTargetParams.NewViewTarget = childViewTarget;
             playerController->ProcessEvent(setViewTargetFunc, &setViewTargetParams);
+
+            // To prevent excessive flashing, only set the view target at most once per second
+            viewTargetLastChanged = time(nullptr);
         }
 
         if (cameraComponent != nullptr) {
@@ -176,6 +193,10 @@ namespace UnrealVR {
             auto setProjectionModeParams = UE4::SetProjectionModeParams();
             cameraComponent->ProcessEvent(setProjectionModeFunc, &setProjectionModeParams);
         }
+
+        if (!Resized) {
+            Resize(static_cast<int>(OpenXRService::EyeWidth), static_cast<int>(OpenXRService::EyeHeight));
+        }
     }
 
     void UE4Service::Resize(const int width, const int height) {
@@ -184,26 +205,46 @@ namespace UnrealVR {
         USING_UOBJECT(getGameUserSettingsFunc, UE4::UFunction, "Function Engine.GameUserSettings.GetGameUserSettings")
         auto getGameUserSettingsParams = UE4::GetGameUserSettingsParams();
         defaultGameUserSettings->ProcessEvent(getGameUserSettingsFunc, &getGameUserSettingsParams);
-        ASSERT_ASSIGN(getGameUserSettingsParams.Result, gameUserSettings)
+        ASSERT_LOG(getGameUserSettingsParams.Result, "Game user settings")
+        const auto gameUserSettings = getGameUserSettingsParams.Result;
+        bool anySettingChanged = false;
 
-        // Set the resolution, also finish initializing VR
-        USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetScreenResolution")
-        UE4::SetScreenResolutionParams setScreenResolutionParams;
-        setScreenResolutionParams.Resolution.X = width;
-        setScreenResolutionParams.Resolution.Y = height;
-        gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setScreenResolutionParams);
+        // Get resolution
+        USING_UOBJECT(getScreenResolutionFunc, UE4::UFunction, "Function Engine.GameUserSettings.GetScreenResolution")
+        auto getScreenResolutionParams = UE4::GetScreenResolutionParams();
+        gameUserSettings->ProcessEvent(getScreenResolutionFunc, &getScreenResolutionParams);
 
-        // Set to fullscreen mode for better performance
-        USING_UOBJECT(setFullscreenModeFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetFullscreenMode")
-        auto setFullscreenModeParams = UE4::SetFullscreenModeParams();
-        gameUserSettings->ProcessEvent(setFullscreenModeFunc, &setFullscreenModeParams);
+        if (width != getScreenResolutionParams.Result.X || height != getScreenResolutionParams.Result.Y) {
+            // Set the resolution
+            USING_UOBJECT(setScreenResolutionFunc, UE4::UFunction,
+                          "Function Engine.GameUserSettings.SetScreenResolution")
+            UE4::SetScreenResolutionParams setScreenResolutionParams;
+            setScreenResolutionParams.Resolution.X = width;
+            setScreenResolutionParams.Resolution.Y = height;
+            gameUserSettings->ProcessEvent(setScreenResolutionFunc, &setScreenResolutionParams);
+            anySettingChanged = true;
+        }
 
-        // Apply the resolution changes
-        // TODO: Does this need to be run every BeginPlaySingle?
-        USING_UOBJECT(applyResolutionSettingsFunc, UE4::UFunction,
-                      "Function Engine.GameUserSettings.ApplyResolutionSettings")
-        auto applyResolutionSettingsParams = UE4::ApplyResolutionSettingsParams();
-        gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyResolutionSettingsParams);
+        // Get fullscreen mode
+        USING_UOBJECT(getFullscreenModeFunc, UE4::UFunction, "Function Engine.GameUserSettings.GetFullscreenMode")
+        auto getFullscreenModeParams = UE4::GetFullscreenModeParams();
+        gameUserSettings->ProcessEvent(getFullscreenModeFunc, &getFullscreenModeParams);
+
+        if (getFullscreenModeParams.Result != UE4::EWindowMode::Fullscreen) {
+            // Set to fullscreen mode for better performance
+            USING_UOBJECT(setFullscreenModeFunc, UE4::UFunction, "Function Engine.GameUserSettings.SetFullscreenMode")
+            auto setFullscreenModeParams = UE4::SetFullscreenModeParams();
+            gameUserSettings->ProcessEvent(setFullscreenModeFunc, &setFullscreenModeParams);
+            anySettingChanged = true;
+        }
+
+        if (anySettingChanged) {
+            // Apply the resolution changes
+            USING_UOBJECT(applyResolutionSettingsFunc, UE4::UFunction,
+                          "Function Engine.GameUserSettings.ApplyResolutionSettings")
+            auto applyResolutionSettingsParams = UE4::ApplyResolutionSettingsParams();
+            gameUserSettings->ProcessEvent(applyResolutionSettingsFunc, &applyResolutionSettingsParams);
+        }
 
         Resized = true;
         Log::Info("[UnrealVR] Resized render resolution to %dx%d", width, height);
@@ -266,7 +307,11 @@ namespace UnrealVR {
         // Apply IPD by setting the child's relative location
         USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
-        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(0.f, eye == Eye::Left ? -3.15f : 3.15f, 0.f);
+        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(
+            positionalOffset.X,
+            positionalOffset.Y + (eye == Eye::Left ? -3.15f : 3.15f),
+            positionalOffset.Z
+        );
         childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
 
         /*

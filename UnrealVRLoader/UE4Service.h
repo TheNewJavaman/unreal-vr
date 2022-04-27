@@ -12,19 +12,15 @@ namespace UnrealVR {
 
     class UE4Service {
     public:
-        /** Implies that all the necessary game objects have been loaded */
-        static inline bool GameLoaded = false;
-
         /** Register events with UnrealModLoader */
         static void AddHooks();
 
         /** Set the view target to a custom camera actor meant for VR */
         static void SetViewTarget();
 
-        /** Set the render resolution to match the VR headset */
-        static void Resize(int width, int height);
+        /** Resize */
         static inline bool Resized = false;
-
+        
         /** Input VR pose (with corrected axes) and forward to Unreal Engine, with several adjustments */
         //static void UpdatePose(UE4::FVector loc, UE4::FQuat rot, UE4::FVector loc2);
         static void UpdatePose(UE4::FQuat rot, Eye eye);
@@ -37,7 +33,6 @@ namespace UnrealVR {
         static inline std::map<std::string, UE4::UObject*> uObjects;
 
         /** Called once per scene start */
-        static void RegisterInitGameStateEvent();
         static void InitGameStateCallback();
 
         /**
@@ -61,9 +56,11 @@ namespace UnrealVR {
         static inline UE4::AActor* parentViewTarget = nullptr;
         static inline UE4::AActor* childViewTarget = nullptr;
         static inline UE4::UObject* cameraComponent = nullptr;
+        static inline UE4::FVector positionalOffset = UE4::FVector();
+        static inline time_t viewTargetLastChanged = 0;
 
-        /** Resize */
-        static inline UE4::UObject* gameUserSettings = nullptr;
+        /** Set the render resolution to match the VR headset */
+        static void Resize(int width, int height);
 
         /** UpdatePose */
         static inline UE4::FVector lastLoc = UE4::FVector();
