@@ -16,17 +16,14 @@
         return false; \
     }
 
-namespace UnrealVR
-{
+namespace UnrealVR {
     class OpenXRService;
 
-    void D3D11Service::AddHooks()
-    {
+    void D3D11Service::AddHooks() {
         CreateThread(nullptr, 0, AddHooksThread, nullptr, 0, nullptr);
     }
 
-    DWORD __stdcall D3D11Service::AddHooksThread(LPVOID)
-    {
+    DWORD __stdcall D3D11Service::AddHooksThread(LPVOID) {
         const WNDCLASSEXA wc = {
             sizeof(WNDCLASSEX),
             CS_CLASSDC,
@@ -45,7 +42,7 @@ namespace UnrealVR
         const auto hWnd = CreateWindowA("DX", NULL, WS_OVERLAPPEDWINDOW,
                                         100, 100, 300, 300,
                                         NULL, NULL, wc.hInstance, NULL);
-        constexpr D3D_FEATURE_LEVEL requestedLevels[] = {D3D_FEATURE_LEVEL_11_0};
+        constexpr D3D_FEATURE_LEVEL requestedLevels[] = { D3D_FEATURE_LEVEL_11_0 };
         D3D_FEATURE_LEVEL obtainedLevel;
         DXGI_SWAP_CHAIN_DESC scd;
         ZeroMemory(&scd, sizeof(scd));
@@ -99,16 +96,15 @@ namespace UnrealVR
         IDXGISwapChain* pSwapChain,
         UINT SyncInterval,
         UINT Flags
-    )
-    {
-        if (!OpenXRService::VRLoaded)
-        {
+    ) {
+        if (!OpenXRService::VRLoaded) {
             ID3D11Device* device;
             pSwapChain->GetDevice(IID_PPV_ARGS(&device));
             DXGI_SWAP_CHAIN_DESC desc;
             pSwapChain->GetDesc(&desc);
-            if (!OpenXRService::FinishInit(device, desc.SampleDesc.Count))
+            if (!OpenXRService::FinishInit(device, desc.SampleDesc.Count)) {
                 return PresentOriginal(pSwapChain, SyncInterval, Flags);
+            }
             device->Release();
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
         }
@@ -125,13 +121,13 @@ namespace UnrealVR
         pSwapChain->GetBuffer(0, IID_PPV_ARGS(&texture));
         OpenXRService::SubmitFrame(texture);
         texture->Release();
-        if (OpenXRService::LastEyeShown == Eye::Left)
+        if (OpenXRService::LastEyeShown == Eye::Left) {
             return PresentOriginal(pSwapChain, SyncInterval, Flags);
+        }
         return S_OK;
     }
 
-    bool D3D11Service::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv)
-    {
+    bool D3D11Service::ConvertFrame(ID3D11Texture2D* source, ID3D11RenderTargetView* rtv) {
         HRESULT hr;
         ID3D11Device* device;
         rtv->GetDevice(&device);
@@ -139,8 +135,7 @@ namespace UnrealVR
         device->GetImmediateContext(&context);
 
         // Create shaders
-        if (!shadersCreated)
-        {
+        if (!shadersCreated) {
             hr = device->CreateVertexShader(
                 VertexShader,
                 ARRAYSIZE(VertexShader),
@@ -160,17 +155,16 @@ namespace UnrealVR
 
         // If the swapchain settings changed, invalidate previous shader resource view
         bool shouldCreateSRV = false;
-        if (srv == nullptr) shouldCreateSRV = true;
-        else
-        {
+        if (srv == nullptr) {
+            shouldCreateSRV = true;
+        } else {
             D3D11_TEXTURE2D_DESC sourceDesc;
             source->GetDesc(&sourceDesc);
             D3D11_TEXTURE2D_DESC copyDesc;
             copy->GetDesc(&copyDesc);
             if (copyDesc.Format != sourceDesc.Format
                 || copyDesc.Width != sourceDesc.Width
-                || copyDesc.Height != sourceDesc.Height)
-            {
+                || copyDesc.Height != sourceDesc.Height) {
                 shouldCreateSRV = true;
                 srv->Release();
                 copy->Release();
@@ -178,8 +172,7 @@ namespace UnrealVR
         }
 
         // Create a new shader resource view if necessary
-        if (shouldCreateSRV)
-        {
+        if (shouldCreateSRV) {
             D3D11_TEXTURE2D_DESC sourceDesc;
             source->GetDesc(&sourceDesc);
             sourceDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
@@ -211,11 +204,18 @@ namespace UnrealVR
         return true;
     }
 
-    void D3D11Service::Stop()
-    {
-        if (pixelShader != nullptr) pixelShader->Release();
-        if (vertexShader != nullptr) vertexShader->Release();
-        if (srv != nullptr) srv->Release();
-        if (copy != nullptr) copy->Release();
+    void D3D11Service::Stop() {
+        if (pixelShader != nullptr) {
+            pixelShader->Release();
+        }
+        if (vertexShader != nullptr) {
+            vertexShader->Release();
+        }
+        if (srv != nullptr) {
+            srv->Release();
+        }
+        if (copy != nullptr) {
+            copy->Release();
+        }
     }
 }

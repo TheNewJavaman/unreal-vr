@@ -1,4 +1,4 @@
-#include "UnrealVRLoader.h"
+﻿#include "UnrealVRLoader.h"
 
 #include <Utilities/Logger.h>
 
@@ -26,6 +26,7 @@ namespace UnrealVR
         while (!IsGameInfoLoaded())
             Sleep(100);
         UE4::InitSDK();
+        Sleep(15'000);
         if (!OpenXRService::BeginInit())
         {
             Log::Error("[UnrealVR] Failed to init VR");

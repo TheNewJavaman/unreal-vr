@@ -148,8 +148,9 @@ namespace UnrealVR {
         Log::Info("[UnrealVR] Per-eye resolution: %ux%u", EyeWidth, EyeHeight);
 
         // Create swapchains
-        if (!CreateSwapChains(sampleCount))
+        if (!CreateSwapChains(sampleCount)) {
             return false;
+        }
 
         // Begin OpenXR session
         XrSessionBeginInfo beginInfo = { XR_TYPE_SESSION_BEGIN_INFO };
@@ -307,20 +308,20 @@ namespace UnrealVR {
             xrRTVs.at(1).at(i)->Release();
         }
         for (uint32_t i = 0; i < xrViewCount; i++) {
-            if (xrSwapChains.at(i) != XR_NULL_HANDLE && xrDestroySwapchain(xrSwapChains.at(i))) {
+            if (xrSwapChains.at(i) != XR_NULL_HANDLE && xrDestroySwapchain(xrSwapChains.at(i)) != XR_SUCCESS) {
                 Log::Error("[UnrealVR] Failed to destroy OpenXR swapchain");
             }
         }
-        if (xrAppSpace != XR_NULL_HANDLE && xrDestroySpace(xrAppSpace) != XR_SUCCESS) {
+        if (xrAppSpace != nullptr && xrAppSpace != XR_NULL_HANDLE && xrDestroySpace(xrAppSpace) != XR_SUCCESS) {
             Log::Error("[UnrealVR] Failed to destroy OpenXR app space");
         }
-        if (xrSession != XR_NULL_HANDLE && xrDestroySession(xrSession) != XR_SUCCESS) {
+        if (xrSession != nullptr && xrSession != XR_NULL_HANDLE && xrDestroySession(xrSession) != XR_SUCCESS) {
             Log::Error("[UnrealVR] Failed to destroy OpenXR session");
         }
-        if (xrDebug != XR_NULL_HANDLE && xrExtDestroyDebugUtilsMessenger(xrDebug) != XR_SUCCESS) {
+        if (xrDebug != nullptr && xrDebug != XR_NULL_HANDLE && xrExtDestroyDebugUtilsMessenger(xrDebug) != XR_SUCCESS) {
             Log::Error("[UnrealVR] Failed to destroy OpenXR debug");
         }
-        if (xrInstance != XR_NULL_HANDLE && xrDestroyInstance(xrInstance) != XR_SUCCESS) {
+        if (xrInstance != nullptr && xrInstance != XR_NULL_HANDLE && xrDestroyInstance(xrInstance) != XR_SUCCESS) {
             Log::Error("[UnrealVR] Failed to destroy OpenXR instance");
         }
     }

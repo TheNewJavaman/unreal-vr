@@ -1,7 +1,7 @@
 ﻿#include "UE4Service.h"
 
 #include <PatternStreams.h>
-#include <Utilities/Globals.h> // TODO: Get Russell to use PatternStreams
+#include <Utilities/Globals.h>
 
 #include "HookHelper.h"
 #include "OpenXRService.h"
@@ -172,7 +172,7 @@ namespace UnrealVR {
             cameraComponent->ProcessEvent(setConstraintAspectRatioFunc, &setConstraintAspectRatioParams);
 
             // Set projection mode to perspective so that VR FOV works properly
-            USING_UOBJECT(setProjectionModeFunc, UE4::UFunction, "Function Engine.CameraComponent.SetProjectionMode");
+            USING_UOBJECT(setProjectionModeFunc, UE4::UFunction, "Function Engine.CameraComponent.SetProjectionMode")
             auto setProjectionModeParams = UE4::SetProjectionModeParams();
             cameraComponent->ProcessEvent(setProjectionModeFunc, &setProjectionModeParams);
         }
