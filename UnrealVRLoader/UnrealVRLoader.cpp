@@ -23,10 +23,11 @@ namespace UnrealVR
             Sleep(100);
             umlDLL = GetModuleHandle(L"UnrealEngineModLoader.dll");
         }
-        while (!IsGameInfoLoaded())
+        while (!IsGameInfoLoaded()) {
             Sleep(100);
+        }
         UE4::InitSDK();
-        Sleep(15'000);
+        Sleep(10'000);
         if (!OpenXRService::BeginInit())
         {
             Log::Error("[UnrealVR] Failed to init VR");

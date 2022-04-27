@@ -130,7 +130,7 @@ namespace UnrealVR {
         CHECK_XR(xr, "Could not create OpenXR session")
         XrReferenceSpaceCreateInfo spaceInfo = { XR_TYPE_REFERENCE_SPACE_CREATE_INFO };
         spaceInfo.poseInReferenceSpace = xrPoseIdentity;
-        spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_STAGE;
+        spaceInfo.referenceSpaceType = XR_REFERENCE_SPACE_TYPE_LOCAL;
         xr = xrCreateReferenceSpace(xrSession, &spaceInfo, &xrAppSpace);
         CHECK_XR(xr, "Could not create OpenXR reference space")
         Log::Info("[UnrealVR] Finished initializing OpenXR");
@@ -278,9 +278,9 @@ namespace UnrealVR {
         CHECK_XR(xr, "Could not release OpenXR swapchain image")
 
         // Set up Unreal Engine for the next frame
-        EyeFOV = xrViews.at(nextI).fov;
-        const auto [qx, qy, qz, qw] = xrViews.at(0).pose.orientation;
-        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, nextEye);
+        EyeFOV = xrViews.at(thisI).fov;
+        const auto [qx, qy, qz, qw] = xrViews.at(thisI).pose.orientation;
+        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, thisEye);
 
         // If this frame is for the right eye, end the OpenXR frame
         if (thisEye == Eye::Right) {

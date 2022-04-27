@@ -150,26 +150,36 @@ namespace UnrealVR {
             parentViewTarget = currentViewTarget;
             lastRot = UE4::FRotator();
 
-            // Get current view target's location
-            USING_UOBJECT(getActorEyesViewPointFunc, UE4::UFunction, "Function Engine.Actor.GetActorEyesViewPoint")
-            auto getActorEyesViewPointParams = UE4::GetActorEyesViewPointParams();
-            currentViewTarget->ProcessEvent(getActorEyesViewPointFunc, &getActorEyesViewPointParams);
+            // Get player camera manager
+            USING_UOBJECT(getPlayerCameraManagerFunc, UE4::UFunction,
+                          "Function Engine.GameplayStatics.GetPlayerCameraManager")
+            auto getPlayerCameraManagerParams = UE4::GetPlayerCameraManagerParams();
+            getPlayerCameraManagerParams.WorldContextObject = UE4::UWorld::GetWorld();
+            gameplayStatics->ProcessEvent(getPlayerCameraManagerFunc, &getPlayerCameraManagerParams);
+            ASSERT_LOG(getPlayerCameraManagerParams.Result, "Player camera manager")
+            const auto playerCameraManager = getPlayerCameraManagerParams.Result;
 
+            // Get current view target's location, including camera offsets
+            USING_UOBJECT(getCameraLocationFunc, UE4::UFunction,
+                          "Function Engine.PlayerCameraManager.GetCameraLocation")
+            auto getCameraLocationParams = UE4::GetCameraLocationParams();
+            playerCameraManager->ProcessEvent(getCameraLocationFunc, &getCameraLocationParams);
+
+            // Get positional offset; this is often present due to camera offsets
+            USING_UOBJECT(getActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_GetActorLocation")
+            auto getActorLocationParams = UE4::GetActorLocationParams();
+            childViewTarget->ProcessEvent(getActorLocationFunc, &getActorLocationParams);
+            positionalOffset = UE4::FVector(
+                getCameraLocationParams.Result.X - getActorLocationParams.Result.X,
+                getCameraLocationParams.Result.Y - getActorLocationParams.Result.Y,
+                getCameraLocationParams.Result.Z - getActorLocationParams.Result.Z
+            );
+            
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
             attachParams.ParentActor = currentViewTarget;
             childViewTarget->ProcessEvent(attachToActorFunc, &attachParams);
-
-            // Get positional offset; this is often present due to center-of-camera vs. center-of-character
-            USING_UOBJECT(getActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_GetActorLocation")
-            auto getActorLocationParams = UE4::GetActorLocationParams();
-            childViewTarget->ProcessEvent(getActorLocationFunc, &getActorLocationParams);
-            positionalOffset = UE4::FVector(
-                getActorEyesViewPointParams.Location.X - getActorLocationParams.Result.X,
-                getActorEyesViewPointParams.Location.Y - getActorLocationParams.Result.Y,
-                getActorEyesViewPointParams.Location.Z - getActorLocationParams.Result.Z
-            );
 
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
