@@ -170,6 +170,31 @@ namespace UE4 {
         ECameraProjectionMode::Type InProjectionMode = ECameraProjectionMode::Perspective;
     };
 
+    struct GetGameStateParams {
+        AGameState* GameState = nullptr;
+    };
+
+    struct HasBegunPlayParams {
+        bool Result = false;
+    };
+
+    struct GetActorEyesViewPointParams {
+        FVector Location = FVector();
+        FRotator Rotation = FRotator();
+    };
+
+    struct GetActorLocationParams {
+        FVector Result = FVector();
+    };
+
+    struct GetScreenResolutionParams {
+        FIntPoint Result = FIntPoint();
+    };
+
+    struct GetFullscreenModeParams {
+        EWindowMode::Type Result = EWindowMode::Windowed;
+    };
+
     FQuat RotatorToQuaternion(FRotator R);
 
     void VectorMatrixMultiply(void* Result, const void* Matrix1, const void* Matrix2);
