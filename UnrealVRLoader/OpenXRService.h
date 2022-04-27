@@ -9,17 +9,14 @@
 #include <openxr/openxr.h>
 #include <openxr/openxr_platform.h>
 
-namespace UnrealVR
-{
+namespace UnrealVR {
     /** UnrealVR currently uses alternate eye rendering (AER), so we must keep track of which eye was last rendered */
-    enum class Eye
-    {
+    enum class Eye {
         Left,
         Right
     };
 
-    class OpenXRService
-    {
+    class OpenXRService {
     public:
         /** Begin initializing OpenXR: starts the runtime, loads extensions */
         static bool BeginInit();
@@ -29,7 +26,7 @@ namespace UnrealVR
         static inline bool VRLoaded = false;
         static inline uint32_t EyeWidth = 1;
         static inline uint32_t EyeHeight = 1;
-        static inline XrFovf EyeFOV = {1.f, 1.f, 1.f, 1.f};
+        static inline XrFovf EyeFOV = { -1.f, 1.f, 1.f, -1.f };
 
         /** Copy a frame and present it to the headset */
         static bool SubmitFrame(ID3D11Texture2D* texture);
@@ -63,16 +60,16 @@ namespace UnrealVR
         static inline XrEnvironmentBlendMode xrBlend = {};
 
         /** FinishInit */
-        static inline XrGraphicsBindingD3D11KHR graphicsBinding = {XR_TYPE_GRAPHICS_BINDING_D3D11_KHR};
+        static inline XrGraphicsBindingD3D11KHR graphicsBinding = { XR_TYPE_GRAPHICS_BINDING_D3D11_KHR };
         static inline XrSession xrSession = {};
         static inline XrSpace xrAppSpace = {};
         static inline uint32_t xrViewCount = 0;
         static inline std::vector<XrViewConfigurationView> xrConfigViews;
-                
+
         /** Create a VR swapchain with the same format and sample count as Unreal Engine's swapchain */
         static bool CreateSwapChains(uint32_t sampleCount);
         static inline DXGI_FORMAT xrFormat = DXGI_FORMAT_UNKNOWN;
-        static inline constexpr XrPosef xrPoseIdentity = {{0, 0, 0, 1}, {0, 0, 0}};
+        static inline constexpr XrPosef xrPoseIdentity = { { 0, 0, 0, 1 }, { 0, 0, 0 } };
         static inline std::vector<XrView> xrViews;
         static inline std::vector<XrSwapchain> xrSwapChains;
         static inline std::map<uint32_t, std::vector<ID3D11RenderTargetView*>> xrRTVs;

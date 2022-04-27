@@ -46,10 +46,17 @@ namespace UnrealVR {
          *
          * Called when evaluating the projection matrix that is sent to the GPU; this is where we use OpenXR's FOV
          */
-        static PS::ByteBuffer Int32ToByteBuffer(int32_t i);
         static void HookCalculateProjectionMatrix();
-        static void CalculateProjectionMatrixDetour(UE4::FMatrix* m);
-        
+        typedef void (__cdecl CalculateProjectionMatrixGivenViewFunc)(
+            void* ViewInfo,
+            UE4::TEnumAsByte<UE4::EAspectRatioAxisConstraint> AspectRatioAxisConstraint,
+            void* Viewport,
+            void* InOutProjectionData
+        );
+        static CalculateProjectionMatrixGivenViewFunc CalculateProjectionMatrixGivenViewDetour;
+        static inline CalculateProjectionMatrixGivenViewFunc* CalculateProjectionMatrixGivenViewTarget = nullptr;
+        static inline CalculateProjectionMatrixGivenViewFunc* CalculateProjectionMatrixGivenViewOriginal = nullptr;
+
         /** SetViewTarget */
         static inline UE4::APlayerController* playerController = nullptr;
         static inline UE4::AActor* parentViewTarget = nullptr;

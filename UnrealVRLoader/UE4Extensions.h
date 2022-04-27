@@ -4,22 +4,18 @@
 
 // TODO: Write full structs/classes for undefined types instead of using generic UObjects
 // TODO: Sort these structs
-namespace UE4
-{
-    struct GetViewTargetParams
-    {
+namespace UE4 {
+    struct GetViewTargetParams {
         AActor* ViewTarget = nullptr;
     };
 
-    enum class EAttachmentRule : UINT8
-    {
+    enum class EAttachmentRule : UINT8 {
         KeepRelative,
         KeepWorld,
         SnapToTarget
     };
 
-    struct AttachToActorParams
-    {
+    struct AttachToActorParams {
         AActor* ParentActor = nullptr;
         FName SocketName = 0; // NAME_None
         EAttachmentRule LocationRule = EAttachmentRule::SnapToTarget;
@@ -28,8 +24,7 @@ namespace UE4
         bool bWeldSimulatedBodies = true;
     };
 
-    enum EViewTargetBlendFunction
-    {
+    enum EViewTargetBlendFunction {
         VTBlend_Linear,
         VTBlend_Cubic,
         VTBlend_EaseIn,
@@ -38,8 +33,7 @@ namespace UE4
         VTBlend_MAX,
     };
 
-    struct SetViewTargetWithBlendParams
-    {
+    struct SetViewTargetWithBlendParams {
         AActor* NewViewTarget = nullptr;
         float BlendTime = 0.0f;
         EViewTargetBlendFunction BlendFunc = VTBlend_Linear;
@@ -47,138 +41,133 @@ namespace UE4
         bool bLockOutgoing = false;
     };
 
-    struct SetActorRelativeLocationParams
-    {
+    struct SetActorRelativeLocationParams {
         FVector RelativeLocation = FVector();
         bool bSweep = false;
         void* SweepHitResult = nullptr;
         bool bTeleport = true;
     };
 
-    struct SetActorRotationParams
-    {
+    struct SetActorRotationParams {
         FRotator NewRotation = FRotator();
         bool bTeleportPhysics = true;
     };
 
-    struct GetGameUserSettingsParams
-    {
+    struct GetGameUserSettingsParams {
         UObject* Result = nullptr;
     };
 
-    struct SetScreenResolutionParams
-    {
+    struct SetScreenResolutionParams {
         FIntPoint Resolution = FIntPoint();
     };
 
-    struct ApplyResolutionSettingsParams
-    {
+    struct ApplyResolutionSettingsParams {
         bool bCheckForCommandLineOverrides = false;
     };
 
-    struct AddActorWorldOffsetParams
-    {
+    struct AddActorWorldOffsetParams {
         FVector DeltaLocation = FVector();
         bool bSweep = false;
         void* SweepHitResult = nullptr;
         bool bTeleport = true;
     };
 
-    struct GetComponentByClassParams
-    {
+    struct GetComponentByClassParams {
         TSubclassOf<UObject> ComponentClass = TSubclassOf<UObject>(UObject::StaticClass());
         UObject* Result = nullptr;
     };
 
-    struct SetFieldOfViewParams
-    {
+    struct SetFieldOfViewParams {
         float InFieldOfView = 90.0f;
     };
 
-    struct SetConstraintAspectRatioParams
-    {
+    struct SetConstraintAspectRatioParams {
         bool bInConstrainAspectRatio = false;
     };
 
-    namespace EWindowMode
-    {
-        enum Type
-        {
+    namespace EWindowMode {
+        enum Type {
             Fullscreen,
             WindowedFullscreen,
             Windowed,
         };
     }
 
-    struct SetFullscreenModeParams
-    {
+    struct SetFullscreenModeParams {
         EWindowMode::Type InFullscreenMode = EWindowMode::Fullscreen;
     };
 
-    struct QuatRotatorParams
-    {
+    struct QuatRotatorParams {
         FQuat Q = FQuat();
         FRotator Result = FRotator();
     };
 
-    struct GetRootComponentParams
-    {
+    struct GetRootComponentParams {
         UObject* Result = nullptr;
     };
 
-    struct SetAbsoluteParams
-    {
+    struct SetAbsoluteParams {
         bool bNewAbsoluteLocation = false;
         bool bNewAbsoluteRotation = false;
         bool bNewAbsoluteScale = false;
     };
 
-    struct GetControlRotationParams
-    {
+    struct GetControlRotationParams {
         FRotator Result = FRotator();
     };
 
-    struct GetPlayerCameraManagerParams
-    {
+    struct GetPlayerCameraManagerParams {
         UObject* WorldContextObject = nullptr;
         int PlayerIndex = 0;
         UObject* Result = nullptr;
     };
 
-    struct GetCameraLocationParams
-    {
+    struct GetCameraLocationParams {
         FVector Result = FVector();
     };
 
-    struct GetPlayerControllerParams
-    {
+    struct GetPlayerControllerParams {
         UObject* WorldContextObject = nullptr;
         int PlayerIndex = 0;
         APlayerController* Result = nullptr;
     };
 
-    struct SetControlRotationParams
-    {
+    struct SetControlRotationParams {
         FRotator NewRotation = FRotator();
     };
 
-    struct ComposeRotatorsParams
-    {
+    struct ComposeRotatorsParams {
         FRotator A = FRotator();
         FRotator B = FRotator();
         FRotator Result = FRotator();
     };
 
-    struct QuatRotateVectorParams
-    {
+    struct QuatRotateVectorParams {
         FQuat Q = FQuat();
         FVector V = FVector();
     };
 
-    struct QuatUnrotateVectorParams
-    {
+    struct QuatUnrotateVectorParams {
         FQuat Q = FQuat();
         FVector V = FVector();
+    };
+
+    enum EAspectRatioAxisConstraint {
+        AspectRatio_MaintainYFOV,
+        AspectRatio_MaintainXFOV,
+        AspectRatio_MajorAxisFOV,
+        AspectRatio_MAX,
+    };
+
+    namespace ECameraProjectionMode {
+        enum Type {
+            Perspective,
+            Orthographic
+        };
+    }
+
+    struct SetProjectionModeParams {
+        ECameraProjectionMode::Type InProjectionMode = ECameraProjectionMode::Perspective;
     };
 
     FQuat RotatorToQuaternion(FRotator R);

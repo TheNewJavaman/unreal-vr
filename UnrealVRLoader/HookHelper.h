@@ -21,15 +21,15 @@ namespace UnrealVR
                               reinterpret_cast<LPVOID>(pDetour),
                               reinterpret_cast<LPVOID*>(ppOriginal)) != MH_OK)
             {
-                Log::Error("[UnrealVR] Failed to create hook %s", displayName);
+                Log::Error("[UnrealVR] Failed to create hook %s", displayName.c_str());
                 return false;
             }
             if (MH_EnableHook(reinterpret_cast<LPVOID>(reinterpret_cast<DWORD64>(pTarget))) != MH_OK)
             {
-                Log::Error("[UnrealVR] Failed to enable hook %s", displayName);
+                Log::Error("[UnrealVR] Failed to enable hook %s", displayName.c_str());
                 return false;
             }
-            Log::Info("[UnrealVR] Added hook %s", displayName);
+            Log::Info("[UnrealVR] Added hook %s", displayName.c_str());
             return true;
         }
 
