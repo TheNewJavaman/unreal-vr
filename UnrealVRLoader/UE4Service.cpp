@@ -150,6 +150,7 @@ namespace UnrealVR {
             parentViewTarget = currentViewTarget;
             lastRot = UE4::FRotator();
 
+            /*
             // Get player camera manager
             USING_UOBJECT(getPlayerCameraManagerFunc, UE4::UFunction,
                           "Function Engine.GameplayStatics.GetPlayerCameraManager")
@@ -174,6 +175,7 @@ namespace UnrealVR {
                 getCameraLocationParams.Result.Y - getActorLocationParams.Result.Y,
                 getCameraLocationParams.Result.Z - getActorLocationParams.Result.Z
             );
+            */
             
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
