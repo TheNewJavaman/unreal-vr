@@ -1,29 +1,29 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.Win32.SafeHandles;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using Windows.ApplicationModel;
 using Windows.Globalization.NumberFormatting;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using WinRT;
-using Windows.Win32;
-using Windows.Win32.System.Diagnostics.ToolHelp;
-using Windows.Win32.System.Threading;
-using Windows.Win32.System.Memory;
-using Microsoft.Win32.SafeHandles;
-using System.Windows.Input;
 using Windows.System;
+using Windows.Win32;
 using Windows.Win32.Foundation;
-using Microsoft.UI.Xaml.Documents;
-using System.IO;
+using Windows.Win32.System.Diagnostics.ToolHelp;
+using Windows.Win32.System.Memory;
+using Windows.Win32.System.Threading;
+using WinRT;
 
 namespace UnrealVR
 {
@@ -259,7 +259,9 @@ namespace UnrealVR
         private void Stop_Click(object sender, RoutedEventArgs e)
         {
             if (!proc.IsInvalid)
+            {
                 PInvoke.TerminateProcess(proc, 0); // SUCCESS = 0
+            }
             ResetProcess();
         }
 

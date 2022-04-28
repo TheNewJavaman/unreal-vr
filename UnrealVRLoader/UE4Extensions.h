@@ -143,13 +143,16 @@ namespace UE4 {
     };
 
     struct QuatRotateVectorParams {
-        FQuat Q = FQuat();
-        FVector V = FVector();
+        QuatRotateVectorParams(FQuat& q, FVector& v) : Q(q), V(v) {}
+        
+        FQuat& Q;
+        FVector& V;
     };
 
     struct QuatUnrotateVectorParams {
         FQuat Q = FQuat();
         FVector V = FVector();
+        FVector Result = FVector();
     };
 
     enum EAspectRatioAxisConstraint {

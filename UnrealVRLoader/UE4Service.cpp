@@ -51,7 +51,7 @@ namespace UnrealVR {
         childViewTarget = nullptr;
         cameraComponent = nullptr;
         lastRot = UE4::FRotator();
-        positionalOffset = UE4::FVector();
+        lastLoc = UE4::FVector();
     }
 
     /** See CalculateProjectionMatrix.asm */
@@ -149,6 +149,7 @@ namespace UnrealVR {
         if (currentViewTarget != childViewTarget && difftime(time(nullptr), viewTargetLastChanged) > 1.) {
             parentViewTarget = currentViewTarget;
             lastRot = UE4::FRotator();
+            lastLoc = UE4::FVector();
 
             /*
             // Get player camera manager
@@ -176,7 +177,7 @@ namespace UnrealVR {
                 getCameraLocationParams.Result.Z - getActorLocationParams.Result.Z
             );
             */
-            
+
             // Attach new view target to old (follows positioning, rotation, scale)
             USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
             auto attachParams = UE4::AttachToActorParams();
@@ -262,8 +263,7 @@ namespace UnrealVR {
         Log::Info("[UnrealVR] Resized render resolution to %dx%d", width, height);
     }
 
-    //void UE4Manager::UpdatePose(const UE4::FVector loc, const UE4::FQuat rot, const UE4::FVector loc2)
-    void UE4Service::UpdatePose(const UE4::FQuat rot, const Eye eye) {
+    void UE4Service::UpdatePose(const UE4::FQuat rot, const UE4::FVector loc, const Eye eye) {
         if (playerController == nullptr || childViewTarget == nullptr) {
             return;
         }
@@ -297,58 +297,22 @@ namespace UnrealVR {
         setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
         childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
 
-        /*
-        // Unrotate IPD
+        // Unrotate location 
         USING_UOBJECT(quatUnrotateVectorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_UnrotateVector")
-        UE4::QuatRotateVectorParams quatUnrotateVectorParams;
-        quatUnrotateVectorParams.Q = RotatorToQuaternion(
-            UE4::FRotator(
-                -quatRotatorParams.Result.Pitch,
-                -quatRotatorParams.Result.Yaw,
-                -quatRotatorParams.Result.Roll
-            )
-        );
-        quatUnrotateVectorParams.V = UE4::FVector(
-            (loc.X - loc2.X) * CmUnitsScale / 2.f,
-            (loc.Y - loc2.Y) * CmUnitsScale / 2.f,
-            (loc.Z - loc2.Z) * CmUnitsScale / 2.f
-        );
+        auto quatUnrotateVectorParams = UE4::QuatUnrotateVectorParams();
+        quatUnrotateVectorParams.Q = rot;
+        quatUnrotateVectorParams.V = loc;
         mathLibrary->ProcessEvent(quatUnrotateVectorFunc, &quatUnrotateVectorParams);
-        */
 
-        // Apply IPD by setting the child's relative location
+        // Apply IPD and positional tracking
         USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
         auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
         setActorRelativeLocationParams.RelativeLocation = UE4::FVector(
-            positionalOffset.X,
-            positionalOffset.Y + (eye == Eye::Left ? -3.15f : 3.15f),
-            positionalOffset.Z
+            (quatUnrotateVectorParams.Result.X - lastLoc.X) * 100.f * CmUnitsScale,
+            (quatUnrotateVectorParams.Result.Y - lastLoc.Y) * 100.f * CmUnitsScale,
+            (quatUnrotateVectorParams.Result.Z - lastLoc.Z) * 100.f * CmUnitsScale
         );
+        lastLoc = quatUnrotateVectorParams.Result;
         childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
-
-        /*
-        // Convert the yaw control rotation to a quat
-        constexpr float C = PI / 180.f / 2.f;
-        const float YawNoWinding = std::remainderf(setControlRotationParams.NewRotation.Yaw, 360.0f);
-        const auto RotationQuat = UE4::FQuat(0.f, 0.f, sin(C * YawNoWinding), cos(C * YawNoWinding));
-
-        // Rotate loc according to the yaw rotation of the view target
-        USING_UOBJECT(quatRotateVectorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_RotateVector")
-        UE4::QuatRotateVectorParams quatRotateVectorParams;
-        quatRotateVectorParams.Q = RotationQuat;
-        quatRotateVectorParams.V = eyeCenterLoc;
-        //mathLibrary->ProcessEvent(quatRotateVectorFunc, &quatRotateVectorParams);
-
-        // Add eye center delta loc to parent
-        USING_UOBJECT(addActorWorldOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorWorldOffset")
-        auto addActorWorldOffsetParams = UE4::AddActorWorldOffsetParams();
-        addActorWorldOffsetParams.DeltaLocation = UE4::FVector(
-            (quatRotateVectorParams.V.X - lastLoc.X) * CmUnitsScale,
-            (quatRotateVectorParams.V.Y - lastLoc.Y) * CmUnitsScale,
-            (quatRotateVectorParams.V.Z - lastLoc.Z) * CmUnitsScale
-        );
-        //parentViewTarget->ProcessEvent(addActorWorldOffsetFunc, &addActorWorldOffsetParams);
-        lastLoc = quatRotateVectorParams.V;
-        */
     }
 }

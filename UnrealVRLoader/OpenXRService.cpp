@@ -280,7 +280,8 @@ namespace UnrealVR {
         // Set up Unreal Engine for the next frame
         EyeFOV = xrViews.at(thisI).fov;
         const auto [qx, qy, qz, qw] = xrViews.at(thisI).pose.orientation;
-        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, thisEye);
+        const auto [lx, ly, lz] = xrViews.at(thisI).pose.position;
+        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, {-lz, lx, ly}, thisEye);
 
         // If this frame is for the right eye, end the OpenXR frame
         if (thisEye == Eye::Right) {
