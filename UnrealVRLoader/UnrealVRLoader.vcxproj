@@ -169,7 +169,9 @@
     <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Basic.cpp" />
     <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\CoreUObject_functions.cpp" />
     <ClCompile Include="UnrealVrLoader.cpp" />
-    <ClInclude Include="UEService.h" />
+    <ClCompile Include="UnrealVrService.cpp" />
+    <ClInclude Include="OpenXrService.h" />
+    <ClInclude Include="UnrealEngineService.h" />
     <ClInclude Include="UnrealVrLoader.h" />
     <FxCompile Include="old\PixelShader.hlsl">
       <ObjectFileOutput>
@@ -214,7 +216,6 @@
     <ClInclude Include="old\UE4Extensions.h" />
     <ClInclude Include="old\UE4Service.h" />
     <ClInclude Include="old\UnrealVRLoader.h" />
-    <ClCompile Include="D3D11GraphicsService.cpp" />
     <ClCompile Include="DependencyInjection.cpp">
       <AssemblerOutput>NoListing</AssemblerOutput>
       <AssemblerListingLocation>x64\Release\</AssemblerListingLocation>
