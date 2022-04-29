@@ -1,9 +1,17 @@
 #pragma once
 
-#include "IEngineService.h"
+#include "AEngineService.h"
+#include "Logging.h"
+#include "PipeService.h"
 
 namespace UnrealVr {
-    class UnrealEngineService final : public IEngineService {
+    class UnrealEngineService : public IEngineService {
+    public:
+        void RegisterInjections() override;
+        ErrorCode Init() override;
         
+    private:
+        LOGGER(UnrealEngineService)
+        PipeService* pipeService = nullptr;
     };
 }

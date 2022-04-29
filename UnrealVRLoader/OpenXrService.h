@@ -1,9 +1,7 @@
 #pragma once
 
-#include "IXrService.h"
+#include "AXrService.h"
 
 namespace UnrealVr {
-    class OpenXrService final : public IXrService {
-        
-    };
+    class OpenXrService : public IXrService {};
 }

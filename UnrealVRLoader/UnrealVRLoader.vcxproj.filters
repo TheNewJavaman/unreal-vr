@@ -20,9 +20,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>DLL</Filter>
-    </ClCompile>
     <ClCompile Include="UnrealVRLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -32,25 +29,34 @@
     <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\CoreUObject_functions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UE4Extensions.cpp">
+    <ClCompile Include="UnrealVrService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="HookHelper.cpp">
+    <ClCompile Include="DependencyInjection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PipeClientService.cpp">
+    <ClCompile Include="old\D3D11Service.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="UE4Service.cpp">
+    <ClCompile Include="old\dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="D3D11Service.cpp">
+    <ClCompile Include="old\HookHelper.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="OpenXRService.cpp">
+    <ClCompile Include="old\OpenXRService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Private\ErrorHandling.cpp">
+    <ClCompile Include="old\PipeClientService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="old\UE4Extensions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="old\UE4Service.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="old\UnrealVRLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -61,54 +67,68 @@
     <ClInclude Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Ue4.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="UE4Extensions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PipeClientService.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HookHelper.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="UE4Service.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="D3D11Service.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="OpenXRService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\DependencyInjection.h">
+    <ClInclude Include="UnrealEngineService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\ErrorHandling.h">
+    <ClInclude Include="DependencyInjection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\IEngineService.h">
+    <ClInclude Include="ErrorHandling.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\IGraphicsService.h">
+    <ClInclude Include="IEngineService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Public\IXrService.h">
+    <ClInclude Include="IGraphicsService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IXrService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\D3D11Service.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\HookHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\OpenXRService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\PipeClientService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\UE4Extensions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\UE4Service.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="old\UnrealVRLoader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UnrealVrService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config">
-      <Filter>Nuget</Filter>
-    </None>
     <None Include="$(OpenXRLoaderBinaryRoot)\bin\openxr_loader.dll">
       <Filter>Nuget</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="PixelShader.hlsl">
-      <Filter>Shader Files</Filter>
-    </FxCompile>
-    <FxCompile Include="VertexShader.hlsl">
-      <Filter>Shader Files</Filter>
-    </FxCompile>
+    <FxCompile Include="old\PixelShader.hlsl" />
+    <FxCompile Include="old\VertexShader.hlsl" />
   </ItemGroup>
 </Project>
