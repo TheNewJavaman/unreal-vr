@@ -32,6 +32,9 @@ namespace UnrealVR {
         static bool SubmitFrame(ID3D11Texture2D* texture);
         static inline Eye LastEyeShown = Eye::Right;
 
+        static void SwitchEyes();
+        static inline Eye LastEyeRendered = Eye::Right;
+        
         /** Releases OpenXR resources */
         static void Stop();
 

@@ -51,6 +51,16 @@ namespace UnrealVR {
         static inline CalculateProjectionMatrixGivenViewFunc* CalculateProjectionMatrixGivenViewTarget = nullptr;
         static inline CalculateProjectionMatrixGivenViewFunc* CalculateProjectionMatrixGivenViewOriginal = nullptr;
 
+        static void HookTick();
+        typedef void (__cdecl TickFunc)(
+            void* pUWorld,
+            int32_t TickType,
+            float DeltaSeconds
+        );
+        static TickFunc TickDetour;
+        static inline TickFunc* TickTarget = nullptr;
+        static inline TickFunc* TickOriginal = nullptr;
+        
         /** SetViewTarget */
         static inline UE4::APlayerController* playerController = nullptr;
         static inline UE4::AActor* parentViewTarget = nullptr;

@@ -230,9 +230,7 @@ namespace UnrealVR {
     bool OpenXRService::SubmitFrame(ID3D11Texture2D* texture) {
         XrResult xr;
         const Eye thisEye = LastEyeShown == Eye::Left ? Eye::Right : Eye::Left;
-        const Eye nextEye = LastEyeShown;
         const int thisI = static_cast<int>(thisEye);
-        const int nextI = static_cast<int>(nextEye);
 
         // If this frame is for the left eye, begin the OpenXR frame
         if (thisEye == Eye::Left) {
@@ -277,12 +275,6 @@ namespace UnrealVR {
         xr = xrReleaseSwapchainImage(xrSwapChains.at(thisI), &releaseInfo);
         CHECK_XR(xr, "Could not release OpenXR swapchain image")
 
-        // Set up Unreal Engine for the next frame
-        EyeFOV = xrViews.at(thisI).fov;
-        const auto [qx, qy, qz, qw] = xrViews.at(thisI).pose.orientation;
-        const auto [lx, ly, lz] = xrViews.at(thisI).pose.position;
-        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, {-lz, lx, ly}, thisEye);
-
         // If this frame is for the right eye, end the OpenXR frame
         if (thisEye == Eye::Right) {
             XrCompositionLayerProjection xrLayerProj = { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
@@ -301,6 +293,19 @@ namespace UnrealVR {
 
         LastEyeShown = thisEye;
         return true;
+    }
+
+    void OpenXRService::SwitchEyes() {
+        const Eye thisEye = LastEyeRendered == Eye::Left ? Eye::Right : Eye::Left;
+        const int thisI = static_cast<int>(thisEye);
+        
+        // Set up Unreal Engine for the next frame
+        EyeFOV = xrViews.at(thisI).fov;
+        const auto [qx, qy, qz, qw] = xrViews.at(thisI).pose.orientation;
+        const auto [lx, ly, lz] = xrViews.at(thisI).pose.position;
+        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, { -lz, lx, ly }, thisEye);
+
+        LastEyeRendered = thisEye;
     }
 
     void OpenXRService::Stop() {

@@ -43,6 +43,7 @@ namespace UnrealVR {
     void UE4Service::AddHooks() {
         Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
         HookCalculateProjectionMatrix();
+        HookTick();
     }
 
     void UE4Service::InitGameStateCallback() {
@@ -96,6 +97,29 @@ namespace UnrealVR {
             { sumRL * -invRL, sumUD * -invUD, 0.f, 1.f },
             { 0.f, 0.f, zNear, 0.f }
         };
+    }
+
+    void UE4Service::HookTick() {
+        const auto match = PS::PatternStream { 0x48, 0x8B, 0xC4, 0x55, 0x53, 0x56, 0x57, 0x51, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57 }
+            | PS::PatternInRange({ 0x48, 0x8D, 0xA8, 0x38, 0xFE, 0xFF, 0xFF }, { 0, 80 }, false)
+            | PS::PatternInRange({ 0x48, 0x81, 0xEC, 0x88, 0x02, 0x00, 0x00 }, { 0, 80 }, false)
+            | PS::ForEach([](PS::BytePtr& i) {
+                Log::Info("[UnrealVR] Found Tick at 0x%p", i);
+            })
+            | PS::FirstOrNullptr();
+        TickTarget = reinterpret_cast<TickFunc*>(match);
+        HookHelper::Add<TickFunc>(
+            TickTarget,
+            &TickDetour,
+            &TickOriginal,
+            "Tick"
+        );
+        Log::Info("[UnrealVR] Hooked Tick at 0x%p", match);
+    }
+
+    void UE4Service::TickDetour(void* pUWorld, int32_t TickType, float DeltaSeconds) {
+        OpenXRService::SwitchEyes();
+        TickOriginal(pUWorld, TickType, DeltaSeconds);
     }
 
     void UE4Service::SetViewTarget() {
