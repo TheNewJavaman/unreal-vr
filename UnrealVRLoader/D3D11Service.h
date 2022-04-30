@@ -3,5 +3,11 @@
 #include "AGraphicsService.h"
 
 namespace UnrealVr {
-    class D3D11Service : public IGraphicsService {};
+    struct D3D11PresentParams : APresentParams {};
+
+    class D3D11Service : public AGraphicsService {
+    public:
+        ErrorCode Init() override;
+        ErrorCode Stop() override;
+    };
 }

@@ -1,47 +1,46 @@
 #pragma once
 
 #include <map>
-#include <ranges>
+#include <memory>
 #include <string>
 #include <vector>
 
 #include "AService.h"
 
-#define SERVICE(T)               \
-    {                            \
-        auto t = new T();        \
-        RegisterService(#T, t);  \
-        t->RegisterInjections(); \
+#define REGISTER_SERVICE(T)                                      \
+    {                                                   \
+        auto t = std::make_shared<T>();                 \
+        RegisterService(#T, t);                         \
+        for (const auto& [ptr, name] : t->injections) { \
+            RegisterInjection(name, ptr);               \
+        }                                               \
     }
-#define INJECTION(T, t) RegisterInjection(#T, &(t));
-#define INJECT(T) InjectService<T>(#T);
+#define SERVICE(T, t) std::shared_ptr<T> (t) = nullptr;
+#define INJECTION(T, ptr) { std::shared_ptr(&(ptr)), #T }
+#define INJECT(T) InjectService(#T);
+#define INJECT_AS(T, S) InjectServiceAs(#T, #S);
 #define GET_SERVICE(T) GetService<T>(#T)
 
 namespace UnrealVr {
-    static inline std::map<std::string, AService*> services;
-    static inline std::map<std::string, std::vector<AService**>> injections;
+    static inline std::map<std::string, std::shared_ptr<AService>> services;
+    static inline std::map<std::string, std::vector<std::shared_ptr<std::shared_ptr<AService>>>> injections;
 
     template<typename T>
-    void RegisterService(const std::string& name, T* service) {
+    void RegisterService(const std::string& name, std::shared_ptr<T> service) {
         services.insert({ name, service });
     }
 
-    void DeleteServices();
-
     template<typename T>
-    T* GetService(const std::string& name) {
-        return reinterpret_cast<T*>(services[name]);
+    std::shared_ptr<T> GetService(const std::string& name) {
+        return std::reinterpret_pointer_cast<T>(services[name]);
     }
 
     template<typename T>
-    void RegisterInjection(const std::string& name, T** injection) {
-        injections[name].push_back(injection);
+    void RegisterInjection(const std::string& name, std::shared_ptr<std::shared_ptr<T>> injection) {
+        injections[name].push_back(std::shared_ptr(std::reinterpret_pointer_cast<AService>(injection.get())));
     }
 
-    template<typename T>
-    void InjectService(const std::string& name) {
-        for (AService** injection : injections[name]) {
-            *injection = reinterpret_cast<T*>(injection);
-        }
-    }
+    void InjectServiceAs(const std::string& name, const std::string& as);
+
+    void InjectService(const std::string& name);
 }

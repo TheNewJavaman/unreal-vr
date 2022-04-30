@@ -1,11 +1,27 @@
 #pragma once
 
+#include <memory>
+
 #include "AService.h"
-#include "ErrorHandling.h"
+#include "DependencyInjection.h"
+#include "UnrealVrService.h"
 
 namespace UnrealVr {
-    class IGraphicsService : public AService {
+    enum class GraphicsApi : uint8_t {
+        D3D11 = 0
+    };
+
+    struct APresentParams {
+        GraphicsApi graphicsApi;
+    };
+
+    class AGraphicsService : public AService, public AInitable, public AStoppable {
     public:
-        virtual ErrorCode Stop() { return ErrorCode::SUCCESS; }
+        InjectionMap GetInjections() override;
+        ErrorCode Init() override;
+        ErrorCode Stop() override;
+
+    protected:
+        SERVICE(UnrealVrService, unrealVrService)
     };
 }

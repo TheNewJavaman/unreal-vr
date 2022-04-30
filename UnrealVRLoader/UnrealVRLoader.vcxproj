@@ -94,16 +94,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="AGraphicsService.cpp" />
+    <ClCompile Include="D3D11Service.cpp" />
+    <ClCompile Include="DependencyInjection.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Logging.cpp" />
+    <ClCompile Include="PipeService.cpp" />
     <ClCompile Include="UnrealEngineService.cpp" />
     <ClCompile Include="UnrealVrLoader.cpp" />
-    <ClInclude Include="APipeService.h" />
+    <ClCompile Include="UnrealVrService.cpp" />
     <ClInclude Include="OpenXrService.h" />
-    <ClInclude Include="PipeClientService.h" />
-    <ClInclude Include="PipeServerService.h" />
+    <ClInclude Include="PipeService.h" />
     <ClInclude Include="UnrealEngineService.h" />
     <ClInclude Include="UnrealVrLoader.h" />
+    <ClInclude Include="UnrealVrService.h" />
     <FxCompile Include="old\PixelShader.hlsl">
       <ObjectFileOutput>
       </ObjectFileOutput>

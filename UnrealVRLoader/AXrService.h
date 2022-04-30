@@ -3,5 +3,5 @@
 #include "AService.h"
 
 namespace UnrealVr {
-    class IXrService : public AService {};
+    class AXrService : public AService, public AInitable, public AStoppable {};
 }

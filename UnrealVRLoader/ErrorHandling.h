@@ -1,17 +1,18 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
-#include <string>
+
+#define ERROR_VALUE(e) static_cast<uint16_t>(e)
 
 namespace UnrealVr {
-    enum class ErrorCode : uint16_t {
-        SUCCESS = 0,
-        GENERIC = 1
+    enum class ErrorCategory : uint16_t {
+        Generic = 0x0000,
+        Pipe = 0x0100
     };
 
-    inline std::map<ErrorCode, std::string> ErrorString = {
-        { ErrorCode::SUCCESS, "Success" },
-        { ErrorCode::GENERIC, "Generic error" }
+    enum class ErrorCode : uint16_t {
+        Success = ERROR_VALUE(ErrorCategory::Generic) | 0x00,
+        PipeOpen = ERROR_VALUE(ErrorCategory::Pipe) | 0x00,
+        PipeClose = ERROR_VALUE(ErrorCategory::Pipe) | 0x01
     };
 }

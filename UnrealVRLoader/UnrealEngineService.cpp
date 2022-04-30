@@ -1,13 +1,13 @@
 #include "UnrealEngineService.h"
 
-#include "DependencyInjection.h"
-
 namespace UnrealVr {
-    void UnrealEngineService::RegisterInjections() {
-        INJECTION(PipeService, pipeService)
+    InjectionMap UnrealEngineService::GetInjections() {
+        return {
+            INJECTION(PipeClientService, pipeClientService)
+        };
     }
-
+    
     ErrorCode UnrealEngineService::Init() {
-        return ErrorCode::SUCCESS;
+        return ErrorCode::Success;
     }
 }

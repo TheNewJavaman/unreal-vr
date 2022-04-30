@@ -3,25 +3,33 @@
 #include "D3D11Service.h"
 #include "DependencyInjection.h"
 #include "OpenXrService.h"
+#include "PipeService.h"
+#include "PipeServerService.h"
 #include "UnrealEngineService.h"
+#include "UnrealVrService.h"
 
 namespace UnrealVr {
-    void OnAttach() { CreateThread(nullptr, 0, OnAttachThread, nullptr, 0, nullptr); }
+    void OnAttach() {
+        std::thread workerThread([] {
+            REGISTER_SERVICE(D3D11Service)
+            REGISTER_SERVICE(OpenXrService)
+            REGISTER_SERVICE(PipeService)
+            REGISTER_SERVICE(PipeServerService)
+            REGISTER_SERVICE(UnrealEngineService)
+            REGISTER_SERVICE(UnrealVrService)
 
-    DWORD OnAttachThread(LPVOID) {
-        SERVICE(D3D11Service)
-        SERVICE(OpenXrService)
-        SERVICE(PipeService)
-        SERVICE(UnrealEngineService)
-        INJECT(D3D11Service)
-        INJECT(OpenXrService)
-        INJECT(PipeService)
-        INJECT(UnrealEngineService)
-        return 0;
+            INJECT_AS(D3D11Service, AGraphicsService)
+            INJECT_AS(OpenXrService, AXrService)
+            INJECT(PipeClientService)
+            INJECT(PipeServerService)
+            INJECT_AS(UnrealEngineService, AEngineService)
+            INJECT(UnrealVrService)
+
+            GET_SERVICE(UnrealVrService)->Init();
+        });
     }
 
     void OnDetach() {
-        GET_SERVICE(D3D11Service)->Stop();
-        DeleteServices();
+        GET_SERVICE(UnrealVrService)->Stop();
     }
 }

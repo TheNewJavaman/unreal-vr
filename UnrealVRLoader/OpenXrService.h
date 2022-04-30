@@ -3,5 +3,5 @@
 #include "AXrService.h"
 
 namespace UnrealVr {
-    class OpenXrService : public IXrService {};
+    class OpenXrService : public AXrService {};
 }

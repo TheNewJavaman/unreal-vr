@@ -5,13 +5,12 @@
 #include "PipeService.h"
 
 namespace UnrealVr {
-    class UnrealEngineService : public IEngineService {
+    class UnrealEngineService : public AEngineService {
     public:
-        void RegisterInjections() override;
+        InjectionMap GetInjections() override;
         ErrorCode Init() override;
-        
+
     private:
-        LOGGER(UnrealEngineService)
-        PipeService* pipeService = nullptr;
+        SERVICE(PipeService, pipeService)
     };
 }
