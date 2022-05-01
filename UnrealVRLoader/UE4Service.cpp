@@ -58,9 +58,21 @@ namespace UnrealVR {
 
     /** See CalculateProjectionMatrix.asm */
     void UE4Service::HookCalculateProjectionMatrixGivenView() {
-        const auto match = PS::PatternStream { 0xF6, 0x41, 0x30, 0x01 }
-            | PS::PatternInRange({ 0x0F, 0x84, PS::Any, PS::Any, 0x00, 0x00 }, { 0, 80 }, false)
-            | PS::PatternInRange({ 0xC3, 0xCC, 0x48, 0x8B, 0xC4 }, { -80, 80 }, true)
+        const auto match = PS::PatternStream {
+                0xF6, 0x41, 0x30, 0x01 // test byte [rcx + 0x30], 1
+            }
+            | PS::PatternInRange(
+                {
+                    0x0F, 0x84, PS::Any, PS::Any, 0x00, 0x00 // je 0x0000....
+                }, { 0, 80 }, false
+            )
+            | PS::PatternInRange(
+                {
+                    0xC3, // ret
+                    0xCC, // int3
+                    0x48, 0x8B, 0xC4 // mov rax, rsp
+                }, { -80, 80 }, true
+            )
             | PS::AddOffset(2)
             | PS::ForEach([](PS::BytePtr& i) {
                 Log::Info("[UnrealVR] Found CalculateProjectionMatrixGivenView at 0x%p", i);
@@ -102,10 +114,29 @@ namespace UnrealVR {
 
     void UE4Service::HookTick() {
         const auto match = PS::PatternStream {
-                0x48, 0x8B, 0xC4, 0x55, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57
+                0x48, 0x8B, 0xC4, // mov rax, rsp
+                0x55, // push rbp
+                0x53, // push rbx
+                0x56, // push rsi
+                0x57, // push rdi
+                0x41, 0x54, // push r12
+                0x41, 0x55, // push r13
+                0x41, 0x56, // push r14
+                0x41, 0x57 // push r15
             }
-            | PS::PatternInRange({ 0x0F, 0x29, 0x70, 0xA8, 0x48, 0x8B, 0xF9 }, { 0, 0x40 }, false)
-            | PS::PatternInRange({ 0x0F, 0x29, 0x78, 0x98, 0x0F, 0x28, 0xF2, 0x44, 0x8B, 0xF2 }, { 0, 0x40 }, false)
+            | PS::PatternInRange(
+                {
+                    0x0F, 0x29, 0x70, 0xA8, // movaps xmmword [rax - 0x58], xmm6
+                    0x48, 0x8B, 0xF9 // mov rdi, rcx
+                }, { 0, 0x40 }, false
+            )
+            | PS::PatternInRange(
+                {
+                    0x0F, 0x29, 0x78, 0x98, // movaps xmmword [rax - 0x68], xmm7
+                    0x0F, 0x28, 0xF2, // mov aps xmm6, xmm2
+                    0x44, 0x8B, 0xF2 // mov r14d, edx
+                }, { 0, 0x40 }, false
+            )
             | PS::ForEach([](PS::BytePtr& i) {
                 Log::Info("[UnrealVR] Found Tick at 0x%p", i);
             })
@@ -214,7 +245,7 @@ namespace UnrealVR {
                 getCameraLocationParams.Result.Z - getActorLocationParams.Result.Z
             );
             childViewTarget->ProcessEvent(addActorLocalOffsetFunc, &addActorLocalOffsetParams);
-            
+
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
@@ -339,7 +370,7 @@ namespace UnrealVR {
         );
         mathLibrary->ProcessEvent(quatUnrotateVectorFunc, &quatUnrotateVectorParams);
         lastLoc = loc;
-        
+
         // Apply IPD and positional tracking
         USING_UOBJECT(addActorLocalOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
         auto addActorLocalOffsetParams = UE4::AddActorLocalOffsetParams();
