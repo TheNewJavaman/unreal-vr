@@ -18,8 +18,6 @@ namespace UnrealVr {
     class AGraphicsService : public AService, public AInitable, public AStoppable {
     public:
         InjectionMap GetInjections() override;
-        ErrorCode Init() override;
-        ErrorCode Stop() override;
 
     protected:
         SERVICE(UnrealVrService, unrealVrService)

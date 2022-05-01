@@ -1,23 +1,20 @@
 #include "Logging.h"
 
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-
 #include "DependencyInjection.h"
 
 namespace UnrealVr {
     InjectionMap LoggingService::GetInjections() {
         return {
-            INJECTION(PipeServerService, pipeServerService)
+            INJECTION(PipeService, pipeService)
         };
     }
 
     ErrorCode LoggingService::Init() {
         workerThread = std::thread([&] {
             while (true) {
-                if (pipeServerService->isInitialized && buffer.length() != 0) {
+                if (pipeService->connected && buffer.length() != 0) {
                     std::lock_guard guard(bufferMtx);
-                    pipeServerService->SendString(PipeServerCommand::LOG, buffer);
+                    pipeService->SendData(PipeCommand::Log, std::vector(buffer.begin(), buffer.end()));
                     buffer = "";
                 }
                 Sleep(250);

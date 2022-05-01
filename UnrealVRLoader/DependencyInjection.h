@@ -7,13 +7,13 @@
 
 #include "AService.h"
 
-#define REGISTER_SERVICE(T)                                      \
-    {                                                   \
-        auto t = std::make_shared<T>();                 \
-        RegisterService(#T, t);                         \
-        for (const auto& [ptr, name] : t->injections) { \
-            RegisterInjection(name, ptr);               \
-        }                                               \
+#define REGISTER_SERVICE(T)                                  \
+    {                                                        \
+        auto t = std::make_shared<T>();                      \
+        RegisterService(#T, t);                              \
+        for (const auto& [ptr, name] : t->GetInjections()) { \
+            RegisterInjection(name, ptr);                    \
+        }                                                    \
     }
 #define SERVICE(T, t) std::shared_ptr<T> (t) = nullptr;
 #define INJECTION(T, ptr) { std::shared_ptr(&(ptr)), #T }

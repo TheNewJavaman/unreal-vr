@@ -3,11 +3,12 @@
 namespace UnrealVr {
     InjectionMap UnrealEngineService::GetInjections() {
         return {
-            INJECTION(PipeClientService, pipeClientService)
+            INJECTION(PipeService, pipeService)
         };
     }
     
     ErrorCode UnrealEngineService::Init() {
+        auto processEvent
         return ErrorCode::Success;
     }
 }

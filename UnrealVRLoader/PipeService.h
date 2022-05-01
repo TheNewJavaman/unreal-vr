@@ -21,28 +21,30 @@ namespace UnrealVr {
         CmUnitsScale = 0
     };
 
+    struct PipeSettings {
+        float cmUnitsScale = 1.f;
+    };
+
     class PipeService : public AService, AInitable, AStoppable {
     public:
         InjectionMap GetInjections() override;
         ErrorCode Init() override;
         ErrorCode Stop() override;
+        ErrorCode SendData(PipeCommand command, std::vector<char> data);
 
-        bool settingsInitialized = false;
-
-        struct {
-            float cmUnitsScale = 1.f;
-        } settings;
+        bool connected = false;
+        PipeSettings settings = {};
 
     private:
         static constexpr int BUFFER_SIZE = 1024;
-        
-        LOGGER(PipeClientService)
+
+        LOGGER(PipeService)
         SERVICE(UnrealVrService, unrealVrService)
 
         HANDLE pipe = nullptr;
         std::thread listenerThread;
         bool shouldStopThread = false;
-        
+
         void ListenerThread();
     };
 }

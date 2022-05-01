@@ -23,12 +23,6 @@
     <ClCompile Include="UnrealVRLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Basic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\CoreUObject_functions.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="UnrealVrService.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -59,12 +53,30 @@
     <ClCompile Include="old\UnrealVRLoader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AGraphicsService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D3D11Service.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Logging.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PipeService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UnrealEngineReflection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UnrealEngineService.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="UnrealVRLoader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\UnrealModLoader\UnrealEngineModLoader\UE4\Ue4.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D3D11Service.h">
@@ -80,18 +92,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ErrorHandling.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IEngineService.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IGraphicsService.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IService.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="IXrService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Logging.h">
@@ -121,11 +121,24 @@
     <ClInclude Include="UnrealVrService.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="$(OpenXRLoaderBinaryRoot)\bin\openxr_loader.dll">
-      <Filter>Nuget</Filter>
-    </None>
+    <ClInclude Include="PipeService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="UnrealEngineReflection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AEngineService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AGraphicsService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AXrService.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="old\PixelShader.hlsl" />

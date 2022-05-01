@@ -21,6 +21,7 @@ namespace UnrealVr {
             logger->Error("Couldn't open launcher pipe; error {}", GetLastError());
             return ErrorCode::PipeOpen;
         }
+        connected = true;
         listenerThread = std::thread([&] { ListenerThread(); });
         return ErrorCode::Success;
     }

@@ -4,7 +4,6 @@
 #include "DependencyInjection.h"
 #include "OpenXrService.h"
 #include "PipeService.h"
-#include "PipeServerService.h"
 #include "UnrealEngineService.h"
 #include "UnrealVrService.h"
 
@@ -14,14 +13,12 @@ namespace UnrealVr {
             REGISTER_SERVICE(D3D11Service)
             REGISTER_SERVICE(OpenXrService)
             REGISTER_SERVICE(PipeService)
-            REGISTER_SERVICE(PipeServerService)
             REGISTER_SERVICE(UnrealEngineService)
             REGISTER_SERVICE(UnrealVrService)
 
             INJECT_AS(D3D11Service, AGraphicsService)
             INJECT_AS(OpenXrService, AXrService)
-            INJECT(PipeClientService)
-            INJECT(PipeServerService)
+            INJECT(PipeService)
             INJECT_AS(UnrealEngineService, AEngineService)
             INJECT(UnrealVrService)
 

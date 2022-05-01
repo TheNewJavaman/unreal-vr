@@ -11,6 +11,7 @@ namespace UnrealVr {
         ErrorCode Init() override;
 
     private:
+        LOGGER(UnrealEngineService)
         SERVICE(PipeService, pipeService)
     };
 }

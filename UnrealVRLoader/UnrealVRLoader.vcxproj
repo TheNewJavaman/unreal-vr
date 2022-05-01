@@ -45,11 +45,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(SolutionDir)minhook\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)minhook\include;$(SolutionDir)\PatternStreams\PatternStreams\Public;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(SolutionDir)minhook\include;$(IncludePath)</IncludePath>
+    <IncludePath>$(SolutionDir)minhook\include;$(SolutionDir)\PatternStreams\PatternStreams\Public;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -100,11 +100,13 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="PipeService.cpp" />
+    <ClCompile Include="UnrealEngineReflection.cpp" />
     <ClCompile Include="UnrealEngineService.cpp" />
     <ClCompile Include="UnrealVrLoader.cpp" />
     <ClCompile Include="UnrealVrService.cpp" />
     <ClInclude Include="OpenXrService.h" />
     <ClInclude Include="PipeService.h" />
+    <ClInclude Include="UnrealEngineReflection.h" />
     <ClInclude Include="UnrealEngineService.h" />
     <ClInclude Include="UnrealVrLoader.h" />
     <ClInclude Include="UnrealVrService.h" />
