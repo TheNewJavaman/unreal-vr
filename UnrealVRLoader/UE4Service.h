@@ -74,5 +74,6 @@ namespace UnrealVR {
         /** UpdatePose */
         static inline UE4::FRotator lastRot = UE4::FRotator();
         static inline UE4::FVector lastLoc = UE4::FVector();
+        static inline UE4::FVector locOffset = UE4::FVector();
     };
 }
