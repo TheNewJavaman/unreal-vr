@@ -144,7 +144,7 @@ namespace UE4 {
 
     struct QuatRotateVectorParams {
         QuatRotateVectorParams(FQuat& q, FVector& v) : Q(q), V(v) {}
-        
+
         FQuat& Q;
         FVector& V;
     };
@@ -196,6 +196,13 @@ namespace UE4 {
 
     struct GetFullscreenModeParams {
         EWindowMode::Type Result = EWindowMode::Windowed;
+    };
+
+    struct AddActorLocalOffsetParams {
+        FVector DeltaLocation = FVector();
+        bool bSweep = false;
+        void* SweepHitResult = nullptr;
+        bool bTeleport = true;
     };
 
     FQuat RotatorToQuaternion(FRotator R);

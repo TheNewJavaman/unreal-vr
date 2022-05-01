@@ -40,7 +40,7 @@ namespace UnrealVR {
          *
          * Called when evaluating the projection matrix that is sent to the GPU; this is where we use OpenXR's FOV
          */
-        static void HookCalculateProjectionMatrix();
+        static void HookCalculateProjectionMatrixGivenView();
         typedef void (__cdecl CalculateProjectionMatrixGivenViewFunc)(
             void* ViewInfo,
             UE4::TEnumAsByte<UE4::EAspectRatioAxisConstraint> AspectRatioAxisConstraint,

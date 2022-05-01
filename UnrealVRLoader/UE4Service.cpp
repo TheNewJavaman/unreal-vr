@@ -42,7 +42,7 @@ namespace UnrealVR {
 
     void UE4Service::AddHooks() {
         Global::GetGlobals()->eventSystem.registerEvent(new Event<>("InitGameState", &InitGameStateCallback));
-        HookCalculateProjectionMatrix();
+        HookCalculateProjectionMatrixGivenView();
         HookTick();
     }
 
@@ -56,7 +56,7 @@ namespace UnrealVR {
     }
 
     /** See CalculateProjectionMatrix.asm */
-    void UE4Service::HookCalculateProjectionMatrix() {
+    void UE4Service::HookCalculateProjectionMatrixGivenView() {
         const auto match = PS::PatternStream { 0xF6, 0x41, 0x30, 0x01 }
             | PS::PatternInRange({ 0x0F, 0x84, PS::Any, PS::Any, 0x00, 0x00 }, { 0, 80 }, false)
             | PS::PatternInRange({ 0xC3, 0xCC, 0x48, 0x8B, 0xC4 }, { -80, 80 }, true)
@@ -100,9 +100,11 @@ namespace UnrealVR {
     }
 
     void UE4Service::HookTick() {
-        const auto match = PS::PatternStream { 0x48, 0x8B, 0xC4, 0x55, 0x53, 0x56, 0x57, 0x51, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57 }
-            | PS::PatternInRange({ 0x48, 0x8D, 0xA8, 0x38, 0xFE, 0xFF, 0xFF }, { 0, 80 }, false)
-            | PS::PatternInRange({ 0x48, 0x81, 0xEC, 0x88, 0x02, 0x00, 0x00 }, { 0, 80 }, false)
+        const auto match = PS::PatternStream {
+                0x48, 0x8B, 0xC4, 0x55, 0x53, 0x56, 0x57, 0x41, 0x54, 0x41, 0x55, 0x41, 0x56, 0x41, 0x57
+            }
+            | PS::PatternInRange({ 0x0F, 0x29, 0x70, 0xA8, 0x48, 0x8B, 0xF9 }, { 0, 0x40 }, false)
+            | PS::PatternInRange({ 0x0F, 0x29, 0x78, 0x98, 0x0F, 0x28, 0xF2, 0x44, 0x8B, 0xF2 }, { 0, 0x40 }, false)
             | PS::ForEach([](PS::BytePtr& i) {
                 Log::Info("[UnrealVR] Found Tick at 0x%p", i);
             })
@@ -329,14 +331,15 @@ namespace UnrealVR {
         mathLibrary->ProcessEvent(quatUnrotateVectorFunc, &quatUnrotateVectorParams);
 
         // Apply IPD and positional tracking
-        USING_UOBJECT(setActorRelativeLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorRelativeLocation")
-        auto setActorRelativeLocationParams = UE4::SetActorRelativeLocationParams();
-        setActorRelativeLocationParams.RelativeLocation = UE4::FVector(
-            (quatUnrotateVectorParams.Result.X - lastLoc.X) * 100.f * CmUnitsScale,
-            (quatUnrotateVectorParams.Result.Y - lastLoc.Y) * 100.f * CmUnitsScale,
-            (quatUnrotateVectorParams.Result.Z - lastLoc.Z) * 100.f * CmUnitsScale
-        );
+        USING_UOBJECT(addActorLocalOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
+        auto addActorLocalOffsetParams = UE4::AddActorLocalOffsetParams();
+        //setActorRelativeLocationParams.RelativeLocation = UE4::FVector(
+        //    (quatUnrotateVectorParams.Result.X - lastLoc.X) * 100.f * CmUnitsScale,
+        //    (quatUnrotateVectorParams.Result.Y - lastLoc.Y) * 100.f * CmUnitsScale,
+        //    (quatUnrotateVectorParams.Result.Z - lastLoc.Z) * 100.f * CmUnitsScale
+        //);
+        addActorLocalOffsetParams.DeltaLocation = UE4::FVector(0, eye == Eye::Left ? -6.3f : 6.3f, 0);
         lastLoc = quatUnrotateVectorParams.Result;
-        childViewTarget->ProcessEvent(setActorRelativeLocationFunc, &setActorRelativeLocationParams);
+        childViewTarget->ProcessEvent(addActorLocalOffsetFunc, &addActorLocalOffsetParams);
     }
 }
