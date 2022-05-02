@@ -30,7 +30,10 @@ namespace UnrealVr {
 
     static std::string scopedBuffer;
     static std::mutex scopedBufferMtx;
-    
+
+    /**
+     * Automatically flushes the log buffer to the app UI
+     */
     class LoggingService : public AService, public AInitable {
     public:
         InjectionMap GetInjections() override;
@@ -43,7 +46,12 @@ namespace UnrealVr {
         std::mutex& bufferMtx = scopedBufferMtx;
         std::thread workerThread;
     };
-    
+
+    /**
+     * A generic logger which outputs to the app UI (UnrealVRLauncher)
+     *
+     * Note that this class uses C++ 20's std::format, _not_ % formatting
+     */
     class Logger {
     public:
         Logger(std::string source);

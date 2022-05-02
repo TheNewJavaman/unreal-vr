@@ -5,6 +5,9 @@
 #include "PipeService.h"
 
 namespace UnrealVr {
+    /**
+     * An engine service implementation for Unreal Engine 4/5
+     */
     class UnrealEngineService : public AEngineService {
     public:
         InjectionMap GetInjections() override;

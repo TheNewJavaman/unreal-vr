@@ -15,6 +15,9 @@ namespace UnrealVr {
         GraphicsApi graphicsApi;
     };
 
+    /**
+     * Defines required functionality for graphics APIs
+     */
     class AGraphicsService : public AService, public AInitable, public AStoppable {
     public:
         InjectionMap GetInjections() override;

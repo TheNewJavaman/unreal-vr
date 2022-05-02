@@ -25,6 +25,9 @@ namespace UnrealVr {
         float cmUnitsScale = 1.f;
     };
 
+    /**
+     * Facilitates communication with the app UI for realtime settings changes, logging, and more
+     */
     class PipeService : public AService, AInitable, AStoppable {
     public:
         InjectionMap GetInjections() override;

@@ -22,7 +22,10 @@
 #define GET_SERVICE(T) GetService<T>(#T)
 
 namespace UnrealVr {
+    /** Services that can be injected into class members*/
     static inline std::map<std::string, std::shared_ptr<AService>> services;
+
+    /** Class members that must be injected with services */
     static inline std::map<std::string, std::vector<std::shared_ptr<std::shared_ptr<AService>>>> injections;
 
     template<typename T>
@@ -40,6 +43,11 @@ namespace UnrealVr {
         injections[name].push_back(std::shared_ptr(std::reinterpret_pointer_cast<AService>(injection.get())));
     }
 
+    /**
+     * Injects the specified service as another
+     *
+     * Useful for abstractions, such as injecting "D3D11Service" as "AGraphicsService"
+     */ 
     void InjectServiceAs(const std::string& name, const std::string& as);
 
     void InjectService(const std::string& name);
