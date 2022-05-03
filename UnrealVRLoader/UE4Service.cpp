@@ -341,6 +341,9 @@ namespace UnrealVR {
         quatRotateVectorParams.Q = RotatorToQuaternion(setActorRotationParams.NewRotation);
         quatRotateVectorParams.V = quatUnrotateVectorParams.Result;
         mathLibrary->ProcessEvent(quatRotateVectorFunc, &quatRotateVectorParams);
+        locOffset.X += quatRotateVectorParams.Result.X * 100.f;
+        locOffset.Y += quatRotateVectorParams.Result.Y * 100.f;
+        locOffset.Z += quatRotateVectorParams.Result.Z * 100.f;
 
         // Get old location
         USING_UOBJECT(getActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_GetActorLocation")
@@ -351,9 +354,9 @@ namespace UnrealVR {
         USING_UOBJECT(setActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorLocation")
         auto setActorLocationParams = UE4::SetActorLocationParams();
         setActorLocationParams.NewLocation = UE4::FVector(
-            getActorLocationParams.Result.X + quatRotateVectorParams.Result.X * 100.f,
-            getActorLocationParams.Result.Y + quatRotateVectorParams.Result.Y * 100.f,
-            getActorLocationParams.Result.Z + quatRotateVectorParams.Result.Z * 100.f
+            getActorLocationParams.Result.X + locOffset.X,
+            getActorLocationParams.Result.Y + locOffset.Y,
+            getActorLocationParams.Result.Z + locOffset.Z
         );
         childViewTarget->ProcessEvent(setActorLocationFunc, &setActorLocationParams);
     }
