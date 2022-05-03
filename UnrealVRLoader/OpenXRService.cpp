@@ -7,7 +7,6 @@
 #include "D3D11Service.h"
 #include "UE4Service.h"
 
-#define RAD_DEG 57.29577951308232f
 #define CHECK_XR(xr, message) \
     if ((xr) != XR_SUCCESS) \
     { \
