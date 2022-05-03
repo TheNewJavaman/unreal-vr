@@ -143,10 +143,9 @@ namespace UE4 {
     };
 
     struct QuatRotateVectorParams {
-        QuatRotateVectorParams(FQuat& q, FVector& v) : Q(q), V(v) {}
-
-        FQuat& Q;
-        FVector& V;
+        FQuat Q = FQuat();
+        FVector V = FVector();
+        FVector Result = FVector();
     };
 
     struct QuatUnrotateVectorParams {
@@ -203,6 +202,19 @@ namespace UE4 {
         bool bSweep = false;
         void* SweepHitResult = nullptr;
         bool bTeleport = true;
+    };
+
+    enum class ETeleportType : uint8_t {
+        None,
+        TeleportPhysics,
+        ResetPhysics
+    };
+
+    struct SetActorLocationParams {
+        FVector NewLocation = FVector();
+        bool bSweep = false;
+        void* OutSweepHitResult = nullptr;
+        ETeleportType Teleport = ETeleportType::TeleportPhysics;
     };
 
     FQuat RotatorToQuaternion(FRotator R);

@@ -23,7 +23,7 @@ namespace UnrealVR {
         
         /** Input VR pose (with corrected axes) and forward to Unreal Engine, with several adjustments */
         //static void UpdatePose(UE4::FVector loc, UE4::FQuat rot, UE4::FVector loc2);
-        static void UpdatePose(UE4::FQuat rot, UE4::FVector loc, Eye eye);
+        static void UpdatePose(const UE4::FQuat rot, const UE4::FVector loc);
         static inline float CmUnitsScale = 1.f;
 
     private:

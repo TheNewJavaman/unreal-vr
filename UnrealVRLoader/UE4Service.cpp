@@ -210,42 +210,6 @@ namespace UnrealVR {
             lastLoc = UE4::FVector();
             locOffset = UE4::FVector();
 
-            // Get player camera manager
-            USING_UOBJECT(getPlayerCameraManagerFunc, UE4::UFunction,
-                          "Function Engine.GameplayStatics.GetPlayerCameraManager")
-            auto getPlayerCameraManagerParams = UE4::GetPlayerCameraManagerParams();
-            getPlayerCameraManagerParams.WorldContextObject = UE4::UWorld::GetWorld();
-            gameplayStatics->ProcessEvent(getPlayerCameraManagerFunc, &getPlayerCameraManagerParams);
-            ASSERT_LOG(getPlayerCameraManagerParams.Result, "Player camera manager")
-            const auto playerCameraManager = getPlayerCameraManagerParams.Result;
-
-            // Get current view target's location, including camera offsets
-            USING_UOBJECT(getCameraLocationFunc, UE4::UFunction,
-                          "Function Engine.PlayerCameraManager.GetCameraLocation")
-            auto getCameraLocationParams = UE4::GetCameraLocationParams();
-            playerCameraManager->ProcessEvent(getCameraLocationFunc, &getCameraLocationParams);
-
-            // Attach new view target to old (follows positioning, rotation, scale)
-            USING_UOBJECT(attachToActorFunc, UE4::UFunction, "Function Engine.Actor.K2_AttachToActor")
-            auto attachParams = UE4::AttachToActorParams();
-            attachParams.ParentActor = currentViewTarget;
-            childViewTarget->ProcessEvent(attachToActorFunc, &attachParams);
-
-            // Get positional offset; this is often present due to camera offsets
-            USING_UOBJECT(getActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_GetActorLocation")
-            auto getActorLocationParams = UE4::GetActorLocationParams();
-            childViewTarget->ProcessEvent(getActorLocationFunc, &getActorLocationParams);
-
-            // Add positional offset
-            USING_UOBJECT(addActorLocalOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
-            auto addActorLocalOffsetParams = UE4::AddActorLocalOffsetParams();
-            addActorLocalOffsetParams.DeltaLocation = UE4::FVector(
-                getCameraLocationParams.Result.X - getActorLocationParams.Result.X,
-                getCameraLocationParams.Result.Y - getActorLocationParams.Result.Y,
-                getCameraLocationParams.Result.Z - getActorLocationParams.Result.Z
-            );
-            childViewTarget->ProcessEvent(addActorLocalOffsetFunc, &addActorLocalOffsetParams);
-
             // Set new view target
             USING_UOBJECT(setViewTargetFunc, UE4::UFunction, "Function Engine.PlayerController.SetViewTargetWithBlend")
             auto setViewTargetParams = UE4::SetViewTargetWithBlendParams();
@@ -325,8 +289,8 @@ namespace UnrealVR {
         Log::Info("[UnrealVR] Resized render resolution to %dx%d", width, height);
     }
 
-    void UE4Service::UpdatePose(const UE4::FQuat rot, const UE4::FVector loc, const Eye eye) {
-        if (playerController == nullptr || childViewTarget == nullptr) {
+    void UE4Service::UpdatePose(const UE4::FQuat rot, const UE4::FVector loc) {
+        if (playerController == nullptr || childViewTarget == nullptr || parentViewTarget == nullptr) {
             return;
         }
 
@@ -359,7 +323,7 @@ namespace UnrealVR {
         setActorRotationParams.NewRotation = setControlRotationParams.NewRotation;
         childViewTarget->ProcessEvent(setActorRotationFunc, &setActorRotationParams);
 
-        // Unrotate delta location 
+        // Unrotate delta location by real-life rotation 
         USING_UOBJECT(quatUnrotateVectorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_UnrotateVector")
         auto quatUnrotateVectorParams = UE4::QuatUnrotateVectorParams();
         quatUnrotateVectorParams.Q = rot;
@@ -371,17 +335,26 @@ namespace UnrealVR {
         mathLibrary->ProcessEvent(quatUnrotateVectorFunc, &quatUnrotateVectorParams);
         lastLoc = loc;
 
-        // Apply IPD and positional tracking
-        USING_UOBJECT(addActorLocalOffsetFunc, UE4::UFunction, "Function Engine.Actor.K2_AddActorLocalOffset")
-        auto addActorLocalOffsetParams = UE4::AddActorLocalOffsetParams();
-        addActorLocalOffsetParams.DeltaLocation = UE4::FVector(
-            quatUnrotateVectorParams.Result.X * 100.f * CmUnitsScale,
-            quatUnrotateVectorParams.Result.Y * 100.f * CmUnitsScale,
-            quatUnrotateVectorParams.Result.Z * 100.f * CmUnitsScale
+        // Rotate delta location by in-game rotation
+        USING_UOBJECT(quatRotateVectorFunc, UE4::UFunction, "Function Engine.KismetMathLibrary.Quat_RotateVector")
+        auto quatRotateVectorParams = UE4::QuatRotateVectorParams();
+        quatRotateVectorParams.Q = RotatorToQuaternion(setActorRotationParams.NewRotation);
+        quatRotateVectorParams.V = quatUnrotateVectorParams.Result;
+        mathLibrary->ProcessEvent(quatRotateVectorFunc, &quatRotateVectorParams);
+
+        // Get old location
+        USING_UOBJECT(getActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_GetActorLocation")
+        auto getActorLocationParams = UE4::GetActorLocationParams();
+        parentViewTarget->ProcessEvent(getActorLocationFunc, &getActorLocationParams);
+
+        // Set new location
+        USING_UOBJECT(setActorLocationFunc, UE4::UFunction, "Function Engine.Actor.K2_SetActorLocation")
+        auto setActorLocationParams = UE4::SetActorLocationParams();
+        setActorLocationParams.NewLocation = UE4::FVector(
+            getActorLocationParams.Result.X + quatRotateVectorParams.Result.X * 100.f,
+            getActorLocationParams.Result.Y + quatRotateVectorParams.Result.Y * 100.f,
+            getActorLocationParams.Result.Z + quatRotateVectorParams.Result.Z * 100.f
         );
-        childViewTarget->ProcessEvent(addActorLocalOffsetFunc, &addActorLocalOffsetParams);
-        locOffset.X += quatUnrotateVectorParams.Result.X;
-        locOffset.Y += quatUnrotateVectorParams.Result.Y;
-        locOffset.Z += quatUnrotateVectorParams.Result.Z;
+        childViewTarget->ProcessEvent(setActorLocationFunc, &setActorLocationParams);
     }
 }

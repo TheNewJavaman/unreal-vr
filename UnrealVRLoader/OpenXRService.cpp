@@ -296,14 +296,16 @@ namespace UnrealVR {
     }
 
     void OpenXRService::SwitchEyes() {
-        const Eye thisEye = LastEyeRendered == Eye::Left ? Eye::Right : Eye::Left;
-        const int thisI = static_cast<int>(thisEye);
+        const auto thisEye = LastEyeRendered == Eye::Left ? Eye::Right : Eye::Left;
+        const auto nextEye = LastEyeRendered;
+        const auto thisI = static_cast<int>(thisEye);
+        const auto nextI = static_cast<int>(nextEye);
         
         // Set up Unreal Engine for the next frame
-        EyeFOV = xrViews.at(thisI).fov;
+        EyeFOV = xrViews.at(nextI).fov;
         const auto [qx, qy, qz, qw] = xrViews.at(thisI).pose.orientation;
         const auto [lx, ly, lz] = xrViews.at(thisI).pose.position;
-        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, { -lz, lx, ly }, thisEye);
+        UE4Service::UpdatePose({ -qz, qx, qy, -qw }, { -lz, lx, ly });
 
         LastEyeRendered = thisEye;
     }
