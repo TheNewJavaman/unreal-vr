@@ -36,7 +36,7 @@ Adds virtual reality support to flatscreen Unreal Engine games
 ### Service Logic
 
 ```mermaid
-%%{init: {'theme': 'base'}}%%
+%%{init: {'theme': 'base', 'themeVariables': {'background': '#ffffff'}}}%%
 sequenceDiagram
   participant main as UnrealVR Service
   participant pipe as Pipe Service
