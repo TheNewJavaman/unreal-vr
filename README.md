@@ -36,6 +36,7 @@ Adds virtual reality support to flatscreen Unreal Engine games
 ### Service Logic
 
 ```mermaid
+%%{init: {'theme': 'base'}}%%
 sequenceDiagram
   participant main as UnrealVR Service
   participant pipe as Pipe Service
@@ -44,7 +45,7 @@ sequenceDiagram
   participant graphics as Graphics Service
   participant engine as Game Engine Service
   
-  rect rgba(0, 0, 0, 0.2)
+  rect rgb(246, 248, 250)
   note left of main: 1. Init pipe
   activate main
   note over main: DllAttach called
@@ -68,7 +69,7 @@ sequenceDiagram
   deactivate log
   end
   
-  rect rgba(0, 0, 0, 0.2)
+  rect rgb(246, 248, 250)
   note left of main: 2. Init game
   activate pipe
   note over pipe: SettingsInitialized received
@@ -97,7 +98,7 @@ sequenceDiagram
   deactivate main
   end
   
-  rect rgba(0, 0, 0, 0.2)
+  rect rgb(246, 248, 250)
   note left of main: 3a. Update XR
   activate graphics
   note over graphics: Present hook called
@@ -133,7 +134,7 @@ sequenceDiagram
   deactivate main
   end
   
-  rect rgba(0, 0, 0, 0.2)
+  rect rgb(246, 248, 250)
   note left of main: 3b. Update game
   activate engine
   note over engine: Tick hook called
@@ -161,7 +162,7 @@ sequenceDiagram
   deactivate engine
   end
   
-  rect rgba(0, 0, 0, 0.2)
+  rect rgb(246, 248, 250)
   note left of main: 4. Stop
   alt
   activate main
