@@ -1,0 +1,195 @@
+%%{
+  init: {
+    'theme': 'base', 
+    'themeVariables': { 
+      'darkMode': false,
+      'background': '#f2f2f2',
+      'noteBkgColor': '#757AA3',
+      'noteTextColor': '#ffffff',
+      'noteBorderColor': '#3D405B',
+      'actorBorder': '#3D405B',
+      'actorBkg': '#E07A5F',
+      'actorTextColor': '#ffffff',
+      'actorLineColor': "#000000',
+      'labelBoxBkgColor': '#F2CC8F',
+      'labelBoxBorderColor': '#3D405B',
+      'labelTextColor': '#000000',
+      'loopTextColor': '#000000',
+      'activationBorderColor': '#3D405B',
+      'activationBkgColor': '#F2CC8F',
+      'signalColor': '#000000',
+      'signalTextColor': '#000000'
+    }
+  }
+}%%
+sequenceDiagram
+  participant main as UnrealVR Service
+  participant pipe as Pipe Service
+  participant log as Logging Service
+  participant xr as XR Service
+  participant graphics as Graphics Service
+  participant engine as Game Engine Service
+
+  note over main, engine: 1. Init pipe
+  activate main
+  note over main: DllAttach called
+  main->>pipe: Init
+  activate pipe
+  note over pipe: Open pipe
+  pipe-->>main: 
+  rect rgba(0, 0, 0, 0.05)
+    par Async
+      pipe->>pipe: Listen for commands
+      deactivate pipe
+    end
+  end
+  main->>log: Init
+  activate log
+  log-->>main: 
+  deactivate main
+  rect rgba(0, 0, 0, 0.05)
+    par Async
+      log->>log: Flush buffer
+      deactivate log
+    end
+  end
+  
+  note over main, engine: 2. Init game
+  activate pipe
+  note over pipe: SettingsInitialized received
+  pipe->>main: OnPipeSettingsInitialized
+  activate main
+  main-->>pipe: 
+  deactivate pipe
+  rect rgba(0, 0, 0, 0.05)
+    par Async
+      main->>xr: Init
+      activate xr
+      note over xr: Start XR session
+      note over xr: Register input handlers
+      note over xr: Create swapchain resources
+      xr-->>main: 
+      deactivate xr
+      main->>graphics: Init
+      activate graphics
+      note over graphics: Hook swapchain present
+      graphics-->>main: 
+      deactivate graphics
+      main->>engine: Init
+      activate engine
+      note over engine: Hook game tick
+      engine-->>main: 
+      deactivate engine
+      deactivate main
+    end
+  end
+  
+  note over main, engine: 3a. Update game
+  activate engine
+  note over engine: Tick hook called
+  engine->>main: OnGameTick
+  activate main
+  note over main: Mutex
+  main-->>engine: 
+  deactivate engine
+  rect rgba(0, 0, 0, 0.05)
+    par Async
+      note over main: Switch CPU eye
+      main->>xr: GetPose
+      activate xr
+      deactivate xr
+      xr-->>main: 
+      main->>engine: UpdatePose
+      activate engine
+      note over engine: Update camera FOV
+      note over engine: Update camera rotation
+      opt
+        note over engine: Update player aim
+      end
+      note over engine: Update camera location
+      engine-->>main: 
+      deactivate main
+      deactivate engine
+    end
+  end
+
+  note over main, engine: 3b. Update XR
+  activate graphics
+  note over graphics: Present hook called
+  graphics->>main: OnSwapchainPresent
+  activate main
+  note over main: Mutex
+  main-->>graphics: 
+  deactivate graphics
+  rect rgba(0, 0, 0, 0.05)
+    par Async
+      note over main: Switch GPU eye
+      main->>xr: GetFrame
+      activate xr
+      opt Left eye
+        note over xr: Begin frame
+        note over xr: Cache poses
+      end
+      note over xr: Get render surface
+      xr-->>main: 
+      deactivate xr
+      main->>graphics: ConvertFrame
+      activate graphics
+      note over graphics: Render fullscreen quad
+      graphics-->>main: 
+      deactivate graphics
+      main->>xr: SubmitFrame
+      activate xr
+      note over xr: Submit render surface
+      opt Right eye
+        note over xr: End frame
+      end
+      xr-->>main: 
+      deactivate xr
+      deactivate main
+    end
+  end
+  
+  note over main, engine: 4. Stop
+  alt
+    activate main
+    note over main: DllDetach called
+  else or
+    activate pipe
+    note over pipe: Stop received
+    pipe->>main: OnPipeStop
+    main-->>pipe: 
+    deactivate pipe
+  end
+  rect rgba(0, 0, 0, 0.05)
+    par Async
+      main->>engine: Stop
+      activate engine
+      note over engine: Remove tick hook
+      engine-->>main: 
+      deactivate engine
+      main->>graphics: Stop
+      activate graphics
+      note over graphics: Remove present hook
+      note over graphics: Release conversion resources
+      graphics-->>main: 
+      deactivate graphics
+      main->>xr: Stop
+      activate xr
+      note over xr: Release swapchain resources
+      note over xr: Unregister input handlers 
+      note over xr: Shutdown XR session
+      xr-->>main: 
+      deactivate xr
+      main->>log: Stop
+      activate log
+      deactivate log
+      log-->>main: 
+      main->>pipe: Stop
+      activate pipe
+      note over pipe: Close pipe
+      pipe-->>main: 
+      deactivate pipe
+      deactivate main
+    end
+  end

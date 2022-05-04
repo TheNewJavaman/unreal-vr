@@ -20,6 +20,15 @@ Adds virtual reality support to flatscreen Unreal Engine games
 - **Controller Tracking**: Link hand movement to in-game objects
 - **Synchronized Rendering**: Renders both eyes at the same time, reducing discomfort
 
+## Preview
+
+![](preview.png)
+
+## Contribute
+
+If you have any ideas for features or want to implement a feature yourself, please email me or send a DM on Discord to
+TheNewJavaman#3966.
+
 ## Service Structure
 
 ### Service Explanations
@@ -35,205 +44,12 @@ Adds virtual reality support to flatscreen Unreal Engine games
 
 ### Service Logic
 
-```mermaid
-sequenceDiagram
-  participant main as UnrealVR Service
-  participant pipe as Pipe Service
-  participant log as Logging Service
-  participant xr as XR Service
-  participant graphics as Graphics Service
-  participant engine as Game Engine Service
-  
-  note over main, engine: 1. Init pipe
-  activate main
-  note over main: DllAttach called
-  main->>pipe: Init
-  activate pipe
-  note over pipe: Open pipe
-  pipe-->>main: 
-  note over pipe: Async
-  loop
-  pipe-)pipe: Listen for commands
-  end
-  deactivate pipe
-  main->>log: Init
-  activate log
-  log-->>main: 
-  deactivate main
-  note over log: Async
-  loop
-  log-)log: Flush buffer
-  end
-  deactivate log
-```
+<!--
+https://mermaid.live/
+Copy from/paste to ./service_structure.mmd
+-->
 
-```mermaid
-sequenceDiagram
-  participant main as UnrealVR Service
-  participant pipe as Pipe Service
-  participant log as Logging Service
-  participant xr as XR Service
-  participant graphics as Graphics Service
-  participant engine as Game Engine Service
-  
-  note over main, engine: 2. Init game
-  activate pipe
-  note over pipe: SettingsInitialized received
-  pipe->>main: OnPipeSettingsInitialized
-  activate main
-  main-->>pipe: 
-  deactivate pipe
-  note over main: Async
-  main->>xr: Init
-  activate xr
-  note over xr: Start XR session
-  note over xr: Register input handlers
-  note over xr: Create swapchain resources
-  xr-->>main: 
-  deactivate xr
-  main->>graphics: Init
-  activate graphics
-  note over graphics: Hook swapchain present
-  graphics-->>main: 
-  deactivate graphics
-  main->>engine: Init
-  activate engine
-  note over engine: Hook game tick
-  engine-->>main: 
-  deactivate engine
-  deactivate main
-```
-
-```mermaid
-sequenceDiagram
-  participant main as UnrealVR Service
-  participant pipe as Pipe Service
-  participant log as Logging Service
-  participant xr as XR Service
-  participant graphics as Graphics Service
-  participant engine as Game Engine Service
-  
-  note over main, engine: 3a. Update XR
-  activate graphics
-  note over graphics: Present hook called
-  graphics->>main: OnSwapchainPresent
-  activate main
-  note over main: Mutex
-  main-->>graphics: 
-  deactivate graphics
-  note over main: Async
-  note over main: Switch GPU eye
-  main->>xr: GetFrame
-  activate xr
-  opt Left eye
-  note over xr: Begin frame
-  note over xr: Cache poses
-  end
-  note over xr: Get render surface
-  xr-->>main: 
-  deactivate xr
-  main->>graphics: ConvertFrame
-  activate graphics
-  note over graphics: Render fullscreen quad
-  graphics-->>main: 
-  deactivate graphics
-  main->>xr: SubmitFrame
-  activate xr
-  note over xr: Submit render surface
-  opt Right eye
-  note over xr: End frame
-  end
-  xr-->>main: 
-  deactivate xr
-  deactivate main
-```
-
-```mermaid
-sequenceDiagram
-  participant main as UnrealVR Service
-  participant pipe as Pipe Service
-  participant log as Logging Service
-  participant xr as XR Service
-  participant graphics as Graphics Service
-  participant engine as Game Engine Service
-  
-  note over main, engine: 3b. Update game
-  activate engine
-  note over engine: Tick hook called
-  engine->>main: OnGameTick
-  activate main
-  note over main: Mutex
-  main-->>engine: 
-  deactivate engine
-  note over main: Async
-  note over main: Switch CPU eye
-  main->>xr: GetPose
-  activate xr
-  deactivate xr
-  xr-->>main: 
-  main->>engine: UpdatePose
-  activate engine
-  note over engine: Update camera FOV
-  note over engine: Update camera rotation
-  opt
-  note over engine: Update player aim
-  end
-  note over engine: Update camera location
-  deactivate main
-  engine-->>main: 
-  deactivate engine
-```
-
-```mermaid
-sequenceDiagram
-  participant main as UnrealVR Service
-  participant pipe as Pipe Service
-  participant log as Logging Service
-  participant xr as XR Service
-  participant graphics as Graphics Service
-  participant engine as Game Engine Service
-  
-  note over main, engine: 4. Stop
-  alt
-  activate main
-  note over main: DllDetach called
-  else or
-  activate pipe
-  note over pipe: Stop received
-  pipe->>main: OnPipeStop
-  main-->>pipe: 
-  deactivate pipe
-  note over main: Async
-  end
-  main->>engine: Stop
-  activate engine
-  note over engine: Remove tick hook
-  engine-->>main: 
-  deactivate engine
-  main->>graphics: Stop
-  activate graphics
-  note over graphics: Remove present hook
-  note over graphics: Release conversion resources
-  graphics-->>main: 
-  deactivate graphics
-  main->>xr: Stop
-  activate xr
-  note over xr: Release swapchain resources
-  note over xr: Unregister input handlers 
-  note over xr: Shutdown XR session
-  xr-->>main: 
-  deactivate xr
-  main->>log: Stop
-  activate log
-  deactivate log
-  log-->>main: 
-  main->>pipe: Stop
-  activate pipe
-  note over pipe: Close pipe
-  pipe-->>main: 
-  deactivate pipe
-  deactivate main
-```
+[![](https://mermaid.ink/img/pako:eNqtWG1P4zgQ_itWVog7qYs4WMSpH1YqhXInsQK1gPZDv7jJNLWa2lnHYcsh_vuNHefdSdtlCyI0fjzzjOfFY795vgjAG3pHR29zTgjjTA2J-ZeQY7WCDRwPyfGCJnA8INXXz1QyuoggwfE3O4JjAZXrbygS3y5plMCgGFlQfx1KkfJAS_y0PNM_x-U4Fwqu1uFYREIaxOXF5Wh03kA8wlaVkKX5NIUIGYAsQefXX04vriog6ishM1QfYB2a0ZvTy9HFpDm6g4fB3DEOOWbufTo1nwoooguIrsS2ZvXkbDz-e-JC7TLLAOu82iqFiHdAkDp7oYoJvs9C5tBeExIWchr16MwATmIZ5l0_8M_70dGcJ_AjBe7DNaOhpBs9FFOpmM9iyhXZUMYJTcgTl0Cj5ymZgXxhPjRxMYtB4x70swMTiVBD7kQYMh52obZSg753akKW8Yr5iUbd5v93YIGjJsPrlm6A3GRfC7CG6yAn4gWkMXVgpwzJXyfkX8xfY5jGWfeAgbUnDsl1FI2Uov6K-DSKINAYPfL561ctY2jE1STloktJGfA-Bl4M6udnlJEp0W8k-IrIcEH_OB0Q-3tyevFn5lw0n4ySV-7n8WAE5BzuWKJQ-FJI4ovNhvIgyXEBtIgRXA1jh31Yc9CPDmvwrf6Ojzrditx86Q60QIu0WidRmqzIIl0uQTqIWw5N3n1-PrN-DjFA9vLODJTC8E30LEYj9h8E2iBgL5nP7XpnC3DPdUI4pjhDyqxv4avG4uV8Dlw867OtLF2mP4XYbbGOpaEaPFOYRzoNE0gSLEpu1BRCHVES97o4VWSFARWBTNzgMZYQ_J78pLG_0nVFQiJS6UOB38p67DTcW3K1VuW1oMO2fLhNp5z4jxDrCqUYOQEvROW4XlpNNZZcHmFOatlgm1g-ydDSMUmwmK1zXDbaS6Yu2JF8hyTHOT0hT3FgjGzmR6mozf4ROZOVNqGshZZ7mRm6JD9a43ZW12-pgm01R3JVjSwpWR2YJ02Fs59MYS0fPzwReAVHNt2CehAJ9CSUM3JdId4ImGzFncJ3hY11lo9LKymZ3D_vC5VCmd4jx4u4iNmeyXFEX_EtZZsyQoN9VUbCr6ncI7jLGO6M-Wpw94b2ogjt79NaCFbT2VUxHrIS0YzvolSUET7Ly8pDWVUOj_RScyPWq0R_T7Tf9kX7RNoS0BHuGDLkDpaqKqG5BVzhfoHtR1VSa5fAFgojC6M_6Q0qywot59hYkySVS-rDx3eSseAovsPafXaUaUZomUZR4kvAdutHSoPfsaOYfTldbNhOXzT2cjOnY6W026YsXPX67YYHda9VXLL3Un9wM_pygk2JiE0SRbY6OQQ6-vJraPTlgIdpImRDRtn2tno-1Ftr8txtnmXnauScrZw1-tc6unxZSq0H7BNT2OB301uYOvbLDUYrfZx09ksbQymuVNd-eAQUveibdNUdarud_HCuuWzpSrKcUE97W5-gj9TO7pl0ZPEqVYH4yR1N-aHVzpylnNYVJyj3ucpxvquILZOlJbfMrXZ2jSMs9jVE-9DbeULdWVa8gYftBo4E3tAzl3Fzz1y6zT19kxTAkqZYTrxBNpTfh-A2sGShxtgLvLm3YVIKOdK3UUk22dzKzb38PgVVpaaluAkYgrxhdmvn0VSJGWawN1QyhRxkb1ws6v1_upF5eA)](https://mermaid.live/edit#pako:eNqtWG1P4zgQ_itWVog7qYs4WMSpH1YqhXInsQK1gPZDv7jJNLWa2lnHYcsh_vuNHefdSdtlCyI0fjzzjOfFY795vgjAG3pHR29zTgjjTA2J-ZeQY7WCDRwPyfGCJnA8INXXz1QyuoggwfE3O4JjAZXrbygS3y5plMCgGFlQfx1KkfJAS_y0PNM_x-U4Fwqu1uFYREIaxOXF5Wh03kA8wlaVkKX5NIUIGYAsQefXX04vriog6ishM1QfYB2a0ZvTy9HFpDm6g4fB3DEOOWbufTo1nwoooguIrsS2ZvXkbDz-e-JC7TLLAOu82iqFiHdAkDp7oYoJvs9C5tBeExIWchr16MwATmIZ5l0_8M_70dGcJ_AjBe7DNaOhpBs9FFOpmM9iyhXZUMYJTcgTl0Cj5ymZgXxhPjRxMYtB4x70swMTiVBD7kQYMh52obZSg753akKW8Yr5iUbd5v93YIGjJsPrlm6A3GRfC7CG6yAn4gWkMXVgpwzJXyfkX8xfY5jGWfeAgbUnDsl1FI2Uov6K-DSKINAYPfL561ctY2jE1STloktJGfA-Bl4M6udnlJEp0W8k-IrIcEH_OB0Q-3tyevFn5lw0n4ySV-7n8WAE5BzuWKJQ-FJI4ovNhvIgyXEBtIgRXA1jh31Yc9CPDmvwrf6Ojzrditx86Q60QIu0WidRmqzIIl0uQTqIWw5N3n1-PrN-DjFA9vLODJTC8E30LEYj9h8E2iBgL5nP7XpnC3DPdUI4pjhDyqxv4avG4uV8Dlw867OtLF2mP4XYbbGOpaEaPFOYRzoNE0gSLEpu1BRCHVES97o4VWSFARWBTNzgMZYQ_J78pLG_0nVFQiJS6UOB38p67DTcW3K1VuW1oMO2fLhNp5z4jxDrCqUYOQEvROW4XlpNNZZcHmFOatlgm1g-ydDSMUmwmK1zXDbaS6Yu2JF8hyTHOT0hT3FgjGzmR6mozf4ROZOVNqGshZZ7mRm6JD9a43ZW12-pgm01R3JVjSwpWR2YJ02Fs59MYS0fPzwReAVHNt2CehAJ9CSUM3JdId4ImGzFncJ3hY11lo9LKymZ3D_vC5VCmd4jx4u4iNmeyXFEX_EtZZsyQoN9VUbCr6ncI7jLGO6M-Wpw94b2ogjt79NaCFbT2VUxHrIS0YzvolSUET7Ly8pDWVUOj_RScyPWq0R_T7Tf9kX7RNoS0BHuGDLkDpaqKqG5BVzhfoHtR1VSa5fAFgojC6M_6Q0qywot59hYkySVS-rDx3eSseAovsPafXaUaUZomUZR4kvAdutHSoPfsaOYfTldbNhOXzT2cjOnY6W026YsXPX67YYHda9VXLL3Un9wM_pygk2JiE0SRbY6OQQ6-vJraPTlgIdpImRDRtn2tno-1Ftr8txtnmXnauScrZw1-tc6unxZSq0H7BNT2OB301uYOvbLDUYrfZx09ksbQymuVNd-eAQUveibdNUdarud_HCuuWzpSrKcUE97W5-gj9TO7pl0ZPEqVYH4yR1N-aHVzpylnNYVJyj3ucpxvquILZOlJbfMrXZ2jSMs9jVE-9DbeULdWVa8gYftBo4E3tAzl3Fzz1y6zT19kxTAkqZYTrxBNpTfh-A2sGShxtgLvLm3YVIKOdK3UUk22dzKzb38PgVVpaaluAkYgrxhdmvn0VSJGWawN1QyhRxkb1ws6v1_upF5eA)
 
 ## Improvements
 
@@ -262,15 +78,6 @@ There are so many features I want to add, and so many refactorings that could im
 - **Build System**: Use meson so it's faster and cross-platform. Would also reduce dependence on Rider/Visual Studio
 - **Stop Using UML**: Build a home-grown solution that's better for this specific use-case
 - **Dependency Injection**: Inject service class instances at runtime so there aren't as many static members
-
-## Preview
-
-![](preview.png)
-
-## Contribute
-
-If you have any ideas for features or want to implement a feature yourself, please email me or send a DM on Discord to
-TheNewJavaman#3966.
 
 ### Development Tools
 
