@@ -36,7 +36,6 @@ Adds virtual reality support to flatscreen Unreal Engine games
 ### Service Logic
 
 ```mermaid
-%%{init: {'theme': 'base', 'themeVariables': {'background': '#ffffff'}}}%%
 sequenceDiagram
   participant main as UnrealVR Service
   participant pipe as Pipe Service
@@ -45,8 +44,7 @@ sequenceDiagram
   participant graphics as Graphics Service
   participant engine as Game Engine Service
   
-  rect rgb(246, 248, 250)
-  note left of main: 1. Init pipe
+  note over main, engine: 1. Init pipe
   activate main
   note over main: DllAttach called
   main->>pipe: Init
@@ -67,10 +65,18 @@ sequenceDiagram
   log-)log: Flush buffer
   end
   deactivate log
-  end
+```
+
+```mermaid
+sequenceDiagram
+  participant main as UnrealVR Service
+  participant pipe as Pipe Service
+  participant log as Logging Service
+  participant xr as XR Service
+  participant graphics as Graphics Service
+  participant engine as Game Engine Service
   
-  rect rgb(246, 248, 250)
-  note left of main: 2. Init game
+  note over main, engine: 2. Init game
   activate pipe
   note over pipe: SettingsInitialized received
   pipe->>main: OnPipeSettingsInitialized
@@ -96,10 +102,18 @@ sequenceDiagram
   engine-->>main: 
   deactivate engine
   deactivate main
-  end
+```
+
+```mermaid
+sequenceDiagram
+  participant main as UnrealVR Service
+  participant pipe as Pipe Service
+  participant log as Logging Service
+  participant xr as XR Service
+  participant graphics as Graphics Service
+  participant engine as Game Engine Service
   
-  rect rgb(246, 248, 250)
-  note left of main: 3a. Update XR
+  note over main, engine: 3a. Update XR
   activate graphics
   note over graphics: Present hook called
   graphics->>main: OnSwapchainPresent
@@ -132,10 +146,18 @@ sequenceDiagram
   xr-->>main: 
   deactivate xr
   deactivate main
-  end
+```
+
+```mermaid
+sequenceDiagram
+  participant main as UnrealVR Service
+  participant pipe as Pipe Service
+  participant log as Logging Service
+  participant xr as XR Service
+  participant graphics as Graphics Service
+  participant engine as Game Engine Service
   
-  rect rgb(246, 248, 250)
-  note left of main: 3b. Update game
+  note over main, engine: 3b. Update game
   activate engine
   note over engine: Tick hook called
   engine->>main: OnGameTick
@@ -160,10 +182,18 @@ sequenceDiagram
   deactivate main
   engine-->>main: 
   deactivate engine
-  end
+```
+
+```mermaid
+sequenceDiagram
+  participant main as UnrealVR Service
+  participant pipe as Pipe Service
+  participant log as Logging Service
+  participant xr as XR Service
+  participant graphics as Graphics Service
+  participant engine as Game Engine Service
   
-  rect rgb(246, 248, 250)
-  note left of main: 4. Stop
+  note over main, engine: 4. Stop
   alt
   activate main
   note over main: DllDetach called
@@ -203,7 +233,6 @@ sequenceDiagram
   pipe-->>main: 
   deactivate pipe
   deactivate main
-  end
 ```
 
 ## Improvements
