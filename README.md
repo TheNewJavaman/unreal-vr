@@ -20,6 +20,191 @@ Adds virtual reality support to flatscreen Unreal Engine games
 - **Controller Tracking**: Link hand movement to in-game objects
 - **Synchronized Rendering**: Renders both eyes at the same time, reducing discomfort
 
+## Service Structure
+
+### Service Explanations
+
+| Service  | Description                                                                                  |
+|----------|----------------------------------------------------------------------------------------------|
+| UnrealVR | Handles mod logic at a high level                                                            |
+| Pipe     | Communicates with the app UI (launcher)                                                      |
+| Logging  | Flushes the buffered log to the pipe                                                         |
+| Graphics | Interacts with D3D11 (and D3D12 in the future)                                               |
+| XR       | Interacts with OpenXR                                                                        |
+| Engine   | Interacts with the application's game engine (Unreal Engine 4/5, maybe others in the future) |
+
+### Service Logic
+
+```mermaid
+sequenceDiagram
+  participant main as UnrealVR Service
+  participant pipe as Pipe Service
+  participant log as Logging Service
+  participant xr as XR Service
+  participant graphics as Graphics Service
+  participant engine as Game Engine Service
+  
+  rect rgba(0, 0, 0, 0.2)
+  note left of main: 1. Init pipe
+  activate main
+  note over main: DllAttach called
+  main->>pipe: Init
+  activate pipe
+  note over pipe: Open pipe
+  pipe-->>main: 
+  note over pipe: Async
+  loop
+  pipe-)pipe: Listen for commands
+  end
+  deactivate pipe
+  main->>log: Init
+  activate log
+  log-->>main: 
+  deactivate main
+  note over log: Async
+  loop
+  log-)log: Flush buffer
+  end
+  deactivate log
+  end
+  
+  rect rgba(0, 0, 0, 0.2)
+  note left of main: 2. Init game
+  activate pipe
+  note over pipe: SettingsInitialized received
+  pipe->>main: OnPipeSettingsInitialized
+  activate main
+  main-->>pipe: 
+  deactivate pipe
+  note over main: Async
+  main->>xr: Init
+  activate xr
+  note over xr: Start XR session
+  note over xr: Register input handlers
+  note over xr: Create swapchain resources
+  xr-->>main: 
+  deactivate xr
+  main->>graphics: Init
+  activate graphics
+  note over graphics: Hook swapchain present
+  graphics-->>main: 
+  deactivate graphics
+  main->>engine: Init
+  activate engine
+  note over engine: Hook game tick
+  engine-->>main: 
+  deactivate engine
+  deactivate main
+  end
+  
+  rect rgba(0, 0, 0, 0.2)
+  note left of main: 3a. Update XR
+  activate graphics
+  note over graphics: Present hook called
+  graphics->>main: OnSwapchainPresent
+  activate main
+  note over main: Mutex
+  main-->>graphics: 
+  deactivate graphics
+  note over main: Async
+  note over main: Switch GPU eye
+  main->>xr: GetFrame
+  activate xr
+  opt Left eye
+  note over xr: Begin frame
+  note over xr: Cache poses
+  end
+  note over xr: Get render surface
+  xr-->>main: 
+  deactivate xr
+  main->>graphics: ConvertFrame
+  activate graphics
+  note over graphics: Render fullscreen quad
+  graphics-->>main: 
+  deactivate graphics
+  main->>xr: SubmitFrame
+  activate xr
+  note over xr: Submit render surface
+  opt Right eye
+  note over xr: End frame
+  end
+  xr-->>main: 
+  deactivate xr
+  deactivate main
+  end
+  
+  rect rgba(0, 0, 0, 0.2)
+  note left of main: 3b. Update game
+  activate engine
+  note over engine: Tick hook called
+  engine->>main: OnGameTick
+  activate main
+  note over main: Mutex
+  main-->>engine: 
+  deactivate engine
+  note over main: Async
+  note over main: Switch CPU eye
+  main->>xr: GetPose
+  activate xr
+  deactivate xr
+  xr-->>main: 
+  main->>engine: UpdatePose
+  activate engine
+  note over engine: Update camera FOV
+  note over engine: Update camera rotation
+  opt
+  note over engine: Update player aim
+  end
+  note over engine: Update camera location
+  deactivate main
+  engine-->>main: 
+  deactivate engine
+  end
+  
+  rect rgba(0, 0, 0, 0.2)
+  note left of main: 4. Stop
+  alt
+  activate main
+  note over main: DllDetach called
+  else or
+  activate pipe
+  note over pipe: Stop received
+  pipe->>main: OnPipeStop
+  main-->>pipe: 
+  deactivate pipe
+  note over main: Async
+  end
+  main->>engine: Stop
+  activate engine
+  note over engine: Remove tick hook
+  engine-->>main: 
+  deactivate engine
+  main->>graphics: Stop
+  activate graphics
+  note over graphics: Remove present hook
+  note over graphics: Release conversion resources
+  graphics-->>main: 
+  deactivate graphics
+  main->>xr: Stop
+  activate xr
+  note over xr: Release swapchain resources
+  note over xr: Unregister input handlers 
+  note over xr: Shutdown XR session
+  xr-->>main: 
+  deactivate xr
+  main->>log: Stop
+  activate log
+  deactivate log
+  log-->>main: 
+  main->>pipe: Stop
+  activate pipe
+  note over pipe: Close pipe
+  pipe-->>main: 
+  deactivate pipe
+  deactivate main
+  end
+```
+
 ## Improvements
 
 There are so many features I want to add, and so many refactorings that could improve the code.
