@@ -22,7 +22,7 @@ namespace UnrealVr {
      * 6. Free
      * 7. Free
      */
-    class ThreadingService : public AService, public AInitable, public AStoppable {
+    class ThreadPoolService : public AService, public AInitable, public AStoppable {
     public:
         ErrorCode Init() override;
         ErrorCode Stop() override;
@@ -30,16 +30,16 @@ namespace UnrealVr {
         void QueueJob(const Job& job);
         
     private:
-        void ThreadLoop();
-        
-        LOGGER(ThreadingService)
-
         static constexpr uint32_t THREAD_COUNT = 8;
         
+        LOGGER(ThreadingService)
+        
         bool shouldStop = false;
-        std::mutex mtx;
-        std::condition_variable cv;
         std::vector<std::thread> threadPool;
         std::queue<Job> jobQueue;
+        std::mutex jobQueueMtx;
+        std::condition_variable jobQueueCv;
+
+        void ThreadLoop();
     };
 }

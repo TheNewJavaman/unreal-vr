@@ -12,7 +12,10 @@ namespace UnrealVr {
 
     enum class ErrorCode : uint16_t {
         Success = ERROR_VALUE(ErrorCategory::Generic) | 0x00,
-        PipeOpen = ERROR_VALUE(ErrorCategory::Pipe) | 0x00,
-        PipeClose = ERROR_VALUE(ErrorCategory::Pipe) | 0x01
+        Stopping = ERROR_VALUE(ErrorCategory::Generic) | 0x01,
+        
+        PipeOpenFailed = ERROR_VALUE(ErrorCategory::Pipe) | 0x00,
+        PipeCloseFailed = ERROR_VALUE(ErrorCategory::Pipe) | 0x01,
+        PipeClosed = ERROR_VALUE(ErrorCategory::Pipe) | 0x02
     };
 }

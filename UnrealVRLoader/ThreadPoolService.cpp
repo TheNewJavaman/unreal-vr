@@ -1,8 +1,8 @@
-#include "ThreadingService.h"
+#include "ThreadPoolService.h"
 
 namespace UnrealVr {
-    ErrorCode ThreadingService::Init() {
-        logger->Info("Initializing thread pool...");
+    ErrorCode ThreadPoolService::Init() {
+        logger->Info("Initializing thread pool");
         threadPool.resize(THREAD_COUNT);
         for (uint32_t i = 0; i < THREAD_COUNT; i++) {
             threadPool.at(i) = std::thread(ThreadLoop);
@@ -11,12 +11,12 @@ namespace UnrealVr {
         return ErrorCode::Success;
     }
 
-    void ThreadingService::ThreadLoop() {
+    void ThreadPoolService::ThreadLoop() {
         while (true) {
             Job job;
             {
-                std::unique_lock lock(mtx);
-                cv.wait(lock, [this] {
+                std::unique_lock lock(jobQueueMtx);
+                jobQueueCv.wait(lock, [this] {
                     return !jobQueue.empty() || shouldStop;
                 });
                 if (shouldStop) {
@@ -29,13 +29,13 @@ namespace UnrealVr {
         }
     }
 
-    ErrorCode ThreadingService::Stop() {
-        logger->Info("Stopping thread pool...");
+    ErrorCode ThreadPoolService::Stop() {
+        logger->Info("Stopping thread pool");
         {
-            std::unique_lock lock(mtx);
+            std::unique_lock lock(jobQueueMtx);
             shouldStop = true;
         }
-        cv.notify_all();
+        jobQueueCv.notify_all();
         logger->Info("Notified threads to exit");
         for (auto& activeThread : threadPool) {
             activeThread.join();
@@ -44,11 +44,11 @@ namespace UnrealVr {
         return ErrorCode::Success;
     }
 
-    void ThreadingService::QueueJob(const Job& job) {
+    void ThreadPoolService::QueueJob(const Job& job) {
         {
-            std::unique_lock lock(mtx);
+            std::unique_lock lock(jobQueueMtx);
             jobQueue.push(job);
         }
-        cv.notify_one();
+        jobQueueCv.notify_one();
     }
 }

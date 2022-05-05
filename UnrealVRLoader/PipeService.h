@@ -7,6 +7,7 @@
 #include <thread>
 
 #include "Logging.h"
+#include "ThreadPoolService.h"
 #include "UnrealVrService.h"
 
 namespace UnrealVr {
@@ -30,24 +31,25 @@ namespace UnrealVr {
      */
     class PipeService : public AService, AInitable, AStoppable {
     public:
+        bool connected = false;
+        PipeSettings settings = {};
+
         InjectionMap GetInjections() override;
         ErrorCode Init() override;
         ErrorCode Stop() override;
+        
         ErrorCode SendData(PipeCommand command, std::vector<char> data);
-
-        bool connected = false;
-        PipeSettings settings = {};
 
     private:
         static constexpr int BUFFER_SIZE = 1024;
 
         LOGGER(PipeService)
+        SERVICE(ThreadPoolService, threadPoolService)
         SERVICE(UnrealVrService, unrealVrService)
 
         HANDLE pipe = nullptr;
-        std::thread listenerThread;
-        bool shouldStopThread = false;
+        bool shouldStop = false;
 
-        void ListenerThread();
+        void ListenerJob();
     };
 }

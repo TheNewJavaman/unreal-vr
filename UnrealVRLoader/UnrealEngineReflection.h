@@ -16,10 +16,11 @@ namespace UnrealVr::UE {
         public:
             void operator()(UFunction* Function, void* Params);
         private:
-            LOGGER(UObject)
+            LOGGER(UObject::ProcessEvent)
+            UObject* parent = nullptr;
             typedef void (__cdecl Target_t)(UObject*, UFunction* Function, void* Params);
             Target_t* Target = nullptr;
-        } ProcessEvent;
+        } ProcessEvent = { .parent = this };
     };
 
     class UFunction : public UObject {};

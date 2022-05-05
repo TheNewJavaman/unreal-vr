@@ -46,7 +46,7 @@ namespace UnrealVr {
     /**
      * Injects the specified service as another
      *
-     * Useful for abstractions, such as injecting "D3D11Service" as "AGraphicsService"
+     * Useful for abstractions, such as injecting D3D11Service as AGraphicsService
      */ 
     void InjectServiceAs(const std::string& name, const std::string& as);
 

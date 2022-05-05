@@ -6,7 +6,6 @@
 #include <map>
 #include <mutex>
 #include <string>
-#include <thread>
 
 #include "AService.h"
 #include "PipeService.h"
@@ -20,7 +19,7 @@ namespace UnrealVr {
         Error = 2
     };
 
-    static std::map<LogLevel, std::string> LogLevelStrings = {
+    static constexpr std::map<LogLevel, std::string> LogLevelStrings = {
         { LogLevel::Info, "Info " },
         { LogLevel::Warn, "Warn " },
         { LogLevel::Error, "Error" }
@@ -28,22 +27,7 @@ namespace UnrealVr {
 
     static std::string scopedBuffer;
     static std::mutex scopedBufferMtx;
-
-    /**
-     * Automatically flushes the log buffer to the app UI
-     */
-    class LoggingService : public AService, public AInitable {
-    public:
-        InjectionMap GetInjections() override;
-        ErrorCode Init() override;
-
-    private:
-        SERVICE(PipeService, pipeService)
-
-        std::string& buffer = scopedBuffer;
-        std::mutex& bufferMtx = scopedBufferMtx;
-        std::thread workerThread;
-    };
+    static std::condition_variable scopedBufferCv;
 
     /**
      * A generic logger which outputs to the app UI (UnrealVRLauncher)
@@ -58,8 +42,11 @@ namespace UnrealVr {
         void Log(LogLevel logLevel, const std::string& format, Args ...args) {
             auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
             auto line = std::format("[{:%F %T}] [{}] [{}] " + format + "\n", now, source, logLevel, args...);
-            std::lock_guard guard(scopedBufferMtx);
-            scopedBuffer += line;
+            {
+                std::lock_guard guard(scopedBufferMtx);
+                scopedBuffer += line;
+            }
+            scopedBufferCv.notify_all();
         }
 
         template<typename... Args>
@@ -79,5 +66,27 @@ namespace UnrealVr {
 
     private:
         std::string source;
+    };
+
+    /**
+     * Automatically flushes the log buffer to the app UI
+     */
+    class LoggingService : public AService, public AInitable, public AStoppable {
+    public:
+        InjectionMap GetInjections() override;
+        ErrorCode Init() override;
+        ErrorCode Stop() override;
+
+    private:
+        LOGGER(LoggingService)
+        SERVICE(PipeService, pipeService)
+        SERVICE(ThreadPoolService, threadPoolService)
+
+        std::string& buffer = scopedBuffer;
+        std::mutex& bufferMtx = scopedBufferMtx;
+        std::condition_variable& bufferCv = scopedBufferCv;
+        bool shouldStop = false;
+
+        void FlushJob() const;
     };
 }

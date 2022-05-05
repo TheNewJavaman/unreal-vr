@@ -100,14 +100,14 @@
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="Logging.cpp" />
     <ClCompile Include="PipeService.cpp" />
-    <ClCompile Include="ThreadingService.cpp" />
+    <ClCompile Include="ThreadPoolService.cpp" />
     <ClCompile Include="UnrealEngineReflection.cpp" />
     <ClCompile Include="UnrealEngineService.cpp" />
     <ClCompile Include="UnrealVrLoader.cpp" />
     <ClCompile Include="UnrealVrService.cpp" />
     <ClInclude Include="OpenXrService.h" />
     <ClInclude Include="PipeService.h" />
-    <ClInclude Include="ThreadingService.h" />
+    <ClInclude Include="ThreadPoolService.h" />
     <ClInclude Include="UnrealEngineReflection.h" />
     <ClInclude Include="UnrealEngineService.h" />
     <ClInclude Include="UnrealVrLoader.h" />

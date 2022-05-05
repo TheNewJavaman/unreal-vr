@@ -3,8 +3,8 @@
 #include "PatternStreams.h"
 
 namespace UnrealVr::UE {
-    void UObject::ProcessEvent(UFunction* Function, void* Params) {
-        if (ProcessEvent_Orig == nullptr) {
+    void UObject::ProcessEvent_t::operator()(UFunction* Function, void* Params) {
+        if (Target == nullptr) {
             const auto match = PS::PatternStream(
                     {
                         0x40, 0x55, // push rbp
@@ -34,12 +34,12 @@ namespace UnrealVr::UE {
                 )
                 .FirstOrNullPtr();
             if (match == nullptr) {
-                logger->Error("Couldn't find UObject::ProcessEvent");
+                logger->Error("Couldn't find target");
                 return;
             }
-            logger->Info("Found UObject::ProcessEvent at {:p}", match);
-            ProcessEvent_Orig = reinterpret_cast<ProcessEvent_t*>(match);
+            logger->Info("Found target at {:p}", match);
+            Target = reinterpret_cast<Target_t*>(match);
         }
-        ProcessEvent_Orig(this, Function, Params);
+        Target(parent, Function, Params);
     }
 }
