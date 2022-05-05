@@ -37,7 +37,7 @@ namespace UnrealVr::UE {
                 logger->Error("Couldn't find UObject::ProcessEvent");
                 return;
             }
-            logger->Debug("Found UObject::ProcessEvent at {:p}", match);
+            logger->Info("Found UObject::ProcessEvent at {:p}", match);
             ProcessEvent_Orig = reinterpret_cast<ProcessEvent_t*>(match);
         }
         ProcessEvent_Orig(this, Function, Params);

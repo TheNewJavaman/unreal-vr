@@ -22,7 +22,7 @@ namespace UnrealVr {
             return ErrorCode::PipeOpen;
         }
         connected = true;
-        listenerThread = std::thread([&] { ListenerThread(); });
+        listenerThread = std::thread(this->ListenerThread);
         return ErrorCode::Success;
     }
 

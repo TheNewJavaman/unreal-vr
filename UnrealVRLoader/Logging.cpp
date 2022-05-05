@@ -10,7 +10,7 @@ namespace UnrealVr {
     }
 
     ErrorCode LoggingService::Init() {
-        workerThread = std::thread([&] {
+        workerThread = std::thread([this] {
             while (true) {
                 if (pipeService->connected && buffer.length() != 0) {
                     std::lock_guard guard(bufferMtx);

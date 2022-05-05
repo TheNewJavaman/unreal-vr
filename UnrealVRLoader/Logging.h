@@ -15,14 +15,12 @@
 
 namespace UnrealVr {
     enum class LogLevel : uint8_t {
-        Debug = 0,
-        Info = 1,
-        Warn = 2,
-        Error = 3
+        Info = 0,
+        Warn = 1,
+        Error = 2
     };
 
     static std::map<LogLevel, std::string> LogLevelStrings = {
-        { LogLevel::Debug, "Debug" },
         { LogLevel::Info, "Info " },
         { LogLevel::Warn, "Warn " },
         { LogLevel::Error, "Error" }
@@ -64,11 +62,6 @@ namespace UnrealVr {
             scopedBuffer += line;
         }
 
-        template<typename... Args>
-        void Debug(const std::string& format, Args ...args) {
-            Log(LogLevel::Debug, format, args...);
-        }
-        
         template<typename... Args>
         void Info(const std::string& format, Args ...args) {
             Log(LogLevel::Info, format, args...);

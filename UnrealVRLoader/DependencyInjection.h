@@ -17,8 +17,8 @@
     }
 #define SERVICE(T, t) std::shared_ptr<T> (t) = nullptr;
 #define INJECTION(T, ptr) { std::shared_ptr(&(ptr)), #T }
-#define INJECT(T) InjectService(#T);
-#define INJECT_AS(T, S) InjectServiceAs(#T, #S);
+#define INJECT_SERVICE(T) InjectService(#T);
+#define INJECT_SERVICE_AS(T, S) InjectServiceAs(#T, #S);
 #define GET_SERVICE(T) GetService<T>(#T)
 
 namespace UnrealVr {
