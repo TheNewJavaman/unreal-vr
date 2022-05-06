@@ -6,14 +6,14 @@
 #include <memory>
 #include <thread>
 
-#include "Logging.h"
+#include "Logger.h"
 #include "ThreadPoolService.h"
 #include "UnrealVrService.h"
 
 namespace UnrealVr {
     enum class PipeCommand : uint8_t {
         Setting = 0,
-        Initialized = 1,
+        InitDone = 1,
         Stop = 2,
         Log = 3
     };

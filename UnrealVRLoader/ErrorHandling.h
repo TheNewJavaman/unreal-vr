@@ -3,6 +3,11 @@
 #include <cstdint>
 
 #define ERROR_VALUE(e) static_cast<uint16_t>(e)
+#define CHECK(e, m, f)               \
+    if ((e) != ErrorCode::Success) { \
+        logger->Error(m);            \
+        f                            \
+    }
 
 namespace UnrealVr {
     enum class ErrorCategory : uint16_t {
@@ -13,7 +18,8 @@ namespace UnrealVr {
     enum class ErrorCode : uint16_t {
         Success = ERROR_VALUE(ErrorCategory::Generic) | 0x00,
         Stopping = ERROR_VALUE(ErrorCategory::Generic) | 0x01,
-        
+        InitFailed = ERROR_VALUE(ErrorCategory::Generic) | 0x02,
+
         PipeOpenFailed = ERROR_VALUE(ErrorCategory::Pipe) | 0x00,
         PipeCloseFailed = ERROR_VALUE(ErrorCategory::Pipe) | 0x01,
         PipeClosed = ERROR_VALUE(ErrorCategory::Pipe) | 0x02

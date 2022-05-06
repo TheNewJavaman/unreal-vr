@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AEngineService.h"
-#include "Logging.h"
+#include "Logger.h"
 #include "PipeService.h"
 
 namespace UnrealVr {

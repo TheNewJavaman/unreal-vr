@@ -94,23 +94,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AGraphicsService.cpp" />
     <ClCompile Include="D3D11Service.cpp" />
     <ClCompile Include="DependencyInjection.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Logging.cpp" />
+    <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="LoggingService.cpp" />
+    <ClCompile Include="OpenXrD3D11Service.cpp" />
     <ClCompile Include="PipeService.cpp" />
     <ClCompile Include="ThreadPoolService.cpp" />
     <ClCompile Include="UnrealEngineReflection.cpp" />
     <ClCompile Include="UnrealEngineService.cpp" />
-    <ClCompile Include="UnrealVrLoader.cpp" />
     <ClCompile Include="UnrealVrService.cpp" />
-    <ClInclude Include="OpenXrService.h" />
+    <ClInclude Include="LoggingService.h" />
+    <ClInclude Include="OpenXrD3D11Service.h" />
     <ClInclude Include="PipeService.h" />
     <ClInclude Include="ThreadPoolService.h" />
     <ClInclude Include="UnrealEngineReflection.h" />
     <ClInclude Include="UnrealEngineService.h" />
-    <ClInclude Include="UnrealVrLoader.h" />
     <ClInclude Include="UnrealVrService.h" />
     <FxCompile Include="old\PixelShader.hlsl">
       <ObjectFileOutput>
@@ -147,7 +147,7 @@
     <ClInclude Include="AGraphicsService.h" />
     <ClInclude Include="AService.h" />
     <ClInclude Include="AXrService.h" />
-    <ClInclude Include="Logging.h" />
+    <ClInclude Include="Logger.h" />
     <ClInclude Include="old\D3D11Service.h" />
     <ClInclude Include="old\HookHelper.h" />
     <ClInclude Include="old\OpenXRService.h" />

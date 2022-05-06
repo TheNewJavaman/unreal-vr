@@ -4,7 +4,7 @@
 #include <queue>
 
 #include "AService.h"
-#include "Logging.h"
+#include "Logger.h"
 
 namespace UnrealVr {
     typedef std::function<void()> Job;
@@ -22,7 +22,7 @@ namespace UnrealVr {
      * 6. Free
      * 7. Free
      */
-    class ThreadPoolService : public AService, public AInitable, public AStoppable {
+    class ThreadPoolService : public AService {
     public:
         ErrorCode Init() override;
         ErrorCode Stop() override;

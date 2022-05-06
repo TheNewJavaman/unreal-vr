@@ -3,26 +3,19 @@
 #include <memory>
 
 #include "AService.h"
-#include "DependencyInjection.h"
 #include "UnrealVrService.h"
 
 namespace UnrealVr {
-    enum class GraphicsApi : uint8_t {
-        D3D11 = 0
-    };
-
-    struct APresentParams {
-        GraphicsApi graphicsApi;
-    };
+    struct APresentParams {};
 
     /**
      * Defines required functionality for graphics APIs
      */
-    class AGraphicsService : public AService, public AInitable, public AStoppable {
+    class AGraphicsService : public AService {
     public:
-        InjectionMap GetInjections() override;
-
-    protected:
-        SERVICE(UnrealVrService, unrealVrService)
+        virtual ErrorCode ConvertFrame(
+            std::shared_ptr<APresentParams> inPresentParams,
+            std::shared_ptr<APresentParams> outPresentParams
+        );
     };
 }

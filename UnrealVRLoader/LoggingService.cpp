@@ -1,16 +1,6 @@
-#include "Logging.h"
-
-#include "DependencyInjection.h"
+﻿#include "LoggingService.h"
 
 namespace UnrealVr {
-    Logger::Logger(std::string source) {
-        if (source.length() > 24) {
-            this->source = source.substr(0, 21) + "...";
-        } else {
-            this->source = std::format("{: >24}", source);
-        }
-    }
-
     InjectionMap LoggingService::GetInjections() {
         return {
             INJECTION(PipeService, pipeService),
@@ -23,7 +13,7 @@ namespace UnrealVr {
         return ErrorCode::Success;
     }
 
-    void LoggingService::FlushJob() const {
+    void LoggingService::FlushJob() {
         while (true) {
             std::unique_lock lock(bufferMtx);
             bufferCv.wait(lock, [this] {
@@ -35,7 +25,7 @@ namespace UnrealVr {
             }
             const auto e = pipeService->SendData(PipeCommand::Log, std::vector(buffer.begin(), buffer.end()));
             if (e == ErrorCode::PipeClosed) {
-                logger->Info("Stopping flush job due because the pipe was closed");
+                logger->Info("Stopping flush job because the pipe was closed");
                 return;
             }
             buffer = "";

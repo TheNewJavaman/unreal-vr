@@ -1,5 +1,5 @@
 #pragma once
-#include "Logging.h"
+#include "Logger.h"
 
 /**
  * Definitions for useful Unreal Engine structs, classes, enums, etc. 

@@ -7,8 +7,7 @@
 #include <mutex>
 #include <string>
 
-#include "AService.h"
-#include "PipeService.h"
+#include "LoggingService.h"
 
 #define LOGGER(T) auto logger = std::make_unique<Logger>(#T);
 
@@ -25,10 +24,6 @@ namespace UnrealVr {
         { LogLevel::Error, "Error" }
     };
 
-    static std::string scopedBuffer;
-    static std::mutex scopedBufferMtx;
-    static std::condition_variable scopedBufferCv;
-
     /**
      * A generic logger which outputs to the app UI (UnrealVRLauncher)
      *
@@ -43,10 +38,10 @@ namespace UnrealVr {
             auto now = std::chrono::current_zone()->to_local(std::chrono::system_clock::now());
             auto line = std::format("[{:%F %T}] [{}] [{}] " + format + "\n", now, source, logLevel, args...);
             {
-                std::lock_guard guard(scopedBufferMtx);
-                scopedBuffer += line;
+                std::lock_guard guard(LoggingService::bufferMtx);
+                LoggingService::buffer += line;
             }
-            scopedBufferCv.notify_all();
+            LoggingService::bufferCv.notify_all();
         }
 
         template<typename... Args>
@@ -58,7 +53,7 @@ namespace UnrealVr {
         void Warn(const std::string& format, Args ...args) {
             Log(LogLevel::Warn, format, args...);
         }
-        
+
         template<typename... Args>
         void Error(const std::string& format, Args ...args) {
             Log(LogLevel::Error, format, args...);
@@ -66,27 +61,5 @@ namespace UnrealVr {
 
     private:
         std::string source;
-    };
-
-    /**
-     * Automatically flushes the log buffer to the app UI
-     */
-    class LoggingService : public AService, public AInitable, public AStoppable {
-    public:
-        InjectionMap GetInjections() override;
-        ErrorCode Init() override;
-        ErrorCode Stop() override;
-
-    private:
-        LOGGER(LoggingService)
-        SERVICE(PipeService, pipeService)
-        SERVICE(ThreadPoolService, threadPoolService)
-
-        std::string& buffer = scopedBuffer;
-        std::mutex& bufferMtx = scopedBufferMtx;
-        std::condition_variable& bufferCv = scopedBufferCv;
-        bool shouldStop = false;
-
-        void FlushJob() const;
     };
 }

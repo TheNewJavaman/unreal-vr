@@ -61,8 +61,8 @@ namespace UnrealVr {
                     break;
                 }
                 break;
-            case PipeCommand::Initialized:
-                logger->Info("Received Initialized command");
+            case PipeCommand::InitDone:
+                logger->Info("Received InitDone command");
                 unrealVrService->OnPipeSettingsInitialized();
                 break;
             case PipeCommand::Stop:
