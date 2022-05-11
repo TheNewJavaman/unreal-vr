@@ -6,14 +6,16 @@
 #include "OpenXrD3D11Service.h"
 #include "UnrealEngineService.h"
 
-#define CHECK_INIT(s)                                                             \
-    if ((s)->Init() != ErrorCode::Success) {                                      \
-        logger->Error(#m " service init failed");                                 \
-        Stop();                                                                   \
-        return ErrorCode::InitFailed;                                             \
-    }                                                                             \
-    orderedStopFunctions.insert(orderedStopFunctions.begin(), { (s)->Stop, #s });
-
+#define CHECK_INIT(s, n)                                                             \
+    {                                                                                \
+        const auto e = (s)->Init();                                                  \
+        if (e != ErrorCode::Success) {                                               \
+            logger->Error(n " init failed; error {:x}", e);                          \
+            Stop();                                                                  \
+            return ErrorCode::InitFailed;                                            \
+        }                                                                            \
+        orderedStopFunctions.insert(orderedStopFunctions.begin(), { (s)->Stop, n }); \
+    }
 namespace UnrealVr {
     void OnAttach() {
         std::thread workerThread([] {
@@ -53,32 +55,50 @@ namespace UnrealVr {
     }
 
     ErrorCode UnrealVrService::Init() {
-        CHECK_INIT(threadPoolService)
-        CHECK_INIT(pipeService)
-        CHECK_INIT(loggingService)
+        CHECK_INIT(threadPoolService, "Thread pool service")
+        CHECK_INIT(pipeService, "Pipe service")
+        CHECK_INIT(loggingService, "Logging service")
         return ErrorCode::Success;
     }
 
     void UnrealVrService::OnPipeInitDone() {
         threadPoolService->QueueJob([this] {
-            CHECK_INIT(xrService)
-            CHECK_INIT(graphicsService)
-            CHECK_INIT(engineService)
+            CHECK_INIT(xrService, "XR service")
+            CHECK_INIT(graphicsService, "Graphics service")
+            CHECK_INIT(engineService, "Engine service")
             return ErrorCode::Success;
         });
     }
 
-    void UnrealVrService::OnGraphicsPresent(const std::shared_ptr<APresentParams>& presentParams) {
-        std::unique_lock queueLock(swapchainPresentMtx);
-        swapchainPresentCv.wait(queueLock, [this] {
-            return !swapchainPresentJobActive;
-        });
+    void UnrealVrService::OnEngineTick() {
+        std::unique_lock queueLock(engineTickMtx);
+        if (engineTickJobActive) {
+            engineTickCv.wait(queueLock);
+        }
         threadPoolService->QueueJob([this] {
-            std::lock_guard jobLock(swapchainPresentMtx);
-            swapchainPresentJobActive = true;
-            
-            swapchainPresentCv.notify_one();
-            swapchainPresentJobActive = false;
+            std::lock_guard jobLock(engineTickMtx);
+            engineTickJobActive = true;
+            const auto e = engineService->UpdatePose(cpuEye);
+            if (e != ErrorCode::Success) {
+                logger->Error("Engine pose update failed; error {:x}", e);
+            }
+        });
+    }
+    
+    void UnrealVrService::OnGraphicsPresent(const std::shared_ptr<APresentParams>& presentParams) {
+        std::unique_lock queueLock(graphicsPresentMtx);
+        if (graphicsPresentJobActive) {
+            graphicsPresentCv.wait(queueLock);
+        }
+        threadPoolService->QueueJob([this, presentParams] {
+            std::lock_guard jobLock(graphicsPresentMtx);
+            graphicsPresentJobActive = true;
+            const auto e = xrService->SubmitFrame(presentParams, gpuEye);
+            if (e != ErrorCode::Success) {
+                logger->Error("XR frame submission failed; error {:x}", e);
+            }
+            graphicsPresentCv.notify_one();
+            graphicsPresentJobActive = false;
         });
     }
 
@@ -88,8 +108,9 @@ namespace UnrealVr {
 
     ErrorCode UnrealVrService::Stop() {
         for (const auto& [stop, name] : orderedStopFunctions) {
-            if (stop() != ErrorCode::Success) {
-                logger->Error(name + " service stop failed");
+            const auto e = stop();
+            if (e != ErrorCode::Success) {
+                logger->Error(name + " stop failed; error {:x}", e);
             }
         }
         return ErrorCode::Success;

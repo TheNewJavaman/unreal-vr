@@ -3,11 +3,6 @@
 #include <cstdint>
 
 #define ERROR_VALUE(e) static_cast<uint16_t>(e)
-#define CHECK(e, m, f)               \
-    if ((e) != ErrorCode::Success) { \
-        logger->Error(m);            \
-        f                            \
-    }
 
 namespace UnrealVr {
     enum class ErrorCategory : uint16_t {

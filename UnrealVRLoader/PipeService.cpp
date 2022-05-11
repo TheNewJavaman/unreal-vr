@@ -20,7 +20,7 @@ namespace UnrealVr {
             nullptr
         );
         if (pipe == INVALID_HANDLE_VALUE) {
-            logger->Error("Couldn't open launcher pipe; error {}", GetLastError());
+            logger->Error("Couldn't open launcher pipe; error {:x}", GetLastError());
             return ErrorCode::PipeOpenFailed;
         }
         logger->Info("Successfully opened launcher pipe");
@@ -63,7 +63,7 @@ namespace UnrealVr {
                 break;
             case PipeCommand::InitDone:
                 logger->Info("Received InitDone command");
-                unrealVrService->OnPipeSettingsInitialized();
+                unrealVrService->OnPipeInitDone();
                 break;
             case PipeCommand::Stop:
                 logger->Info("Received Stop command");
@@ -103,7 +103,7 @@ namespace UnrealVr {
         shouldStop = true;
         logger->Info("Closing launcher pipe");
         if (!CloseHandle(pipe)) {
-            logger->Error("Couldn't close launcher pipe handle; error {}", GetLastError());
+            logger->Error("Couldn't close launcher pipe handle; error {:x}", GetLastError());
             return ErrorCode::PipeCloseFailed;
         }
         logger->Info("Successfully closed launcher pipe");

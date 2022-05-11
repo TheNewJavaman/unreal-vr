@@ -49,6 +49,6 @@ namespace UnrealVr {
     class AXrService : public AService {
     public:
         virtual Directional2D GetPose(Eye eye);
-        virtual ErrorCode SubmitFrame(Eye eye);
+        virtual ErrorCode SubmitFrame(const std::shared_ptr<APresentParams>& presentParams, Eye eye);
     };
 }

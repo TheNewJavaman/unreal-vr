@@ -18,18 +18,18 @@ namespace UnrealVr::UE {
                 )
                 .HasPatternInRange(
                     {
-                        0x4D, 0x8B, 0xF8,                  // mov r15, r8
-                        0x48, 0X8B, 0xF2,                  // mov rsi, rdx
-                        0x4C, 0x8B, 0xE1,                  // mov r12, rcx
-                        0x41, 0xB8, 0xFF, 0xFF, 0x00, 0x00 // mov r8d, 0x0000FFFF
+                        0x4d, 0x8b, 0xf8,                  // mov r15, r8
+                        0x48, 0x8b, 0xf2,                  // mov rsi, rdx
+                        0x4c, 0x8b, 0xe1,                  // mov r12, rcx
+                        0x41, 0xb8, 0xff, 0xff, 0x00, 0x00 // mov r8d, 0x0000FFFF
                     }, 0, 0x40, false
                 )
                 .HasPatternInRange(
                     {
                         0x48, 0x98,            // cdqe
-                        0xC1, 0xF9, 0x10,      // sar ecx, 0x10
-                        0x48, 0x63, 0xC9,      // movsxd rcx, ecx
-                        0x48, 0x8B, 0x0C, 0xC8 // lea rdx, [rax + rax * 2]
+                        0xc1, 0xf9, 0x10,      // sar ecx, 0x10
+                        0x48, 0x63, 0xc9,      // movsxd rcx, ecx
+                        0x48, 0x8b, 0x0c, 0xc8 // lea rdx, [rax + rax * 2]
                     }, 0, 0x80, false
                 )
                 .FirstOrNullPtr();

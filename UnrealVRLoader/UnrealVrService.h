@@ -24,6 +24,7 @@ namespace UnrealVr {
 
         void OnPipeInitDone();
         void OnPipeStop();
+        void OnEngineTick();
         void OnGraphicsPresent(const std::shared_ptr<APresentParams>& presentParams);
         
     private:
@@ -36,9 +37,15 @@ namespace UnrealVr {
         SERVICE(ThreadPoolService, threadPoolService)
 
         std::vector<std::pair<std::function<ErrorCode()>, std::string>> orderedStopFunctions;
+
+        std::mutex engineTickMtx;
+        std::condition_variable engineTickCv;
+        bool engineTickJobActive = false;
+        Eye cpuEye = Eye::Right;
         
-        std::mutex swapchainPresentMtx;
-        std::condition_variable swapchainPresentCv;
-        bool swapchainPresentJobActive = false;
+        std::mutex graphicsPresentMtx;
+        std::condition_variable graphicsPresentCv;
+        bool graphicsPresentJobActive = false;
+        Eye gpuEye = Eye::Right;
     };
 }

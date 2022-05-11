@@ -1,24 +1,11 @@
-﻿
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.2.32210.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "UnrealVRLoader", "UnrealVRLoader\UnrealVRLoader.vcxproj", "{D6615132-07AE-494B-91B0-84C8BD5EFF23}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libMinHook", "minhook\build\VC16\libMinHook.vcxproj", "{F142A341-5EE0-442D-A15F-98AE9B48DBAE}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7C1C8400-8B57-4E8F-B04C-7F56FC146C56}"
-	ProjectSection(SolutionItems) = preProject
-		README.md = README.md
-		rizin_to_uml.py = rizin_to_uml.py
-	EndProjectSection
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnrealVRLauncher", "UnrealVRLauncher\UnrealVRLauncher.csproj", "{F8C4A549-E621-4AA5-A8ED-8C2C12250C79}"
 	ProjectSection(ProjectDependencies) = postProject
 		{D6615132-07AE-494B-91B0-84C8BD5EFF23} = {D6615132-07AE-494B-91B0-84C8BD5EFF23}
 	EndProjectSection
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PatternStreams", "PatternStreams\PatternStreams\PatternStreams.vcxproj", "{37CD8A5D-65E8-4D18-90A3-595EEA6C6F19}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

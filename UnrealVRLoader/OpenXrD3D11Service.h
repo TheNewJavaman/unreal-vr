@@ -12,6 +12,6 @@ namespace UnrealVr {
         ErrorCode Init() override;
         ErrorCode Stop() override;
         Directional2D GetPose(Eye eye) override;
-        ErrorCode SubmitFrame(Eye eye) override;
+        ErrorCode SubmitFrame(const std::shared_ptr<APresentParams>& presentParams, Eye eye) override;
     };
 }

@@ -1,6 +1,0 @@
-[submodule "minhook"]
-	path = minhook
-	url = https://github.com/TheNewJavaman/minhook
-[submodule "PatternStreams"]
-	path = PatternStreams
-	url = https://github.com/TheNewJavaman/PatternStreams
