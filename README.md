@@ -40,6 +40,19 @@ TheNewJavaman#3966.
 | UnrealVRCore         | C++       | The main logic of the mod, which manages DirectX, OpenXR, and Unreal Engine                                                          |
 | UnrealVRLauncher     | C#        | The app UI; this is the only subproject which relies on Visual Studio for development, the rest use CMake/CLion                      |
 | docs                 | HTML, CSS | The website ([unrealvr.dev](https://unrealvr.dev))                                                                                   |
+
+### UnrealCameraInjector
+
+- Renders a custom point of view
+- Exports generated frames to a custom render surface
+- Is a universal injector mod, not an Unreal plugin or similar baked-in solution
+- Allows configuring whether the original viewport is still rendered/visible on the desktop
+- Allows injecting an arbitrary number of cameras
+- Editable projection matrix
+- Other features like smoothing
+- Toggleable heads-up display (HUD), application UI
+- Allows interfacing with existing Unreal Engine functionality via hooks and the object pool
+
 ### UnrealVRCore Service Structure
 
 #### Service Explanations
