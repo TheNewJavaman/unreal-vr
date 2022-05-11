@@ -1,4 +1,7 @@
 <code_scheme name="CLionGoldenRules" version="173">
+  <CMakeCodeStyleSettings>
+    <option name="FORCE_COMMANDS_CASE" value="1" />
+  </CMakeCodeStyleSettings>
   <Objective-C>
     <option name="KEEP_STRUCTURES_IN_ONE_LINE" value="true" />
     <option name="FUNCTION_NON_TOP_AFTER_RETURN_TYPE_WRAP" value="0" />
@@ -68,8 +71,10 @@
       <rule entity="STRUCT_MEMBER_FIELD" visibility="ANY" specifier="CONST,STATIC" prefix="" style="SCREAMING_SNAKE_CASE" suffix="" />
     </rules>
   </Objective-C-extensions>
+  <codeStyleSettings language="CMake">
+    <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
+  </codeStyleSettings>
   <codeStyleSettings language="ObjectiveC">
-    <option name="KEEP_CONTROL_STATEMENT_IN_ONE_LINE" value="false" />
     <option name="KEEP_BLANK_LINES_IN_DECLARATIONS" value="1" />
     <option name="KEEP_BLANK_LINES_IN_CODE" value="1" />
     <option name="KEEP_BLANK_LINES_BEFORE_RBRACE" value="1" />
@@ -83,7 +88,6 @@
     <option name="TERNARY_OPERATION_WRAP" value="5" />
     <option name="ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE" value="true" />
     <option name="ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE" value="true" />
-    <option name="IF_BRACE_FORCE" value="3" />
     <option name="DOWHILE_BRACE_FORCE" value="3" />
     <option name="FOR_BRACE_FORCE" value="3" />
     <indentOptions>

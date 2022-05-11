@@ -1,4 +1,4 @@
-#include "UnrealReflection.h"
+#include "UnrealCore.h"
 
 #include "PatternStreams.h"
 
@@ -32,5 +32,9 @@ namespace UE {
         if (match == nullptr) return false;
         target = reinterpret_cast<Target_t>(match);
         return true;
+    }
+
+    void UObject::ProcessEvent_t::operator ()(UFunction* function, void* params) {
+        target(parent, function, params);
     }
 }

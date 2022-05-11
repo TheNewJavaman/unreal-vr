@@ -41,6 +41,12 @@ TheNewJavaman#3966.
 | UnrealVRLauncher     | C#        | The app UI; this is the only subproject which relies on Visual Studio for development, the rest use CMake/CLion                      |
 | docs                 | HTML, CSS | The website ([unrealvr.dev](https://unrealvr.dev))                                                                                   |
 
+### UnrealReflector
+
+- Structs are not named exactly, but their memory layouts should be correct
+- Check Doxygen comments on each struct for applicable versions of UE
+- Additional helper functions have been added for caching, constructors, etc.
+
 ### UnrealCameraInjector
 
 - Renders a custom point of view
