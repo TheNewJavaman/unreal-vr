@@ -5,11 +5,10 @@
 #include <vector>
 
 namespace PS {
-    typedef uint8_t Byte, * BytePtr;
-
-    typedef std::function<void(BytePtr& ptr)> BytePtrFunc;
-
-    typedef std::function<void(const BytePtr& ptr)> ConstBytePtrFunc;
+    using Byte = uint8_t;
+    using BytePtr = Byte*;
+    using BytePtrFunc = std::function<void(BytePtr&)>;
+    using ConstBytePtrFunc = std::function<void(const BytePtr&)>;
 
     class PatternByte {
     public:

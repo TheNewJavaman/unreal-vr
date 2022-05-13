@@ -2,17 +2,22 @@
 
 #include <cstdint>
 
-template<typename Raw_t>
+template<typename Target>
 class ACacheable {
-    public:
-    typedef Raw_t* Target_t;
-    Target_t target = nullptr;
+public:
+    using TargetPtr = Target*;
+
+    static inline TargetPtr target = nullptr;
+
     virtual bool RefreshCache() = 0;
 };
 
-template<typename Target_t, typename Parent_t>
-class ACacheableMember : public ACacheable<Target_t> {
-    public:
-    ACacheableMember(Parent_t* parent) : parent(parent) {}
-    Parent_t* parent;
+template<typename Target, typename Parent>
+class ACacheableMember : public ACacheable<Target> {
+public:
+    using ParentPtr = Parent*;
+
+    ACacheableMember(ParentPtr parent) : parent(parent) {}
+
+    ParentPtr parent;
 };
