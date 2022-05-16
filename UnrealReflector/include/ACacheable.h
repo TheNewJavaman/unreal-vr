@@ -3,8 +3,7 @@
 #include <cstdint>
 
 template<typename Target>
-class ACacheable {
-public:
+struct ACacheable {
     using TargetPtr = Target*;
 
     static inline TargetPtr target = nullptr;
@@ -13,8 +12,7 @@ public:
 };
 
 template<typename Target, typename Parent>
-class ACacheableMember : public ACacheable<Target> {
-public:
+struct ACacheableMember : public ACacheable<Target> {
     using ParentPtr = Parent*;
 
     ACacheableMember(ParentPtr parent) : parent(parent) {}

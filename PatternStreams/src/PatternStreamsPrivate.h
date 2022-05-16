@@ -13,8 +13,7 @@ namespace PS {
         size_t Length;
     };
 
-    class ProcessInfo {
-    public:
+    struct ProcessInfo {
         static BytePtrInterval GetModuleInterval(const std::string& module);
         static HANDLE GetProcessHandle();
 

@@ -1,9 +1,9 @@
-#include "UnrealCoreUObject.h"
+#include "Unreal/CoreUObject.h"
 
 #include "PatternStreams.h"
 
 namespace UE {
-    bool UObject_ProcessEvent_0::RefreshCache() {
+    bool UObject_X::ProcessEvent_0_t::RefreshCache() {
         const auto match = PS::PatternStream(
             {
                 0x40, 0x55, // push rbp
@@ -34,7 +34,7 @@ namespace UE {
         return true;
     }
 
-    void UObject_ProcessEvent_0::operator ()(UFunction_0* function, void* params) {
+    void UObject_X::ProcessEvent_0_t::operator ()(UFunction_X* function, void* params) {
         target(parent, function, params);
     }
 }

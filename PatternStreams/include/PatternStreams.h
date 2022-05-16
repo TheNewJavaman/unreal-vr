@@ -10,8 +10,7 @@ namespace PS {
     using BytePtrFunc = std::function<void(BytePtr&)>;
     using ConstBytePtrFunc = std::function<void(const BytePtr&)>;
 
-    class PatternByte {
-    public:
+    struct PatternByte {
         PatternByte() : value(0x00), isWildcard(true) {}
         PatternByte(const Byte value) : value(value), isWildcard(false) {}
 
@@ -19,15 +18,13 @@ namespace PS {
         bool isWildcard;
     };
 
-    class Pattern : public std::vector<PatternByte> {
-    public:
+    struct Pattern : std::vector<PatternByte> {
         Pattern(std::initializer_list<PatternByte> l) : std::vector<PatternByte>(l) {}
 
         bool IsMatch(const BytePtr& ptr) const;
     };
 
-    class PatternStream : public std::vector<BytePtr> {
-    public:
+    struct PatternStream : std::vector<BytePtr> {
         PatternStream(const Pattern& pattern, const std::string& module = "");
 
         PatternStream HasPatternInRange(
