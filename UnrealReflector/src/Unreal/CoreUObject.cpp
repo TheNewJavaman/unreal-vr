@@ -2,7 +2,7 @@
 
 #include "PatternStreams.h"
 
-namespace UE {
+namespace UEVersionedApi {
     bool UObject_X::ProcessEvent_0_t::RefreshCache() {
         const auto match = PS::PatternStream(
             {

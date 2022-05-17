@@ -2,15 +2,11 @@
 
 #include <cstdint>
 
-namespace UE {
-    /**
-     * @todo Fields
-     */
-    struct FScriptContainerElement_X {};
+namespace UEVersionedApi {
+    /// @todo Fields
+    struct FScriptContainerElement_X {};;
 
-    /**
-     * @version 4.0 - 4.22
-     */
+    /// @version 4.0 - 4.22
     struct FHeapAllocator_0 {
         enum { NeedsElementType = false };
         enum { RequireRangeCheck = true };
@@ -23,10 +19,7 @@ namespace UE {
         struct ForElementType : ForAnyElementType {};
     };
 
-    /**
-     * @version 4.23 - Latest (5.0)
-     * @tparam IndexSize
-     */
+    /// @version 4.23 - Latest (5.0)
     template<int IndexSize>
     struct TBitsToSizeType_0;
 
@@ -42,9 +35,7 @@ namespace UE {
     template<>
     struct TBitsToSizeType_0<64> { using Type = int64_t; };
 
-    /**
-     * @version 4.23 - Latest (5.0)
-     */
+    /// @version 4.23 - Latest (5.0)
     template<int IndexSize>
     struct TSizedHeapAllocator_0 {
         using SizeType = typename TBitsToSizeType_0<IndexSize>::Type;
@@ -60,29 +51,21 @@ namespace UE {
         struct ForElementType : ForAnyElementType {};
     };
 
-    /**
-     * @version 4.23 - Latest (5.0)
-     */
+    /// @version 4.23 - Latest (5.0)
     template<int IndexSize>
     struct TSizedDefaultAllocator_0 : TSizedHeapAllocator_0<IndexSize> {
         typedef TSizedHeapAllocator_0<IndexSize> Typedef;
     };
 
-    /**
-     * @version 4.0 - 4.22
-     */
+    /// @version 4.0 - 4.22
     struct FDefaultAllocator_0 : FHeapAllocator_0 {
         typedef FHeapAllocator_0 Typedef;
     };
 
-    /**
-     * @version 4.23 - ?
-     */
+    /// @version 4.23 - ?
     using FDefaultAllocator_1 = TSizedDefaultAllocator_0<32>;
 
-    /**
-     * @version 4.0 - Latest (5.0)
-     */
+    /// @version 4.0 - Latest (5.0)
     template<bool Predicate, typename TrueClass, typename FalseClass>
     struct TChooseClass_0;
 
@@ -96,9 +79,7 @@ namespace UE {
         typedef FalseClass Result;
     };
 
-    /**
-     * @version 4.0 - 4.22
-     */
+    /// @version 4.0 - 4.22
     template<typename InElementType, typename InAllocator = FDefaultAllocator_0>
     struct TArray_0 {
         typedef InElementType ElementType;
@@ -114,9 +95,7 @@ namespace UE {
         int32_t ArrayMax;
     };
 
-    /**
-     * @version 4.23 - Latest (5.0)
-     */
+    /// @version 4.23 - Latest (5.0)
     template<typename InElementType, typename InAllocator = FDefaultAllocator_1>
     struct TArray_1 {
         typedef InElementType ElementType;
@@ -133,9 +112,7 @@ namespace UE {
         SizeType ArrayMax;
     };
 
-    /**
-     * @version ? - ?
-     */
+    /// @version 4.0 - 4.18
     template<typename ElementType, int32_t MaxTotalElements, int32_t ElementsPerChunk>
     struct TStaticIndirectArrayThreadSafeRead_0 {
         enum { ChunkTableSize = (MaxTotalElements + ElementsPerChunk - 1) / ElementsPerChunk };
@@ -145,8 +122,11 @@ namespace UE {
         int32_t NumChunks;
     };
 
-    /**
-     * @todo Fields
-     */
-    struct FUObjectItem {};
+    /// @version 4.19 - ?
+    /// @todo Fields
+    template<typename ElementType, int32_t MaxTotalElements, int32_t ElementsPerChunk>
+    struct TStaticIndirectArrayThreadSafeRead_1 {};
+
+    /// @todo Fields
+    struct FUObjectItem_X {};
 }

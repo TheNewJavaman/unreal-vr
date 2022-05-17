@@ -3,9 +3,7 @@
 #include <cstdint>
 
 namespace UE {
-    /**
-     * @version 4.0 - 4.27
-     */
+    /// @version 4.0 - 4.27
     struct FVector_0 {
         FVector_0() : X(0), Y(0), Z(0) {}
         FVector_0(const float x, const float y, const float z) : X(x), Y(y), Z(z) {}
@@ -13,9 +11,7 @@ namespace UE {
         float X, Y, Z;
     };
 
-    /**
-     * @version 5.0 - Latest (5.0)
-     */
+    /// @version 5.0 - Latest (5.0)
     template<typename T>
     struct TVector_0 {
         TVector_0() : X(T()), Y(T()), Z(T()) {}
@@ -24,10 +20,7 @@ namespace UE {
         T X, Y, Z;
     };
 
-    /**
-     * @tparam T
-     * @version 5.0 - Latest (5.0)
-     */
+    /// @version 5.0 - Latest (5.0)
     template<typename T>
     struct alignas(16) TPlane_0 : public TVector_0<T> {
         TPlane_0() : TVector_0<T>(), W(T()) {}
@@ -36,9 +29,7 @@ namespace UE {
         T W;
     };
 
-    /**
-     * @version 4.0 - 4.27
-     */
+    /// @version 4.0 - 4.27
     struct alignas(16) FPlane_0 : public FVector_0 {
         FPlane_0() : FVector_0(), W(0) {}
         FPlane_0(const float x, const float y, const float z, const float w) : FVector_0(x, y, z), W(w) {}
@@ -46,9 +37,7 @@ namespace UE {
         float W;
     };
 
-    /**
-     * @version 4.0 - 4.27
-     */
+    /// @version 4.0 - 4.27
     struct FMatrix_0 {
         FMatrix_0() : M {} {}
         FMatrix_0(const FPlane_0 x, const FPlane_0 y, const FPlane_0 z, const FPlane_0 w) : M {
@@ -61,11 +50,7 @@ namespace UE {
         alignas(16) float M[4][4];
     };
 
-    /**
-     * @tparam NumRows
-     * @tparam NumColumns
-     * @version 4.0 - 4.27
-     */
+    /// @version 4.0 - 4.27
     template<uint32_t NumRows, uint32_t NumColumns>
     struct TMatrix_0 {
         TMatrix_0() : M {} {}
@@ -79,10 +64,7 @@ namespace UE {
         alignas(16) float M[NumRows][NumColumns];
     };
 
-    /**
-     * @tparam T
-     * @version 5.0 - Latest (5.0)
-     */
+    /// @version 5.0 - Latest (5.0)
     template<typename T>
     struct TMatrix_1 {
         TMatrix_1() : M {} {}

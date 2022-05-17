@@ -1,7 +1,5 @@
 set(CMAKE_CXX_STANDARD 20)
-add_library(UnrealReflector
-        src/ACacheable.cpp
-        src/CoreUObject.cpp
-        src/Math.cpp)
+add_library(UnrealReflector)
 target_include_directories(UnrealReflector PUBLIC include)
+target_sources(UnrealReflector PUBLIC src/Unreal/CoreUObject.cpp)
 target_link_libraries(UnrealReflector PUBLIC PatternStreams)
