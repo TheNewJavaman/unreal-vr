@@ -113,7 +113,7 @@ There are so many features I want to add, and so many refactorings that could im
   access program in the Jetbrains Toolbox app
 - **Visual Studio 2022 Preview**: For writing C# code or HLSL shaders; Rider doesn't support WinUI nor Hot Reload; also,
   VS supports profiling both the CPU and GPU for C++, compiling HLSL, and packaging the final app. Get it for free via
-  the Visual Studio installer
+  the Visual Studio installer. **Install the MSIX Packaging Tools**
 - **Sourcetree**: My favorite Git GUI; the main thing is its support for multiple stashes; get it for free from
   Atlassian
 - **Rizin**: Used to reverse engineer UE/game binaries. Get it for free from GitHub
