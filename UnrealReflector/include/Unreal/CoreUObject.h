@@ -47,22 +47,9 @@ namespace UEVersionedApi {
         int32_t NumElements;
     };
 
-    /// @version 4.20
+    /// @version 4.20 - Latest (5.0)
+    /// Some games alter the chunk schema; calculate enum NumElementsPerChunk using MaxElements / NumElements
     struct FChunkedFixedUObjectArray_0 {
-        enum { NumElementsPerChunk = 65 * 1024, };
-
-        FUObjectItem_1** Objects;
-        FUObjectItem_1* PreAllocatedObjects;
-        int32_t MaxElements;
-        int32_t NumElements;
-        int32_t MaxChunks;
-        int32_t NumChunks;
-    };
-
-    /// @version 4.21 - Latest (5.0)
-    struct FChunkedFixedUObjectArray_1 {
-        enum { NumElementsPerChunk = 64 * 1024, };
-
         FUObjectItem_1** Objects;
         FUObjectItem_1* PreAllocatedObjects;
         int32_t MaxElements;
@@ -77,11 +64,8 @@ namespace UEVersionedApi {
     /// @version 4.11 - 4.19
     using TUObjectArray_1 = FFixedUObjectArray_0;
 
-    /// @version 4.20
+    /// @version 4.20 - Latest (5.0)
     using TUObjectArray_2 = FChunkedFixedUObjectArray_0;
-
-    /// @version 4.21 - Latest (5.0)
-    using TUObjectArray_3 = FChunkedFixedUObjectArray_1;
 
     /// @version 4.0 - 4.7
     /// @todo Fields after ObjObjects
@@ -104,8 +88,6 @@ namespace UEVersionedApi {
     /// @version 4.11 - 4.19
     /// @todo Fields after ObjObjects
     struct FUObjectArray_2 {
-        enum ESerialNumberConstants { START_SERIAL_NUMBER = 1000 };
-
         int32_t ObjFirstGCIndex;
         int32_t ObjLastNonGCIndex;
         int32_t MaxObjectsNotConsideredByGC;
@@ -113,7 +95,7 @@ namespace UEVersionedApi {
         TUObjectArray_1 ObjObjects;
     };
 
-    /// @version 4.20
+    /// @version 4.20 - Latest (5.0)
     /// @todo Fields after ObjObjects
     struct FUObjectArray_3 {
         int32_t ObjFirstGCIndex;
@@ -121,15 +103,5 @@ namespace UEVersionedApi {
         int32_t MaxObjectsNotConsideredByGC;
         bool OpenForDisregardForGC;
         TUObjectArray_2 ObjObjects;
-    };
-
-    /// @version 4.21 - Latest (5.0)
-    /// @todo Fields after ObjObjects
-    struct FUObjectArray_4 {
-        int32_t ObjFirstGCIndex;
-        int32_t ObjLastNonGCIndex;
-        int32_t MaxObjectsNotConsideredByGC;
-        bool OpenForDisregardForGC;
-        TUObjectArray_3 ObjObjects;
     };
 }
