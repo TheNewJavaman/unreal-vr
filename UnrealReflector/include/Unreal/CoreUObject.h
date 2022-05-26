@@ -25,9 +25,24 @@ namespace UEVersionedApi {
     /// @todo Fields
     struct UFunction_X : UObject_X {};
 
+    /// @version 4.11 - 4.12
+    struct FUObjectItem_0 {
+        UObjectBase_X* Object;
+        int32_t ClusterAndFlags;
+        int32_t SerialNumber;
+    };
+
+    /// @version 4.13 - Latest (5.0)
+    struct FUObjectItem_1 {
+        UObjectBase_X* Object;
+        int32_t Flags;
+        int32_t ClusterIndex;
+        int32_t SerialNumber;
+    };
+
     /// @version ? - 4.19 - 4.20 - ?
     struct FFixedUObjectArray_0 {
-        FUObjectItem_X* Objects;
+        FUObjectItem_1* Objects;
         int32_t MaxElements;
         int32_t NumElements;
     };
@@ -36,8 +51,8 @@ namespace UEVersionedApi {
     struct FChunkedFixedUObjectArray_0 {
         enum { NumElementsPerChunk = 65 * 1024, };
 
-        FUObjectItem_X** Objects;
-        FUObjectItem_X* PreAllocatedObjects;
+        FUObjectItem_1** Objects;
+        FUObjectItem_1* PreAllocatedObjects;
         int32_t MaxElements;
         int32_t NumElements;
         int32_t MaxChunks;
@@ -48,8 +63,8 @@ namespace UEVersionedApi {
     struct FChunkedFixedUObjectArray_1 {
         enum { NumElementsPerChunk = 64 * 1024, };
 
-        FUObjectItem_X** Objects;
-        FUObjectItem_X* PreAllocatedObjects;
+        FUObjectItem_1** Objects;
+        FUObjectItem_1* PreAllocatedObjects;
         int32_t MaxElements;
         int32_t NumElements;
         int32_t MaxChunks;

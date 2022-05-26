@@ -126,7 +126,4 @@ namespace UEVersionedApi {
     /// @todo Fields
     template<typename ElementType, int32_t MaxTotalElements, int32_t ElementsPerChunk>
     struct TStaticIndirectArrayThreadSafeRead_1 {};
-
-    /// @todo Fields
-    struct FUObjectItem_X {};
 }
