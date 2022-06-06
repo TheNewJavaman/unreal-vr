@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="RUST_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/pattern-streams/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/unreal-camera-injector/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/unreal-vr-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/unreal-vr-launcher/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/unreal-sdk/src" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+</module>

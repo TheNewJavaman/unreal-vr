@@ -1,0 +1,11 @@
+[package]
+name = "pattern-streams"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Pizarro <gpizarro@javaman.net>"]
+description = "Simplifies assembly instruction pattern matching in runtime memory"
+homepage = "https://unrealvr.dev"
+repository = "https://github.com/TheNewJavaman/unreal-vr"
+license = "MIT"
+keywords = ["virtual-reality", "graphics", "gamedev", "unreal-engine", "vr"]
+categories = ["game-development", "game-engines", "graphics"]

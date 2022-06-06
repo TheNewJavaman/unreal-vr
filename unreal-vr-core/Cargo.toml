@@ -1,0 +1,9 @@
+[package]
+name = "unreal-vr-core"
+version = "0.1.0"
+
+[dependencies]
+unreal-camera-injector = { path = "../unreal-camera-injector" }
+
+[lib]
+crate-type = ["cdylib"]

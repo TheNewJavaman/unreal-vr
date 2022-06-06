@@ -1,0 +1,14 @@
+[package]
+name = "unreal-sdk"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Pizarro <gpizarro@javaman.net>"]
+description = "Finds and interacts with Unreal Engine objects in the currently running process"
+homepage = "https://unrealvr.dev"
+repository = "https://github.com/TheNewJavaman/unreal-vr"
+license = "MIT"
+keywords = ["virtual-reality", "graphics",  "gamedev", "unreal-engine", "vr"]
+categories = ["game-development", "game-engines", "graphics"]
+
+[dependencies]
+bitflags = "1.3"

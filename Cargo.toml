@@ -1,0 +1,13 @@
+[workspace]
+members = [
+    "pattern-streams",
+    "unreal-camera-injector",
+    "unreal-sdk",
+    "unreal-vr-core",
+    "unreal-vr-launcher"
+]
+
+[profile.dev-opt]
+inherits = "dev"
+opt-level = 3
+lto = true
