@@ -10,19 +10,17 @@ pub fn pattern(tokens: TokenStream) -> TokenStream {
     let body = parse_macro_input!(tokens as Pattern)
         .bytes
         .iter()
-        .map(|byte| {
-            match byte {
-                PatternByte::Value(v) => quote! {
-                    pattern.push(PatternByte::Value(#v));
-                },
-                PatternByte::Wildcard => quote! {
-                    pattern.push(PatternByte::Wildcard);
-                }
+        .map(|byte| match byte {
+            WildcardByte::Value(v) => quote! {
+                pattern.push(WildcardByte::Value(#v));
+            },
+            WildcardByte::Wildcard => quote! {
+                pattern.push(WildcardByte::Wildcard);
             }
         });
     quote! {
         {
-            use pattern_streams::ps::{PatternByte, WildcardPattern};
+            use pattern_streams::ps::{WildcardByte, WildcardPattern};
             let pattern: WildcardPattern = Default::default();
             #(body)*
             pattern
@@ -31,10 +29,10 @@ pub fn pattern(tokens: TokenStream) -> TokenStream {
 }
 
 struct Pattern {
-    bytes: Vec<PatternByte>,
+    bytes: Vec<WildcardByte>,
 }
 
-enum PatternByte {
+enum WildcardByte {
     Value(Lit),
     Wildcard,
 }
@@ -53,9 +51,9 @@ impl Parse for Pattern {
         loop {
             let lookahead = stream.lookahead1();
             if lookahead.peek(Token![?]) {
-                pattern.bytes.push(PatternByte::Wildcard);
+                pattern.bytes.push(WildcardByte::Wildcard);
             } else if lookahead.peek(Lit) {
-                pattern.bytes.push(PatternByte::Value(stream.parse()?));
+                pattern.bytes.push(WildcardByte::Value(stream.parse()?));
             } else {
                 break;
             }
