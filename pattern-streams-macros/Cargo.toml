@@ -1,14 +1,17 @@
 [package]
-name = "pattern-streams"
+name = "pattern-streams-macros"
 version = "0.1.0"
 edition = "2021"
 authors = ["Gabriel Pizarro <gpizarro@javaman.net>"]
-description = "Simplifies assembly instruction pattern matching in runtime memory"
+description = "Macros for pattern-streams"
 homepage = "https://unrealvr.dev"
 repository = "https://github.com/TheNewJavaman/unreal-vr"
 license = "MIT"
 keywords = ["virtual-reality", "graphics", "gamedev", "unreal-engine", "vr"]
 categories = ["game-development", "game-engines", "graphics"]
 
+[lib]
+proc-macro = true
+
 [dependencies]
-pattern-streams-macros = { path = "../pattern-streams-macros" }
+syn = "1.0.96"
