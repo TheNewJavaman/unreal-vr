@@ -12,3 +12,12 @@ categories = ["game-development", "game-engines", "graphics"]
 
 [dependencies]
 pattern-streams-macros = { path = "../pattern-streams-macros" }
+
+[dependencies.windows]
+version = "0.37.0"
+features = [
+    "Win32_Foundation",
+    "Win32_System_Threading",
+    "Win32_System_LibraryLoader",
+    "Win32_System_ProcessStatus"
+]

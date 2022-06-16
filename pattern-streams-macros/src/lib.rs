@@ -1,14 +1,15 @@
 #![feature(proc_macro_quote)]
 
-use proc_macro::{quote, TokenStream};
+use proc_macro::TokenStream;
+use quote::quote;
 
 use syn::{Error, Lit, parse_macro_input, Token};
 use syn::parse::{Parse, ParseStream};
 
 #[proc_macro]
 pub fn pattern(tokens: TokenStream) -> TokenStream {
-    let body = parse_macro_input!(tokens as Pattern)
-        .bytes
+    let pattern = parse_macro_input!(tokens as Pattern);
+    let body = pattern.bytes
         .iter()
         .map(|byte| match byte {
             WildcardByte::Value(v) => quote! {
@@ -18,14 +19,14 @@ pub fn pattern(tokens: TokenStream) -> TokenStream {
                 pattern.push(WildcardByte::Wildcard);
             }
         });
-    quote! {
+    (quote! {
         {
             use pattern_streams::ps::{WildcardByte, WildcardPattern};
-            let pattern: WildcardPattern = Default::default();
-            #(body)*
+            let pattern = WildcardPattern::default();
+            #(#body)*
             pattern
         }
-    }
+    }).into()
 }
 
 struct Pattern {

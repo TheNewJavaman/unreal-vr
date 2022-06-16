@@ -137,6 +137,7 @@ pub mod t_choose_class {
     }
 }
 
+/*
 pub mod t_array {
     use crate::ue_api::core::{f_default_allocator, t_choose_class};
 
@@ -150,3 +151,4 @@ pub mod t_array {
         type ElementAllocatorType = t_choose_class::V0<InAllocator::NeedsElementType, TrueClass, FalseClass>
     }
 }
+ */
