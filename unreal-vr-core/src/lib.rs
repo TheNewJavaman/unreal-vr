@@ -7,9 +7,7 @@ use services::ue::UeService;
 
 mod services;
 
-lazy_static! {
-    static ref mut CORE: Option<Core> = None;
-}
+static mut CORE: Option<Core> = None;
 
 /// Holds the mod's entire state
 struct Core {
