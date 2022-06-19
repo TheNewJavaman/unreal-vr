@@ -3,6 +3,7 @@ use std::mem::size_of;
 use std::ptr::addr_of_mut;
 use std::sync::Mutex;
 
+use lazy_static::lazy_static;
 use windows::core::PCWSTR;
 use windows::Win32::Foundation::HANDLE;
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
@@ -32,30 +33,13 @@ impl Iterator for PtrInterval {
     }
 }
 
-struct ProcInfo {
-    proc_handle: Mutex<Option<HANDLE>>,
-    module_intervals: Mutex<HashMap<Option<String>, PtrInterval>>,
-}
-
-impl ProcInfo {
-    fn new() -> Self {
-        ProcInfo {
-            proc_handle: Mutex::new(None),
-            module_intervals: Mutex::new(HashMap::new()),
-        }
-    }
-}
-
-static mut PROC_INFO: Option<ProcInfo> = None;
-
-pub fn init() {
-    unsafe {
-        PROC_INFO = Some(ProcInfo::new());
-    }
+lazy_static! {
+    static ref PROC_HANDLE: Mutex<Option<HANDLE>> = Mutex::new(None);
+    static ref MODULE_INTERVALS: Mutex<HashMap<Option<String>, PtrInterval>> = Mutex::new(HashMap::new());
 }
 
 pub fn get_proc_handle() -> HANDLE {
-    let mut proc_handle = unsafe { PROC_INFO.unwrap() }.proc_handle.lock().unwrap();
+    let mut proc_handle = PROC_HANDLE.lock().unwrap();
     match *proc_handle {
         Some(v) => v,
         None => {
@@ -70,14 +54,14 @@ pub fn get_proc_handle() -> HANDLE {
 }
 
 pub fn get_module_interval(module: Option<&str>) -> PtrInterval {
-    let mut module_intervals = unsafe { PROC_INFO.unwrap() }.module_intervals.lock().unwrap();
-    match module_intervals.get(&module.map(|m| String::from(m))) {
-        Some(v) => v.clone(),
+    let mut module_intervals = MODULE_INTERVALS.lock().unwrap();
+    match module_intervals.get(&module.map(String::from)) {
+        Some(v) => *v,
         None => {
             let handle = if let Some(v) = module {
-                unsafe { GetModuleHandleW(v) }.unwrap()
+                unsafe { GetModuleHandleW(v).unwrap() }
             } else {
-                unsafe { GetModuleHandleW(PCWSTR::default()) }.unwrap()
+                unsafe { GetModuleHandleW(PCWSTR::default()).unwrap() }
             };
             let mut module_info = MODULEINFO::default();
             unsafe {
@@ -92,7 +76,7 @@ pub fn get_module_interval(module: Option<&str>) -> PtrInterval {
                 start: handle.0 as *const u8,
                 length: module_info.SizeOfImage as usize,
             };
-            module_intervals.insert(module.map(|m| String::from(m)), interval);
+            module_intervals.insert(module.map(String::from), interval);
             interval
         }
     }

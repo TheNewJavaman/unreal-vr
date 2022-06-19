@@ -12,6 +12,7 @@ categories = ["game-development", "game-engines", "graphics"]
 
 [dependencies]
 pattern-streams-macros = { path = "../pattern-streams-macros" }
+lazy_static = "1.4.0"
 
 [dependencies.windows]
 version = "0.37.0"

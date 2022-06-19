@@ -7,14 +7,14 @@ use services::ue::UeService;
 
 mod services;
 
-/// This should only be initialized once, but must be an `Option` because `Mutex` has no const 
-/// default, which services use
-static mut CORE: Option<Core> = None;
+lazy_static! {
+    static ref mut CORE: Option<Core> = None;
+}
 
 /// Holds the mod's entire state
 struct Core {
     d3d: Mutex<D3DService>,
-    xr: Mutex<OpenXrService>,
+    open_xr: Mutex<OpenXrService>,
     pipe: Mutex<PipeService>,
     ue: Mutex<UeService>,
 }

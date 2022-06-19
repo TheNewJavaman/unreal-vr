@@ -7,8 +7,9 @@ description = "Finds and interacts with Unreal Engine objects in the currently r
 homepage = "https://unrealvr.dev"
 repository = "https://github.com/TheNewJavaman/unreal-vr"
 license = "MIT"
-keywords = ["virtual-reality", "graphics",  "gamedev", "unreal-engine", "vr"]
+keywords = ["virtual-reality", "graphics", "gamedev", "unreal-engine", "vr"]
 categories = ["game-development", "game-engines", "graphics"]
 
 [dependencies]
 bitflags = "1.3"
+pattern-streams = { path = "../pattern-streams" }

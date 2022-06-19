@@ -21,7 +21,7 @@ impl Pattern for WildcardPattern {
             .iter()
             .enumerate()
             .all(|(i, byte)| match byte {
-                WildcardByte::Value(v) => v == &(unsafe { *ptr.offset(i as isize) }),
+                WildcardByte::Value(v) => v == &(unsafe { *ptr.add(i) }),
                 WildcardByte::Wildcard => true
             })
     }
@@ -83,8 +83,4 @@ impl PatternStream {
     pub fn first(&self) -> Option<*const u8> {
         self.matches.first().copied()
     }
-}
-
-pub fn init() {
-
 }
