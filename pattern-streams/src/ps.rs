@@ -1,4 +1,6 @@
-pub trait PatternMatcher {
+use crate::proc_info::get_module_interval;
+
+pub trait Pattern {
     fn is_match(&self, ptr: *const u8) -> bool;
 }
 
@@ -13,7 +15,7 @@ pub struct WildcardPattern {
     bytes: Vec<WildcardByte>,
 }
 
-impl PatternMatcher for WildcardPattern {
+impl Pattern for WildcardPattern {
     fn is_match(&self, ptr: *const u8) -> bool {
         self.bytes
             .iter()
@@ -31,11 +33,20 @@ pub struct PatternStream {
 }
 
 impl PatternStream {
-    pub fn new(pattern: &dyn PatternMatcher, module: &str) -> Self {}
+    pub fn new(pattern: &dyn Pattern, module: Option<&str>) -> Self {
+        let interval = get_module_interval(module);
+        let mut stream = PatternStream::default();
+        for ptr in interval {
+            if pattern.is_match(ptr) {
+                stream.matches.push(ptr);
+            }
+        }
+        stream
+    }
 
     pub fn has_pattern_in_range(
         &self,
-        pattern: &dyn PatternMatcher,
+        pattern: &dyn Pattern,
         range_offset: isize,
         range_length: isize,
         replace_prev_match: bool,
@@ -72,4 +83,8 @@ impl PatternStream {
     pub fn first(&self) -> Option<*const u8> {
         self.matches.first().copied()
     }
+}
+
+pub fn init() {
+
 }

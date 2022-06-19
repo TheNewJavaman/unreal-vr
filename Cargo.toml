@@ -4,7 +4,7 @@ members = [
     "pattern-streams-macros",
     "unreal-sdk",
     "unreal-camera-injector",
-    "unreal-vr-core",
+    "unreal-vr-CORE",
     "unreal-vr-launcher"
 ]
 
