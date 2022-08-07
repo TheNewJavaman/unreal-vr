@@ -1,5 +1,5 @@
 [package]
-name = "unreal-vr-CORE"
+name = "unreal-vr-runtime"
 version = "0.1.0"
 
 [dependencies]

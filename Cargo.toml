@@ -1,10 +1,9 @@
 [workspace]
 members = [
-    "pattern-streams",
-    "pattern-streams-macros",
+    "asm-analyzer",
     "unreal-sdk",
     "unreal-camera-injector",
-    "unreal-vr-CORE",
+    "unreal-vr-runtime",
     "unreal-vr-launcher"
 ]
 

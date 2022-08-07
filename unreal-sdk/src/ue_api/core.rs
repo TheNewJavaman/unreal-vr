@@ -92,13 +92,21 @@ pub mod t_bits_to_size_type {
     #[repr(C)]
     pub struct V0<const INDEX_SIZE: i32> {}
 
-    impl V0<8> { type Type = i8; }
+    impl V0<8> {
+        type Type = i8;
+    }
 
-    impl V0<16> { type Type = i16; }
+    impl V0<16> {
+        type Type = i16;
+    }
 
-    impl V0<32> { type Type = i32; }
+    impl V0<32> {
+        type Type = i32;
+    }
 
-    impl V0<64> { type Type = i64; }
+    impl V0<64> {
+        type Type = i64;
+    }
 }
 
 pub mod f_default_allocator {

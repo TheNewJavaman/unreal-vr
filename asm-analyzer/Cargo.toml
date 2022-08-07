@@ -1,0 +1,11 @@
+[package]
+name = "asm-analyzer"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Pizarro <gpizarro@javaman.net>"]
+homepage = "https://unrealvr.dev"
+repository = "https://github.com/TheNewJavaman/unreal-vr"
+license = "MIT"
+
+[dependencies]
+capstone = "0.11.0"

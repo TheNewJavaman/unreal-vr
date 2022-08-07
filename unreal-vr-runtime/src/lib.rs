@@ -19,5 +19,5 @@ struct Core {
 
 /// Every type of mod-related error should be indexed here
 enum CoreError {
-    Unknown
+    Unknown,
 }
