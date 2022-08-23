@@ -18,6 +18,7 @@ pub struct BlkNode<'a> {
     next: BlkEnd<'a>,
 }
 
+/// file -> bytes -> instructions -> tree -> model
 impl<'a> FnTree<'a> {
     pub fn new(instructions: &'a Instructions<'a>) -> FnTree<'a> {
         FnTree {
@@ -45,8 +46,4 @@ pub enum BlkEnd<'a> {
     Branch(Option<Rc<BlkNode<'a>>>, Option<Rc<BlkNode<'a>>>),
 }
 
-pub enum AsmFormat {
-    Raw,
-    UnescapedAscii,
-    EscapedAscii,
-}
+

@@ -1,0 +1,15 @@
+[package]
+name = "unreal-sdk-derive"
+version = "0.1.0"
+edition = "2021"
+authors = ["Gabriel Pizarro <gpizarro@javaman.net>"]
+homepage = "https://unrealvr.dev"
+repository = "https://github.com/TheNewJavaman/unreal-vr"
+license = "MIT"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = "1.0.99"
+quote = "1.0.21"

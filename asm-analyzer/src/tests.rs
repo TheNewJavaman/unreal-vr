@@ -10,11 +10,6 @@ fn read_asm_raw() {
 }
 
 #[test]
-fn read_asm_ascii_unescaped() {
-
-}
-
-#[test]
-fn read_asm_ascii_escaped() {
+fn read_asm_ascii() {
 
 }
