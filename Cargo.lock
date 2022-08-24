@@ -393,6 +393,8 @@ name = "unreal-sdk"
 version = "0.1.0"
 dependencies = [
  "bindgen",
+ "lazy_static",
+ "regex",
  "serde_json",
  "windows",
 ]

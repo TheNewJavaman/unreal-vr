@@ -1,15 +1,13 @@
 use proc_macro::TokenStream;
-
 use syn::DeriveInput;
 
 //#[proc_macro]
-//pub fn ue_sdk(input: TokenStream) -> TokenStream {
+// pub fn ue_sdk(input: TokenStream) -> TokenStream {
 //// get default
 //// or path
 //// generate for specific modules
 //}
-//
-//fn impl_ue_sdk(ast: &DeriveInput) -> TokenStream {
+// fn impl_ue_sdk(ast: &DeriveInput) -> TokenStream {
 //    let ue_path = &ast.ident
 //    quote::quote! {
 //        impl HelloMacro for #name {
@@ -19,5 +17,4 @@ use syn::DeriveInput;
 //        }
 //    }.into()
 //}
-//
-//fn parse_attr(input: &TokenStream) -> Option<TokenStream> {}
+// fn parse_attr(input: &TokenStream) -> Option<TokenStream> {}

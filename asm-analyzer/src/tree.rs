@@ -34,7 +34,8 @@ impl<'a> FnTree<'a> {
 
 /// How a [BlkNode](BlkNode) ends
 ///
-/// Note: Any [Option](Option) that is [None](None) is out of the scope of the [FnTree](FnTree)
+/// Note: Any [Option](Option) that is [None](None) is out of the scope of the
+/// [FnTree](FnTree)
 pub enum BlkEnd<'a> {
     /// End of the function
     Ret,
@@ -45,5 +46,3 @@ pub enum BlkEnd<'a> {
     /// Conditional jump, resulting in branching
     Branch(Option<Rc<BlkNode<'a>>>, Option<Rc<BlkNode<'a>>>),
 }
-
-

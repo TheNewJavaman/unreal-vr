@@ -13,4 +13,6 @@ categories = ["game-development", "game-engines", "graphics"]
 [dependencies]
 bindgen = "0.60"
 windows = { version = "0.39", features = ["Win32_Foundation", "Win32_System_Registry"] }
-serde_json = "1.0"
+serde_json = "1"
+regex = "1"
+lazy_static = "1"
