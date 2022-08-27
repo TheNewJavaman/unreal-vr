@@ -1,10 +1,13 @@
 #![allow(dead_code)]
 
-pub mod error;
-pub mod install;
-pub mod version;
+extern crate core;
 
-mod tests;
+pub mod csharp;
+pub mod dotenv;
+pub mod error;
+pub mod path;
+pub mod source;
+pub mod version;
 
 #[macro_export]
 macro_rules! ue_sdk {
@@ -17,7 +20,7 @@ macro_rules! ue_sdk {
         }
     };
     {
-        path: $version: expr,
+        path: $path: expr,
         modules: [$($module: literal),+$(,)?]$(,)?
     } => {
         {

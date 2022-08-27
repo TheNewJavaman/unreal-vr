@@ -3,7 +3,7 @@ name = "unreal-vr-runtime"
 version = "0.1.0"
 
 [dependencies]
-unreal-camera-injector = { path = "../unreal-camera-injector" }
+unreal-sdk = { path = "../unreal-sdk" }
 
 [lib]
 crate-type = ["cdylib"]

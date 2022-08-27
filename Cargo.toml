@@ -2,8 +2,6 @@
 members = [
     "asm-analyzer",
     "unreal-sdk",
-    "unreal-sdk-derive",
-    "unreal-camera-injector",
     "unreal-vr-runtime",
     "unreal-vr-launcher"
 ]

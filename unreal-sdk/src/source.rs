@@ -1,10 +1,9 @@
 use std::collections::{BTreeSet, HashSet};
-use std::fs::{File};
+use std::fs::File;
 use std::hash::Hash;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::ptr;
-use std::result;
+use std::{ptr, result};
 
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -18,14 +17,15 @@ use windows::Win32::System::Registry::{
     KEY_QUERY_VALUE,
 };
 
-use crate::check_dir;
-use crate::error::{Error,ErrorKind, Result};
+use crate::error::{Catcher, Error, ErrorKind, RegexResult, Result};
+use crate::path::PathChecker;
 use crate::version::UeVersion;
 
 #[derive(Debug)]
 pub struct Engine {
     pub version: UeVersion,
     pub root_dir: PathBuf,
+    pub binaries_dir: PathBuf,
     pub build_dir: PathBuf,
     pub source_dir: PathBuf,
     pub modules: HashSet<Module>,
@@ -40,49 +40,29 @@ pub struct Module {
     pub dependencies: BTreeSet<String>,
 }
 
-macro_rules! check_dir {
-    ($path:expr) => {{
-        if !$path.exists() && $path.is_dir() {
-            return Err(ErrorKind::PathExists { path: $path.into() });
-        }
-        $path
-    }};
-}
-
-macro_rules! maybe_throw {
-    ($ty:item, $e:ident) => {
-        Error {
-            kind: $ty,
-            ..$e
-        }
-    }
-}
-
 /// Metadata for an Unreal Engine installation or repository clone
 impl Engine {
     /// A local repository clone
     fn from_path(path: &Path, modules: HashSet<&str>) -> Result<Engine> {
-        let a = Error { kind: ErrorKind::LateInit, source: None };
-        let b = maybe_throw!(ErrorKind::LateInit, a);
-        let build_dir = check_dir!(path.join("Engine/Build"));
-        let source_dir = check_dir!(path.join("Engine/Source"));
+        let build_dir = path.join("Engine/Build").check_dir()?;
+        let source_dir = path.join("Engine/Source/Runtime").check_dir()?;
         let mut engine_modules: HashSet<Module> = HashSet::new();
         for module in modules.iter() {
             if !engine_modules.iter().any(|it| it.name == *module) {
-                let module = Module::new(&source_dir, &mut engine_modules, module)?;
-                engine_modules.insert(module);
+                Module::add_to(&mut engine_modules, &source_dir, module)?;
             }
         }
         Ok(Engine {
             version: UeVersion::try_from(&build_dir)?,
-            root_dir: check_dir!(path).into(),
+            root_dir: path.check_dir()?.into(),
+            binaries_dir: path.join("Engine/Build").check_dir()?,
             build_dir,
             source_dir,
             modules: engine_modules,
         })
     }
 
-    /// A local repository clone
+    /// A local repository cloned
     fn from_path_str(path: &str, modules: HashSet<&str>) -> Result<Engine> {
         Self::from_path(&Path::new(path), modules)
     }
@@ -99,7 +79,8 @@ impl Engine {
                 KEY_QUERY_VALUE,
                 &mut reg_key,
             )
-            .ok()?;
+            .ok()
+            .catch_it(|it| ErrorKind::Win32 { code: it.code() })?;
             const REG_BUFFER_SIZE: u32 = 512;
             let mut buffer = vec![];
             let mut tmp_buffer = Vec::with_capacity(REG_BUFFER_SIZE as usize);
@@ -112,51 +93,57 @@ impl Engine {
                     ptr::null_mut(),
                     tmp_buffer.as_mut_ptr(),
                     &mut tmp_buffer_size,
-                );
+                )
+                .ok();
                 match e {
-                    NO_ERROR => {
+                    Ok(_) => {
                         buffer.extend_from_slice(&tmp_buffer[0..tmp_buffer_size as usize]);
                         break;
                     }
-                    ERROR_MORE_DATA => {
-                        buffer.extend_from_slice(&tmp_buffer[0..tmp_buffer_size as usize]);
-                        continue;
-                    }
-                    _ => {
-                        return Err(match e.ok() {
-                            Ok(_) => unreachable!(),
-                            Err(e) => e.into(),
-                        });
-                    }
+                    Err(_) => match e {
+                        ERROR_MORE_DATA => {
+                            buffer.append(&mut tmp_buffer);
+                            continue;
+                        }
+                        _ => Error::from(e),
+                    },
                 }
             }
-            let path = String::from_utf8(buffer)?;
+            let path = String::from_utf8(buffer).catch(ErrorKind::StrFromUtf8)?;
             Self::from_path(&Path::new(&path), modules)
         }
     }
 }
 
-lazy_static! {
-static ref RE: result::Result<Regex, regex::Error> = Regex::new(r#"DependencyModuleNames\.Add.*?\(.*?(?:"(.*?)".*?)+\)"#);
+macro_rules! lazy_regex {
+    ($pat:literal) => {{
+        lazy_static! {
+            static ref RE: RegexResult<Regex> = Regex::new($pat);
+        }
+        RE.catch(ErrorKind::RegexInvalid {
+            hint: $pat.to_string(),
+        })?
+    }};
 }
 
 impl Module {
     fn add_to(modules: &mut HashSet<Module>, source_dir: &Path, name: &str) -> Result<()> {
-        let root_dir = check_dir!(source_dir.join(name));
-        let build_file = check_dir!(root_dir.join(format!("{}.build.cs", name)));
-
-        let file = File::open(build_file).map_err(|source| Error::OpenFile { path: build_file.into(), source })?;
-
+        let root_dir = source_dir.join(name).check_dir()?;
+        let build_file = root_dir.join(format!("{}.build.cs", name)).check_file()?;
+        let mut file = File::open(build_file).catch(ErrorKind::FileOpen {
+            path: build_file.into(),
+        })?;
         let mut contents = String::new();
-        file.read_to_string(&mut contents).map_err(|source| Error::Read)?;
-        let captures = RE.captures_iter()
-        if RE?.is_match(build_file)
+        file.read_to_string(&mut contents)
+            .catch(ErrorKind::FileRead {
+                path: build_file.into(),
+            })?;
         let mut header_files = HashSet::new();
         Self::find_header_files(&mut header_files, &root_dir)?;
         modules.insert(Self {
             name: name.into(),
             root_dir,
-            build_file,
+            build_file: build_file.clone(),
             header_files: Default::default(),
             dependencies: Default::default(),
         });

@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net6.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+        {CompileIncludes}
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="{EngineSourceDir}/Programs/UnrealBuildTool/UnrealBuildTool.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="DotNETUtilities">
+            <HintPath>{EngineBinariesDir}/DotNET/DotNETUtilities.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="UnmanagedExports" Version="1.2.7" />
+    </ItemGroup>
+
+</Project>

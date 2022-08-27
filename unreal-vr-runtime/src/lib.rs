@@ -4,7 +4,6 @@ use services::d3d::D3DService;
 use services::open_xr::OpenXrService;
 use services::pipe::PipeService;
 use services::ue::UeService;
-
 mod services;
 
 static mut CORE: Option<Core> = None;
