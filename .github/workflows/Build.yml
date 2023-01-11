@@ -1,0 +1,40 @@
+name: Build
+
+on:
+  push
+
+env:
+  SOLUTION_FILE_PATH: UnrealVR.sln
+  BUILD_CONFIGURATION: Release
+
+jobs:
+  Win64:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: True
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} /p:Platform=x64 /p:ErrorOnDuplicatePublishOutputFiles=false ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        name: "UnrealVR"
+        path: "${{github.workspace}}/x64/Release/"
+
+    - name: Upload a Build Artifact
+      uses: actions/upload-artifact@v3.1.1
+      with:
+        name: "UnrealVRLauncher"
+        path: "${{github.workspace}}/UnrealVRLauncher/bin/x64/Release/"
